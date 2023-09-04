@@ -18,6 +18,7 @@ services:
   mongo:
     image: mongo:6.0.5-jammy
     container_name: mongodb
+    hostname: mongodb
     volumes:
       - "mongo_data:/data/db"
     networks:
@@ -28,6 +29,7 @@ services:
   opensearch:
     image: opensearchproject/opensearch:2
     container_name: opensearch
+    hostname: opensearch
     environment:
       - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
       - "bootstrap.memory_lock=true"
@@ -46,27 +48,28 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - 9200:9200/tcp
+      - 9210:9210/tcp
     networks:
       - graynet
     restart: unless-stopped
 
   graylog:
-    image: graylog/graylog:5.1
+    image: graylog/graylog:5.1.4
     container_name: graylog
+    hostname: graylog
     environment:
       # CHANGE ME (must be at least 16 characters)!
       GRAYLOG_PASSWORD_SECRET: "somepasswordpepper"
       # Password: admin
       GRAYLOG_ROOT_PASSWORD_SHA2: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
-      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
-      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
-      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9010"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9010/"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9210"
       GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
       GRAYLOG_TIMEZONE: "America/Los_Angeles"
       TZ: "America/Los_Angeles"
       GRAYLOG_TRANSPORT_EMAIL_PROTOCOL: "smtp"
-      GRAYLOG_TRANSPORT_EMAIL_WEB_INTERFACE_URL: "http://192.168.5.20:9000/"
+      GRAYLOG_TRANSPORT_EMAIL_WEB_INTERFACE_URL: "http://192.168.5.20:9010/"
       GRAYLOG_TRANSPORT_EMAIL_HOSTNAME: "outbound.mailhop.org"
       GRAYLOG_TRANSPORT_EMAIL_ENABLED: "true"
       GRAYLOG_TRANSPORT_EMAIL_PORT: "587"
@@ -78,10 +81,11 @@ services:
       GRAYLOG_TRANSPORT_FROM_EMAIL: "smarth@elikesbikes.com"
       GRAYLOG_TRANSPORT_SUBJECT_PREFIX: "[graylog]"
 
-    entrypoint: /usr/bin/tini -- wait-for-it opensearch:9200 -- /docker-entrypoint.sh
+    entrypoint: /usr/bin/tini -- wait-for-it opensearch:9210 -- /docker-entrypoint.sh
     volumes:
-      - "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
-      - "graylog_data:/usr/share/graylog/data"
+      - "/home/ecloaiza/graylog:/usr/share/graylog/config"
+      - "/home/ecloaiza/graylog:/usr/share/graylog/data"
+      #- "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
     networks:
       - graynet
     restart: always
@@ -91,7 +95,7 @@ services:
       mongo:
         condition: "service_started"
     ports:
-      - 9000:9000/tcp   # Graylog web interface and REST API
+      - 9010:9010/tcp   # Graylog web interface and REST API
       - 1514:1514/tcp   # Syslog
       - 1514:1514/udp   # Syslog
       - 1516:1515/udp   # Truenas
