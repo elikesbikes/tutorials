@@ -1,9 +1,5 @@
 version: '3'
 
-networks:
-  graynet:
-    driver: bridge
-
 # This is how you persist data between container restarts
 volumes:
   mongo_data:
@@ -21,10 +17,10 @@ services:
     hostname: mongodb
     volumes:
       - "mongo_data:/data/db"
-    networks:
-      - graynet
+    #networks:
+    #  - graynet
     restart: unless-stopped
-
+  
   # The logs themselves are stored in Opensearch
   opensearch:
     image: opensearchproject/opensearch:2
@@ -48,13 +44,11 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - 9210:9210/tcp
-    networks:
-      - graynet
+      - 9200:9200/tcp
     restart: unless-stopped
 
   graylog:
-    image: graylog/graylog:5.1.4
+    image: graylog/graylog:5.1
     container_name: graylog
     hostname: graylog
     environment:
@@ -64,7 +58,7 @@ services:
       GRAYLOG_ROOT_PASSWORD_SHA2: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
       GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9010"
       GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9010/"
-      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9210"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
       GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
       GRAYLOG_TIMEZONE: "America/Los_Angeles"
       TZ: "America/Los_Angeles"
@@ -81,13 +75,14 @@ services:
       GRAYLOG_TRANSPORT_FROM_EMAIL: "smarth@elikesbikes.com"
       GRAYLOG_TRANSPORT_SUBJECT_PREFIX: "[graylog]"
 
-    entrypoint: /usr/bin/tini -- wait-for-it opensearch:9210 -- /docker-entrypoint.sh
-    volumes:
-      - "/home/ecloaiza/graylog:/usr/share/graylog/config"
-      - "/home/ecloaiza/graylog:/usr/share/graylog/data"
+    entrypoint: /usr/bin/tini -- wait-for-it opensearch:9200 -- /docker-entrypoint.sh
+    #volumes:
+      - "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
+      - "graylog_data:/usr/share/graylog/data"
+      #- "/home/ecloaiza/graylog:/usr/share/graylog/config"
+      #- "/home/ecloaiza/graylog:/usr/share/graylog/data"
       #- "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
-    networks:
-      - graynet
+
     restart: always
     depends_on:
       opensearch:
