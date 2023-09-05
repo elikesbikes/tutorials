@@ -16,7 +16,8 @@ services:
     container_name: mongodb
     hostname: mongodb
     volumes:
-      - "mongo_data:/data/db"
+      - "mongo_data:/data/configdb"
+      
     #networks:
     #  - graynet
     restart: unless-stopped
@@ -76,13 +77,12 @@ services:
       GRAYLOG_TRANSPORT_SUBJECT_PREFIX: "[graylog]"
 
     entrypoint: /usr/bin/tini -- wait-for-it opensearch:9200 -- /docker-entrypoint.sh
-    #volumes:
-      - "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
-      - "graylog_data:/usr/share/graylog/data"
+    volumes:
       #- "/home/ecloaiza/graylog:/usr/share/graylog/config"
       #- "/home/ecloaiza/graylog:/usr/share/graylog/data"
       #- "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
-
+      - "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
+      - "graylog_data:/usr/share/graylog/data"
     restart: always
     depends_on:
       opensearch:
@@ -93,6 +93,6 @@ services:
       - 9010:9010/tcp   # Graylog web interface and REST API
       - 1514:1514/tcp   # Syslog
       - 1514:1514/udp   # Syslog
-      - 1516:1515/udp   # Truenas
+      - 1515:1515/udp   # Truenas
       - 12201:12201/tcp # GELF
       - 12201:12201/udp # GELF
