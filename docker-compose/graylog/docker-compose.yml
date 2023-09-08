@@ -1,5 +1,9 @@
 version: '3'
 
+networks:
+  graynet:
+    driver: bridge
+
 # This is how you persist data between container restarts
 volumes:
   mongo_data:
@@ -18,8 +22,8 @@ services:
     volumes:
       - "mongo_data:/data/configdb"
       
-    #networks:
-    #  - graynet
+    networks:
+      - graynet
     restart: unless-stopped
   
   # The logs themselves are stored in Opensearch
@@ -34,7 +38,7 @@ services:
       - "action.auto_create_index=false"
       - "plugins.security.ssl.http.enabled=false"
       - "plugins.security.disabled=true"
-    volumes:
+    #volumes:
       #- "log_data:/usr/share/opensearch/data"
       - "/home/ecloaiza/opensearch:/usr/share/opensearch/data"
     ulimits:
@@ -46,6 +50,8 @@ services:
         hard: 65536
     ports:
       - 9200:9200/tcp
+    networks:
+      - graynet
     restart: unless-stopped
 
   graylog:
@@ -81,8 +87,10 @@ services:
       #- "/home/ecloaiza/graylog:/usr/share/graylog/config"
       #- "/home/ecloaiza/graylog:/usr/share/graylog/data"
       #- "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
-      - "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
+      #- "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
       - "graylog_data:/usr/share/graylog/data"
+    networks:
+      - graynet
     restart: always
     depends_on:
       opensearch:
@@ -94,5 +102,3 @@ services:
       - 1514:1514/tcp   # Syslog
       - 1514:1514/udp   # Syslog
       - 1515:1515/udp   # Truenas
-      - 12201:12201/tcp # GELF
-      - 12201:12201/udp # GELF
