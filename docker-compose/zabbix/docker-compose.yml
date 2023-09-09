@@ -30,10 +30,10 @@ services:
       - MYSQL_USER
       - MYSQL_PASSWORD
       - MYSQL_ROOT_PASSWORD
-    #depends_on:
-    #  - mysql-server
+    depends_on:
+      - mysql-server
     networks:
-      backend:
+      backend2:
         aliases:
           - zabbix-server
           - zabbix-server-mysql
@@ -72,7 +72,7 @@ services:
         - MYSQL_ROOT_PASSWORD
       stop_grace_period: 1m
       networks:
-        backend:
+        backend2:
           aliases:
           - mysql-server
           - zabbix-database
@@ -93,14 +93,14 @@ services:
     env_file:
       - ./env_vars/env_agent
     networks:
-      backend:
+      backend2:
         aliases:
         - zabbix-agent
         - zabbix-agent-passive
         - zabbix-agent-alpine
       
 networks:
-  backend:
+  backend2:
     external: true
   frontend:
     external: true
