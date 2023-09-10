@@ -169,6 +169,7 @@ services:
 networks:
   backend2:
     external: true
+    
   frontend:
     external: true
 
