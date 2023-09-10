@@ -1,0 +1,17 @@
+Agent installation
+This page covers installation of Zabbix agent. If needed, you may check additional info about supported platforms and permission requirements for the agent.
+
+Red Hat Enterprise Linux / CentOS
+To install agent after correct repository configuration package is installed, run the following command:
+
+# yum install zabbix-agent
+Now agent is ready to be started by:
+
+# systemctl start zabbix-agent
+Debian / Ubuntu
+To install agent after correct repository configuration package is installed, run the following command:
+
+# apt-get install zabbix-agent
+Now agent is ready to be started by:
+
+# service zabbix-agent start
