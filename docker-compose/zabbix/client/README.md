@@ -1,17 +1,23 @@
-Agent installation
-This page covers installation of Zabbix agent. If needed, you may check additional info about supported platforms and permission requirements for the agent.
+. Install Zabbix repository
+Documentation
+Disable Zabbix packages provided by EPEL, if you have it installed. Edit file /etc/yum.repos.d/epel.repo and add the following statement.
 
-Red Hat Enterprise Linux / CentOS
-To install agent after correct repository configuration package is installed, run the following command:
+[epel]
+...
+excludepkgs=zabbix*
+Proceed with installing zabbix repository.
 
-# yum install zabbix-agent
-Now agent is ready to be started by:
+# rpm -Uvh https://repo.zabbix.com/zabbix/6.4/rhel/9/x86_64/zabbix-release-6.4-1.el9.noarch.rpm
+# dnf clean all
+b. Install Zabbix agent2
+# dnf install zabbix-agent2 zabbix-agent2-plugin-*
+c. Start Zabbix agent2 process
+Start Zabbix agent2 process and make it start at system boot.
 
-# systemctl start zabbix-agent
-Debian / Ubuntu
-To install agent after correct repository configuration package is installed, run the following command:
+# systemctl restart zabbix-agent2
+# systemctl enable zabbix-agent2
 
-# apt-get install zabbix-agent
-Now agent is ready to be started by:
+d.
+yum install zabbix_get*
 
-# service zabbix-agent start
+zabbix_get -s 192.168.5.20 -k docker.info
