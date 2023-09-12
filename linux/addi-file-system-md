@@ -1,0 +1,74 @@
+As system administrators, we would have got requirements wherein we need to configure raw hard disks to the existing servers as part of upgrading server capacity or sometimes disk replacement in case of disk failure.
+
+In this article, I will take you through the steps by which we can add the new raw hard disk to an existing Linux server such as RHEL/CentOS or Debian/Ubuntu.
+
+ am using fdisk utility to do this configuration.
+
+I have added a hard disk of 20GB capacity to be mounted as a /data partition.
+
+fdisk is a command line utility to view and manage hard disks and partitions on Linux systems.
+
+# fdisk -l
+This will list the current partitions and configurations.
+
+Find Linux Partition Details
+Find Linux Partition Details
+After attaching the hard disk of 20GB capacity, the fdisk -l will give the below output.
+
+# fdisk -l
+Find New Partition Details
+Find New Partition Details
+New disk added is shown as /dev/xvdc. If we are adding physical disk it will show as /dev/sda based of the disk type. Here I used a virtual disk.
+
+To partition a particular hard disk, for example /dev/xvdc.
+
+# fdisk /dev/xvdc
+Commonly used fdisk commands.
+
+n – Create partition
+p – print partition table
+d – delete a partition
+q – exit without saving the changes
+w – write the changes and exit.
+Here since we are creating a partition use n option.
+
+Create New Partition in Linux
+
+
+Create the Token by clicking Add. Once you do that, a dialog will be shown with Token ID and Secret. Take note of them because they won’t be shown again!
+
+Lastly, let’s create some permissions binding the user and token created to actual resources on the Proxmox by clicking on Permissions submenu followed by Add >> API Token permission:
+
+Path: /
+API Token: Select the token just created
+Role: PVEAuditor
+Propagate: checked
+Click on Add to complete, and create a new permission again:
+
+Path: /nodes/<your_proxmox_node>
+API Token: Select the token just created
+Role: PVEAuditor
+Propagate: checked
+Click on Add to complete, and create a new permission again:
+
+Path: /vms
+API Token: Select the token just created
+Role: PVEAuditor
+Propagate: checked
+Click on Add to complete.
+
+Configuring Zabbix Server through Web UI
+Go to Configuration >> Hosts and select your agent with Proxmox VE running. When the configuration dialog open, the Host tab should be the default one. Look for the Templates section. In the text box, type “Proxmox” and select the “Proxmox VE by HTTP” in the search result. This will link the template to your agent.
+
+The last step is setting the Proxmox API token information in the plugin so that it can connect to the server and fetch metadata. Click on Macros tab. We will need to add 2 macros related to credentials. Click on Add and fill in the new row as follow:
+
+Macro: {$PVE.TOKEN.ID}
+Value: Type your Token ID
+Description: A helpful description or leave it empty
+Click on Add again
+
+Macro: {$PVE.TOKEN.SECRET}
+Value: Type your Token password
+Description: A helpful description or leave it empty
+That is it, let’s try it. Go to Monitoring >> Latest data. In the filter section, type the name of your Proxmox server in the Hosts box, Proxmox in the Name box and finally hit Apply. A list of items should be displayed for it, such as Proxmox: API service status, etc
+

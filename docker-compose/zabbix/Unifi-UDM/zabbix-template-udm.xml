@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2020-06-12T14:22:21Z</date>
+    <groups>
+        <group>
+            <name>Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template UniFi UDMP SSH</template>
+            <name>Template UniFi UDMP SSH</name>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>CPU</name>
+                </application>
+                <application>
+                    <name>Fan</name>
+                </application>
+                <application>
+                    <name>Firewall Status</name>
+                </application>
+                <application>
+                    <name>Memory</name>
+                </application>
+                <application>
+                    <name>Temperature</name>
+                </application>
+                <application>
+                    <name>Traffic</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>States IPv4</name>
+                    <type>SSH</type>
+                    <key>ssh.run[conntrack_ipv4]</key>
+                    <history>30d</history>
+                    <params>conntrack -L -f ipv4 2&gt;&amp;1 | grep -v &quot;127.0.0.1&quot; | wc | awk '{print $1}'</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Firewall Status</name>
+                        </application>
+                    </applications>
+                    <request_method>POST</request_method>
+                </item>
+                <item>
+                    <name>States IPv6</name>
+                    <type>SSH</type>
+                    <key>ssh.run[conntrack_ipv6]</key>
+                    <history>30d</history>
+                    <params>conntrack -L -f ipv6 2&gt;&amp;1 &gt; /dev/null | grep conntrack | awk '{print $4}'</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Firewall Status</name>
+                        </application>
+                    </applications>
+                    <request_method>POST</request_method>
+                </item>
+                <item>
+                    <name>CPU Idle</name>
+                    <type>SSH</type>
+                    <key>ssh.run[cpu_idle]</key>
+                    <history>30d</history>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <params>/usr/bin/mpstat -o JSON | grep idle | awk -F\&quot; '/idle/ {print $25}' | sed 's/[:|}]//g'</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>CPU</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Fan 1</name>
+                    <type>SSH</type>
+                    <key>ssh.run[hw_fan1]</key>
+                    <delay>10m</delay>
+                    <history>30d</history>
+                    <units>rpm</units>
+                    <params>cat /sys/bus/i2c/drivers/adt7475/4-002e/hwmon/hwmon0/device/fan1_input</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Fan</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Fan 2</name>
+                    <type>SSH</type>
+                    <key>ssh.run[hw_fan2]</key>
+                    <delay>10m</delay>
+                    <history>30d</history>
+                    <units>rpm</units>
+                    <params>cat /sys/bus/i2c/drivers/adt7475/4-002e/hwmon/hwmon0/device/fan2_input</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Fan</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Temp 1</name>
+                    <type>SSH</type>
+                    <key>ssh.run[hw_temp1]</key>
+                    <delay>10m</delay>
+                    <history>30d</history>
+                    <units>°C</units>
+                    <params>cat /sys/bus/i2c/drivers/adt7475/4-002e/hwmon/hwmon0/device/temp1_input</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Temperature</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>0.001</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Temp 2</name>
+                    <type>SSH</type>
+                    <key>ssh.run[hw_temp2]</key>
+                    <delay>10m</delay>
+                    <history>30d</history>
+                    <units>°C</units>
+                    <params>cat /sys/bus/i2c/drivers/adt7475/4-002e/hwmon/hwmon0/device/temp2_input</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Temperature</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>0.001</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Temp 3</name>
+                    <type>SSH</type>
+                    <key>ssh.run[hw_temp3]</key>
+                    <delay>10m</delay>
+                    <history>30d</history>
+                    <units>°C</units>
+                    <params>cat /sys/bus/i2c/drivers/adt7475/4-002e/hwmon/hwmon0/device/temp3_input</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Temperature</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>0.001</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Memory Used</name>
+                    <type>SSH</type>
+                    <key>ssh.run[mem_used]</key>
+                    <delay>10m</delay>
+                    <history>30d</history>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <params>free -m | awk 'NR==2{printf &quot;%.2f&quot;, ($3-$7)*100/$2 }'</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>iptables Forward Chain</name>
+                    <type>SSH</type>
+                    <key>ssh.run[wan_traffic_iptables_fwd]</key>
+                    <history>30d</history>
+                    <units>bit</units>
+                    <params>iptables -L FORWARD -xnv| grep policy|awk '{print $7}'</params>
+                    <username>{$UNIFI_SSH_USER}</username>
+                    <password>{$UNIFI_SSH_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>Traffic</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>CHANGE_PER_SECOND</type>
+                            <params/>
+                        </step>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>8</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <screens>
+                <screen>
+                    <name>UDM Pro</name>
+                    <hsize>2</hsize>
+                    <vsize>3</vsize>
+                    <screen_items>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>UDMP CPU Idle</name>
+                                <host>Template UniFi UDMP SSH</host>
+                            </resource>
+                            <width>500</width>
+                            <height>100</height>
+                            <x>0</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>UDMP Memory Used</name>
+                                <host>Template UniFi UDMP SSH</host>
+                            </resource>
+                            <width>500</width>
+                            <height>100</height>
+                            <x>1</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>UDMP Temperature</name>
+                                <host>Template UniFi UDMP SSH</host>
+                            </resource>
+                            <width>500</width>
+                            <height>100</height>
+                            <x>0</x>
+                            <y>1</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>UDMP Fan</name>
+                                <host>Template UniFi UDMP SSH</host>
+                            </resource>
+                            <width>500</width>
+                            <height>100</height>
+                            <x>1</x>
+                            <y>1</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>UDMP Firewall States</name>
+                                <host>Template UniFi UDMP SSH</host>
+                            </resource>
+                            <width>500</width>
+                            <height>100</height>
+                            <x>0</x>
+                            <y>2</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>UDMP Traffic WAN iptables forwarded</name>
+                                <host>Template UniFi UDMP SSH</host>
+                            </resource>
+                            <width>500</width>
+                            <height>100</height>
+                            <x>1</x>
+                            <y>2</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                    </screen_items>
+                </screen>
+            </screens>
+        </template>
+    </templates>
+    <graphs>
+        <graph>
+            <name>UDMP CPU Idle</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <ymax_type_1>FIXED</ymax_type_1>
+            <graph_items>
+                <graph_item>
+                    <drawtype>GRADIENT_LINE</drawtype>
+                    <color>4DB6AC</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[cpu_idle]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>UDMP Fan</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <color>0040FF</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[hw_fan1]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>BFFF00</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[hw_fan2]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>UDMP Firewall States</name>
+            <type>STACKED</type>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <color>111111</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[conntrack_ipv4]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>888888</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[conntrack_ipv6]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>UDMP Memory Used</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <ymax_type_1>FIXED</ymax_type_1>
+            <graph_items>
+                <graph_item>
+                    <drawtype>GRADIENT_LINE</drawtype>
+                    <color>C8E6C9</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[mem_used]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>UDMP Temperature</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <color>0080FF</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[hw_temp1]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>80FF00</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[hw_temp2]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>2774A4</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[hw_temp3]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>UDMP Traffic WAN iptables forwarded</name>
+            <graph_items>
+                <graph_item>
+                    <drawtype>GRADIENT_LINE</drawtype>
+                    <color>1A7C11</color>
+                    <item>
+                        <host>Template UniFi UDMP SSH</host>
+                        <key>ssh.run[wan_traffic_iptables_fwd]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+    </graphs>
+</zabbix_export>
