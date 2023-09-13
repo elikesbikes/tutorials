@@ -12,14 +12,14 @@ auth_service:
   enabled: "yes"
   listen_addr: 0.0.0.0:3025
   proxy_listener_mode: multiplex
-  cluster_name: 192.168.5.20
+  cluster_name: teleport.home.elikesbikes.com
   # -- (Optional) Passwordless Authentication
-  authentication:
-    type: local
-    second_factor: on
-    webauthn:
-      rp_id: teleport.home.elikesbikes.com
-    connector_name: passwordless
+  #authentication:
+  #  type: local
+  #  second_factor: on
+  #  webauthn:
+  #    rp_id: teleport.home.elikesbikes.com
+  #  connector_name: passwordless
   # -- (Optional) Teleport Assist
   # assist:
   #   openai:
@@ -32,7 +32,7 @@ proxy_service:
   enabled: "yes"
   web_listen_addr: 0.0.0.0:3080
   # -- (Optional) when using reverse proxy
-  public_addr: ['192.168.5.20:443']
+  public_addr: ['teleport.home.elikesbikes.com']
   https_keypairs: []
   acme: {}
   # --(Optional) ACME
