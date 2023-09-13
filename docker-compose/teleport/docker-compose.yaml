@@ -1,15 +1,9 @@
 version: '3.5'
 services:  
-networks:
-  backend2:
-    external: true    
-  frontend:
-    external: true
   teleport:
     image: public.ecr.aws/gravitational/teleport-distroless:13
     container_name: teleport
-    hostname: teleport
-    entrypoint: /bin/sh
+    hostname: teleport    
     ports:
       # -- (Optional) Remove this section, when using Traefik
       - "3080:3080"
@@ -35,3 +29,6 @@ networks:
       # - "traefik.http.routers.teleport-https.tls.domains[0].main=your-server-url"
       # - "traefik.http.routers.teleport-https.tls.domains[0].sans=*.your-server-url"
     restart: unless-stopped
+networks:
+  frontend:
+    external: true
