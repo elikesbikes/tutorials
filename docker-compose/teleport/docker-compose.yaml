@@ -1,13 +1,5 @@
-version: '3.5'
+version: '2'
 services:
-
-networks:
-  backend2:
-    external: true
-    
-  frontend:
-    external: true
-
   teleport:
     image: public.ecr.aws/gravitational/teleport-distroless:13
     container_name: teleport
@@ -18,8 +10,6 @@ networks:
       - "3023:3023"
       - "3024:3024"
       - "3025:3025"
-    networks:
-      frontend:    
     volumes:
       - ./config:/etc/teleport
       - ./data:/var/lib/teleport
@@ -36,4 +26,10 @@ networks:
       # - "traefik.http.routers.teleport-https.tls.certresolver=your-certresolver"
       # - "traefik.http.routers.teleport-https.tls.domains[0].main=your-server-url"
       # - "traefik.http.routers.teleport-https.tls.domains[0].sans=*.your-server-url"
+    networks:
+       - frontend
     restart: unless-stopped
+
+networks:    
+  frontend:
+    external: true
