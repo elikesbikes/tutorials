@@ -15,6 +15,8 @@ services:
     volumes:
       - ./config:/etc/teleport
       - ./data:/var/lib/teleport
+      - ./letsencrypt/live/:/etc/letsencrypt/live/
+      - ./letsencrypt/archive/:/etc/letsencrypt/archive/
     # -- (Optional) Traefik example configuration
     # labels:
       # - "traefik.enable=true"
