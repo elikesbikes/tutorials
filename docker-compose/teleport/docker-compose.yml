@@ -1,5 +1,7 @@
 version: '3.5'
 services:
+configure:
+  entrypoint: /bin/sh
 
 networks:
   backend2:
@@ -12,6 +14,7 @@ networks:
     image: public.ecr.aws/gravitational/teleport-distroless:13
     container_name: teleport
     hostname: teleport
+    entrypoint: /bin/sh
     ports:
       # -- (Optional) Remove this section, when using Traefik
       - "3080:3080"
