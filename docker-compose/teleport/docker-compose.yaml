@@ -1,5 +1,17 @@
 version: '3.5'
 services:  
+
+services:
+  configure:
+    image: quay.io/gravitational/teleport:9.1.2
+    container_name: teleport-configure
+    hostname: teleport-configure
+    entrypoint: /bin/sh
+    hostname: teleport.home.elikesbikes.com
+    command: -c "if [ ! -f /etc/teleport/teleport.yaml ]; then teleport configure > /etc/teleport/teleport.yaml; fi"
+    volumes:
+      - ./config:/etc/teleport
+
   teleport:
     image: public.ecr.aws/gravitational/teleport-distroless:13
     container_name: teleport
@@ -30,6 +42,8 @@ services:
       # - "traefik.http.routers.teleport-https.tls.certresolver=your-certresolver"
       # - "traefik.http.routers.teleport-https.tls.domains[0].main=your-server-url"
       # - "traefik.http.routers.teleport-https.tls.domains[0].sans=*.your-server-url"
+    depends_on:
+      - configure
     restart: unless-stopped
 networks:
   frontend:
