@@ -34,6 +34,7 @@ Privilege separation: checked
 Expire: never
 Comments: be creative
 
+zabbix@pam!ZabbixMonitoring01
 79cc8337-a8a8-4981-9967-1fe2cf0bb6ef
 
 
@@ -72,5 +73,7 @@ Click on Add again
 Macro: {$PVE.TOKEN.SECRET}
 Value: Type your Token password
 Description: A helpful description or leave it empty
+
+
 That is it, let’s try it. Go to Monitoring >> Latest data. In the filter section, type the name of your Proxmox server in the Hosts box, Proxmox in the Name box and finally hit Apply. A list of items should be displayed for it, such as Proxmox: API service status, etc
 

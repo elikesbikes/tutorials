@@ -33,7 +33,7 @@ alias u="cd .."
 alias ll="ls -lA --color=yes | less -r -E -X"
 alias l="ls -l --color=yes "
 alias p="ping -c 3 google.com"
-
+alias vim="vi"
 
 
 echo -e -n '\E[1;34m'
