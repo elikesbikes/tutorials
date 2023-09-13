@@ -14,12 +14,12 @@ auth_service:
   proxy_listener_mode: multiplex
   cluster_name: teleport.home.elikesbikes.com
   # -- (Optional) Passwordless Authentication
-  # authentication:
-  #   type: local
-  #   second_factor: on
-  #   webauthn:
-  #     rp_id: your-server-url
-  #   connector_name: passwordless
+  authentication:
+    type: local
+    second_factor: on
+    webauthn:
+      rp_id: teleport.home.elikesbikes.com
+    connector_name: passwordless
   # -- (Optional) Teleport Assist
   # assist:
   #   openai:
