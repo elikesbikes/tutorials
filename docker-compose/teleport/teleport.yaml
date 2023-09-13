@@ -33,6 +33,8 @@ proxy_service:
   web_listen_addr: 0.0.0.0:3080
   # -- (Optional) when using reverse proxy
   public_addr: ['teleport.home.elikesbikes.com']
+  https_cert_file: /home/ecloaiza/teleport/letsencrypt/fullchain1.pem
+  https_key_file: /home/ecloaiza/teleport/letsencrypt/privkey1.pem
   https_keypairs: []
   acme: {}
   # --(Optional) ACME
