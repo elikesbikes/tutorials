@@ -1,15 +1,10 @@
 version: '3.5'
-services:
-configure:
-  entrypoint: /bin/sh
-
+services:  
 networks:
   backend2:
-    external: true
-    
+    external: true    
   frontend:
     external: true
-
   teleport:
     image: public.ecr.aws/gravitational/teleport-distroless:13
     container_name: teleport
