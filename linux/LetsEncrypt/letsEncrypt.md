@@ -1,0 +1,1 @@
+certbot certonly --dns-cloudflare --dns-cloudflare-credentials ./cloudflare.ini -d teleport.elikesbikes.cloud
