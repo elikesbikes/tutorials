@@ -2,4 +2,4 @@ https://computingforgeeks.com/running-powerdns-and-powerdns-admin-in-docker-cont
 
 
 
-https://github.com/pschiffe/docker-pdns/blob/master/docker-compose.yml
+https://github.com/pschiffe/docker-pdns/blob/master/docker-compose.s
