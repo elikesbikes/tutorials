@@ -1,0 +1,12 @@
+$ORIGIN 5.168.192.in-addr.arpa.
+$TTL 86400	; 1 day
+@				IN		SOA		emins1.home.elikesbikes.com. smarth.elikesbikes.com. (
+								14         ; serial
+								3600       ; refresh (1 hour)
+								3600       ; retry (1 hour)
+								2419200    ; expire (4 weeks)
+								3600       ; minimum (1 hour)
+								)
+; Name server record 
+				IN      NS		emins1.home.elikesbikes.com.
+;
