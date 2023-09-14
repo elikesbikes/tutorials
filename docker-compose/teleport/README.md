@@ -8,7 +8,7 @@ docker exec teleport tctl users add root --roles=editor,access --logins=root
 docker exec teleport tctl users add admin --roles=editor,access --logins=root
 
 
-tsh login --proxy=192.168.5.20 --auth=local --user=root --insecure
+tsh login --proxy=192.168.5.20:3080 --auth=local --user=admin --insecure
 
 tsh ls
 tsh ssh ecloaiza@teleport
