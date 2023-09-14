@@ -1,10 +1,14 @@
-$ORIGIN .
 $TTL 86400	; 1 day
-home.elikesbikes.com	IN SOA	ns.home.elikesbikes.com. home.elikesbikes.com. (
-				2001062618 ; serial
-				3600       ; refresh (1 hour)
-				3600       ; retry (1 hour)
-				2419200    ; expire (4 weeks)
-				3600       ; minimum (1 hour)
-				)
-			NS	ns.home.elikesbikes.com.
+$ORIGIN home.elikesbikes.com
+@					IN		SOA	ns.home.elikesbikes.com. smarth.elikesbikes.com. (
+								2001062618 ; serial
+								3600       ; refresh (1 hour)
+								3600       ; retry (1 hour)
+								2419200    ; expire (4 weeks)
+								3600       ; minimum (1 hour)
+								)
+					IN		NS	ns.home.elikesbikes.com.
+NS					IN		A	192.168.5.20
+
+
+emivmdocker			IN		A	192.168.5.20
