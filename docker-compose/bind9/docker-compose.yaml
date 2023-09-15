@@ -2,14 +2,20 @@
 services:
   bind9:
     container_name: dns-prod-1
-    image: ubuntu/bind9:9.18-23.04_edge
-
+    image: ubuntu/bind9:9.18-23.04_edge          
     environment:
       - BIND9_USER=root
+      - "TZ=America/Los_Angeles"
     volumes:
       - ./config/:/etc/bind:rw
       - ./cache/bind:/var/cache/bind
       - ./lib/bind:/var/lib/bind
     network_mode: host
-    user: 1000:1000
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        #syslog-format: "rfc3164"
+        tag: "emins1"
+    user: 0:0
     restart: unless-stopped
