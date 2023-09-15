@@ -1,8 +1,9 @@
 
 services:
   guacd:
-    container_name: guacdcompose
+    container_name: guacamole-guacd
     image: guacamole/guacd
+    user: 0:0 # optional: Set custom user/group or uid/gid
     environment:   
       - "TZ=America/Los_Angeles"
     networks:
@@ -15,11 +16,12 @@ services:
       options:
         syslog-address: "udp://192.168.5.20:1514"
         #syslog-format: "rfc3164"
-        tag: "guacamole-postgres"
+        tag: "guacamole"
     restart: always
 
   postgres:
-    container_name: postgres_guacamole_compose
+    container_name: guacamole-postgres
+    user: 0:0 # optional: Set custom user/group or uid/gid
     environment:
       PGDATA: /var/lib/postgresql/data/guacamole
       POSTGRES_DB: guacamole_db
@@ -41,8 +43,9 @@ services:
 
   # guacamole
   guacamole:
-    container_name: guacamole_compose
+    container_name: guacamole
     image: guacamole/guacamole
+    user: 0:0 # optional: Set custom user/group or uid/gid
     depends_on:
     - guacd
     - postgres
@@ -58,7 +61,7 @@ services:
     networks:
       frontend: 
     ports:
-    - 7070/tcp
+      - 8686:8080/tcp
     restart: always
     logging:
       driver: syslog
