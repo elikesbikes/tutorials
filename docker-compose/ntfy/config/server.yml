@@ -1,0 +1,23 @@
+base-url: "https://ntfy.home.elikesbikes.com"
+upstream-base-url: "https://ntfy.sh"
+#listen-http: ":8989"
+enable-metrics: true
+#metrics-listen-http: "192.168.5.20:8989"
+cache-file: "/var/cache/ntfy/cache.db"
+cache-batch-size: 25
+cache-batch-timeout: "1s"
+cache-startup-queries: |
+    pragma journal_mode = WAL;
+    pragma synchronous = normal;
+    pragma temp_store = memory;
+    pragma busy_timeout = 15000;
+    vacuum;
+attachment-cache-dir: "/var/cache/ntfy/attachments"
+attachment-total-size-limit: "5G"
+attachment-file-size-limit: "15M"
+attachment-expiry-duration: "3h"
+visitor-attachment-total-size-limit: "100M"
+visitor-attachment-daily-bandwidth-limit: "500M"
+log-level: info
+log-format: json
+#log-file: /var/log/ntfy.log
