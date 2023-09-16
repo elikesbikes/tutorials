@@ -78,6 +78,15 @@ services:
         keywords: "Ubiquiti UDM"
         url: "https://emiudm.home.elikesbikes.com"
         target: "_blank" # optional html a tag target attribute
+      - name: "Revise Proxy"      
+        logo: "assets/icons/nginx.jpg"
+        subtitle: "Proxy"
+        tag: "app"
+        keywords: "NGINX"
+        url: "https://proxy.home.elikesbikes.com/"
+        target: "_blank" # optional html a tag target attribute
+
+
   - name: "Server"
     icon: "fa-solid fa-server"
     items:
@@ -95,42 +104,62 @@ services:
         keywords: "self hosted reddit"                         
         url: "https://hpv1.home.elikesbikes.com"                      
         target: "_blank" # optional html a tag target attribute 
+      - name: "emihpvproxmox3"                                 
+        logo: "assets/icons/proxmox.png"                        
+        subtitle: "Virtual Machine Management"                                 
+        tag: "app"                                             
+        keywords: "self hosted reddit"                         
+        url: "https://hpv3.home.elikesbikes.com"                      
+        target: "_blank" # optional html a tag target attribute 
+
+
       - name: "Truenas Scale"
         logo: "assets/icons/truenas.png"
         subtitle: "NAS Storage"
         tag: "NAS"
-        url: "htts://nas.home.elikesbikes.com"
+        url: "https://nas.home.elikesbikes.com"
+
+
   - name: "Monitoring"
     icon: "fa-brands fa-watchman-monitoring"
     items:
-      - name: "Observium2"
-        logo: "assets/icons/observium.jpeg"
-        subtitle: "Monitoring Local Area Network"
+      - name: "Prometheous"
+        #logo: "assets/icons/observium.jpeg"
+        subtitle: "Monitoring"
         tag: "app"
         keywords: "self hosted reddit"
-        url: "https://monitoring..home.elikesbikes.com"
+        url: "http://192.168.5.20:9090/targets?search="
         target: "_blank" # optional html a tag target attribute
       - name: "Linode - Uptime Kuma"
         logo: "assets/icons/uptimakuma.png"
         subtitle: "Monitoring WAN"
         tag: "app"
         keywords: "self hosted reddit"
-        url: "http://96.126.97.197/dashboard/3"
+        url: "http://96.126.97.197"
+        target: "_blank" # optional html a tag target attribute
+      - name: "Home Network - Uptime Kuma"
+        logo: "assets/icons/uptimakuma.png"
+        subtitle: "Monitoring WAN"
+        tag: "app"
+        keywords: "self hosted reddit"
+        url: "http://uptimenas.home.elikesbikes.com"
         target: "_blank" # optional html a tag target attribute
       - name: "Graylog"                                 
         logo: "assets/icons/graylog.png"                        
-        subtitle: "Nagios Syslog Server"                                 
+        subtitle: "Graylog Server"                                 
         tag: "app"                                             
         keywords: "self hosted reddit"                         
         url: "https://graylog.home.elikesbikes.com"                      
         target: "_blank" # optional html a tag target attribute 
-      - name: "Manage Engine Log Server"                                 
-        logo: "assets/icons/log-360-logo.png"                        
-        subtitle: "Syslog Server"                                 
+      - name: "Zabbix Monitoring"                                 
+        logo: "assets/icons/zabbix_logo_500x131.png"                        
+        subtitle: "Monitoring Server"                                 
         tag: "app"                                             
         keywords: "self hosted reddit"                         
-        url: "http://192.168.5.127:8445"
+        url: "http://192.168.5.20:8080"
         target: "_blank" # optional html a tag target attribute 
+
+
   - name: "Smart Home"
     icon: "fa-solid fa-house-signal"
     items:
@@ -146,6 +175,8 @@ services:
         subtitle: "Solar Panels"
         tag: "sense"
         url: "https://home.sense.com/login"
+
+
   - name: "Applications"
     icon: "fa-solid fa-house-signal"
     items:
@@ -161,6 +192,17 @@ services:
         subtitle: "Security Cameras"
         tag: "sense"
         url: "https://security.home.elikesbikes.com"
+      - name: "Teleport"
+        logo: "assets/icons/Teleport.jpg"
+        subtitle: "SSH"
+        tag: "sense"
+        url: "https://teleport.home.elikesbikes.com:3080"
+      - name: "Ntfy"
+        logo: "assets/icons/Teleport.jpg"
+        subtitle: "notify"
+        tag: "alerts"
+        url: "https://ntfy.home.elikesbikes.com/uptimenasprod"
+  
 
   - name: "Docker"
     icon: "fa-brands fa-docker"
@@ -189,15 +231,15 @@ services:
     items:
       - name: "Cloudflare"      
         logo: "assets/icons/Cloudflare_Logo.svg.png "
-        subtitle: "Automation"
+        subtitle: "DNS Management"
         tag: "dns"
-        keywords: "portainer"
+        keywords: "dns"
         url: "https://dash.cloudflare.com"
         target: "_blank" # optional html a tag target attribute
 
       - name: "Zoho Email"
         logo: "assets/icons/Zoho-Mail.png"
-        subtitle: "Database"
+        subtitle: "Email Hosting"
         tag: "email"
         url: "https://mailadmin.zoho.com/cpanel/"
 
