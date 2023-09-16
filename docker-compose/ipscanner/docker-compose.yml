@@ -10,7 +10,7 @@ services:
     network_mode: "host"        
     restart: unless-stopped
     volumes:
-    - ~/.dockerdata/wyl:/data
+    - ./dockerdata/wyl:/data
     logging:
       driver: syslog
       options:
