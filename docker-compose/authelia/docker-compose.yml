@@ -1,0 +1,49 @@
+version: '3.3'
+services:
+  authelia:
+    image: authelia/authelia
+    container_name: authelia-prod1
+    hostname: authelia-prod-1
+    volumes:
+      - ./config:/config
+    ports:
+      - 9091:9091
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    environment:
+      - TZ=America/Los_Angeles
+    networks:
+      frontend:
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        #syslog-format: "rfc3164"
+        tag: "authelia"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    hostname: redis-prod-1
+    container_name: authelia-redis-prod1
+    networks:
+      frontend:
+    volumes:
+      - ./redis:/data
+    expose:
+      - 6379
+    restart: unless-stopped
+    environment:
+      - TZ=America/Los_Angeles
+    logging:
+      driver: syslog
+      options:
+        #syslog-format: "rfc3164"
+        syslog-address: "udp://192.168.5.20:1514"
+        tag: "redis"
+
+networks:
+  frontend:
+    external: true
