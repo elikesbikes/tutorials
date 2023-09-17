@@ -82,15 +82,34 @@ notifier:
   filesystem:
     filename: /config/notification.txt
   #smtp:
-  #  username: <your@email-here.com>
-  #  password: <your-smtp-password>
-  #  host: <your-smtp-server.url>
-  #  port: 25,465,or 587
-  #  sender: <sender@email-here.com>
+  #  username: smarth@elikesbikes.com
+  #  password: wmg1FQU7pwv_vdm6tat
+  #  host: smtppro.zoho.com
+  #  port: 587
+  #  sender: "Uptime Kuma <any@elikesbikes.com>"
   #  subject: "[Authelia] {title}"
+  #  startup_check_address: smarth@elikesbikes.com
   #  disable_require_tls: false
   #  disable_html_emails: false
-  #  tls:
-  #    server_name: <your-smtp-server.url>
-  #    skip_verify: false
-  #    minimum_version: TLS1.2
+    #tls:
+    #  server_name: smtppro.zoho.com
+    #  skip_verify: false
+    #  minimum_version: TLS1.2
+
+notifier:
+  #filesystem:
+  #  filename: /config/notification.txt
+  smtp:
+    username: ecloaiza@gmail.com
+    password: upqn dumb qzed inec
+    host: smtp.gmail.com
+    port: 587
+    sender: "Uptime Kuma <any@elikesbikes.com>"
+    subject: "[Authelia] {title}"
+  #  startup_check_address: smarth@elikesbikes.com
+    disable_require_tls: true
+  #  disable_html_emails: false
+    #tls:
+    #  server_name: smtppro.zoho.com
+    #  skip_verify: false
+    #  minimum_version: TLS1.2
