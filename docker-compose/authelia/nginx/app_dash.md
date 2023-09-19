@@ -30,7 +30,7 @@ location /authelia {
 }
  
     location / {
-        set $upstream_dash http://192.168.5.20:8082;  #ADD IP AND PORT OF SERVICE
+        set $upstream_dash http://192.168.5.20:4000;  #ADD IP AND PORT OF SERVICE
         proxy_pass $upstream_dash;  #change name of the service
  
         auth_request /authelia;
