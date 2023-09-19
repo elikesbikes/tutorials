@@ -1,12 +1,50 @@
-$ORIGIN 5.168.192.in-addr.arpa.
-$TTL 86400	; 1 day
-@				IN		SOA		emins1.home.elikesbikes.com. smarth.elikesbikes.com. (
-								14         ; serial
-								3600       ; refresh (1 hour)
-								3600       ; retry (1 hour)
-								2419200    ; expire (4 weeks)
-								3600       ; minimum (1 hour)
-								)
-; Name server record 
-				IN      NS		emins1.home.elikesbikes.com.
-;
+; reverse map zone file for 192.168.254.4 only
+$TTL 2d  ; 172800 seconds
+$ORIGIN 5.168.192.IN-ADDR.ARPA.
+@     IN      SOA   emins1.home.elikesbikes.com. hostmaster.example.com. (
+													2003080800 ; serial number
+													3h         ; refresh
+													15m        ; update retry
+													3w         ; expiry
+													3h         ; nx = nxdomain ttl
+													)
+; only one NS is required for this local file
+; and is an out of zone name
+      IN      NS      emins1.home.elikesbies.com.
+; UNIFI Netork
+11     IN	  PRT     emiswserverroom.home.elikesbikes.com. ;
+13	   IN	  PRT	  emiswlivingroom.home.elikesbikes.com. ;
+14     IN     PRT     emiswoffice.home.elikesbikes.com. ;
+15				IN		PRT		emiswlaundryroom.home.elikesbikes.com.
+16				IN		PRT		emiapcloset.home.elikesbikes.com.
+17				IN		PRT		emiapmb.home.elikesbikes.com.
+18				IN		PRT		emiapkitchen.home.elikesbikes.com.
+19				IN		PRT		emiapgarage.home.elikesbikes.com.
+35				IN		PRT		airport-server.home.elikesbikes.com.
+34				IN		PRT		airport-paincave.home.elikesbikes.com.
+33				IN		PRT		airport-porch.home.elikesbikes.com.
+25				IN		PRT		emivmpfsense.home.elikesbikes.com.
+;HOME LAB
+24				IN		PRT		emivmopenssl.home.elikesbikes.com.
+57				IN		PRT		cloudbackup.home.elikesbikes.com.
+28				IN		PRT		hpv3-lan.home.elikesbikes.com.
+30				IN		PRT		emiprt.home.elikesbikes.com.
+31				IN		PRT		emivmwin8.home.elikesbikes.com.
+23				IN		PRT		emivmad.home.elikesbikes.com.
+20				IN		PRT		emivmdocker.home.elikesbikes.com.
+67				IN		PRT		emiha.home.elikesbikes.com.
+32				IN		PRT		docker-dev-1.home.elikesbikes.com.
+36				IN		PRT		emipaincavepc.home.elikesbikes.com.
+57				IN		PRT 	emivmcloudbk.home.elikesbikes.com.
+27				IN		PRT		hpv3-idrac.home.elikesbikes.com.
+40				IN		PRT		docker-prod-2.home.elikesbikes.com.
+;security
+56				IN		PRT		ipcam-drivew.home.elikesbikes.com.
+61				IN		PRT		ipcam-patio.home.elikesbikes.com.
+73				IN		PRT		ipcam-office.home.elikesbikes.com.
+29				IN		PRT		ipcam-laundry.home.elikesbikes.com.
+71				IN		PRT		ipcam-porch.home.elikesbikes.com.
+37				IN		PRT		hpv4-lan.home.elikesbikes.com.
+;pfSense Reverse Proxy
+45				IN		PRT		proxy2.home.elikesbikes.com.
+45				IN		PRT		dash2.home.elikesbikes.com.
