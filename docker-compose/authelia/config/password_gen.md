@@ -1,0 +1,1 @@
+ docker run authelia/authelia:latest authelia-authelia-1 crypto hash generate argon2 --password '60204397Joshua'
