@@ -1,13 +1,15 @@
 version: '3.5'
 services:
   zabbix-server:
+    hostname: zabbix-server
+    container_name: zabbix-server
     image: zabbix/zabbix-server-mysql:alpine-6.2-latest
     restart: always
     ports:
       - "10051:10051"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro 
+      - ./etc/localtime:/etc/localtime:ro
+      - ./etc/timezone:/etc/timezone:ro 
       - ./zbx_env/usr/lib/zabbix/alertscripts:/usr/lib/zabbix/alertscripts:ro
       - ./zbx_env/usr/lib/zabbix/externalscripts:/usr/lib/zabbix/externalscripts:ro
       - ./zbx_env/var/lib/zabbix/export:/var/lib/zabbix/export:rw
@@ -23,14 +25,14 @@ services:
         reservations:
           memory: 512M
     env_file:
-      - ./env_vars/.env_db_mysql
-      - ./env_vars/.env_srv
+      - ./env_vars/env_db_mysql
+      - ./env_vars/env_srv
     secrets:
       - MYSQL_USER
       - MYSQL_PASSWORD
       - MYSQL_ROOT_PASSWORD
     depends_on:
-      - mysql-server
+      - zabbix-mysql
     networks:
       backend2:
         aliases:
@@ -39,6 +41,12 @@ services:
           - zabbix-server-alpine-mysql
           - zabbix-server-mysql-alpine
       frontend:
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        #syslog-format: "rfc3164"
+        tag: "zabbix-server"    
     stop_grace_period: 30s
     sysctls:
       - net.ipv4.ip_local_port_range=1024 65000
@@ -52,15 +60,17 @@ services:
       com.zabbix.dbtype: "mysql"
       com.zabbix.os: "alpine"
 
-  zabbix-web-nginx-mysql:
+  zabbix-web:
+    hostname: zabbix-web
+    container_name: zabbix-web
     image: zabbix/zabbix-web-nginx-mysql:alpine-6.2-latest
     restart: always
     ports:
-      - "8080:8080"
+      - "8081:8080"
       - "8443:8443"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
+      - ./etc/localtime:/etc/localtime:ro
+      - ./etc/timezone:/etc/timezone:ro
       - ./zbx_env/etc/ssl/nginx:/etc/ssl/nginx:ro
       - ./zbx_env/usr/share/zabbix/modules/:/usr/share/zabbix/modules/:ro
     deploy:
@@ -70,14 +80,20 @@ services:
         reservations:
           memory: 256M
     env_file:
-      - ./env_vars/.env_db_mysql
-      - ./env_vars/.env_web
+      - ./env_vars/env_db_mysql
+      - ./env_vars/env_web
     secrets:
       - MYSQL_USER
       - MYSQL_PASSWORD
     depends_on:
-      - mysql-server
+      - zabbix-mysql
       - zabbix-server
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        #syslog-format: "rfc3164"
+        tag: "zabbix-web"    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 10s
@@ -102,9 +118,11 @@ services:
       com.zabbix.dbtype: "mysql"
       com.zabbix.os: "alpine"  
 
-  mysql-server:
+  zabbix-mysql:
+    container_name: zabbix-mysql
     image: mariadb:10.5
     restart: always
+    hostname: zabbix-mysql
     command:
       - mysqld
       - --character-set-server=utf8mb4
@@ -114,12 +132,18 @@ services:
     volumes:
       - ./zbx_env/var/lib/mysql:/var/lib/mysql:rw
     env_file:
-      - ./env_vars/.env_db_mysql
+      - ./env_vars/env_db_mysql
     secrets:
       - MYSQL_USER
       - MYSQL_PASSWORD
       - MYSQL_ROOT_PASSWORD
     stop_grace_period: 1m
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        #syslog-format: "rfc3164"
+        tag: "zabbix-mysql2"    
     networks:
       backend2:
         aliases:
@@ -128,19 +152,28 @@ services:
         - mysql-databasse
 
   zabbix-agent:
-    image: zabbix/zabbix-agent:alpine-6.2-latest
+    hostname: zabbix-agent
+    container_name: zabbix-agent2
+    image: zabbix/zabbix-agent:alpine-6.2-latest    
     restart: always
     ports:
       - "10050:10050"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-      - ./zbx_env/etc/zabbix/zabbix_agentd.d:/etc/zabbix/zabbix_agentd.d:ro
+      - ./etc/localtime:/etc/localtime:ro
+      - ./etc/timezone:/etc/timezone:ro
+      - ./zbx_env/etc/zabbix:/etc/zabbix:rw
+      #- ./zbx_env/etc/zabbix/zabbix_agentd.d:/etc/zabbix:rw
       - ./zbx_env/var/lib/zabbix/modules:/var/lib/zabbix/modules:ro
       - ./zbx_env/var/lib/zabbix/enc:/var/lib/zabbix/enc:ro
       - ./zbx_env/var/lib/zabbix/ssh_keys:/var/lib/zabbix/ssh_keys:ro
     env_file:
-      - ./env_vars/.env_agent
+      - ./env_vars/env_agent
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        #syslog-format: "rfc3164"
+        tag: "zabbix-agent"    
     networks:
       backend2:
         aliases:
@@ -169,7 +202,6 @@ services:
 networks:
   backend2:
     external: true
-    
   frontend:
     external: true
 
@@ -179,9 +211,9 @@ volumes:
 
 secrets:
   MYSQL_USER:
-    file: ./env_vars/.MYSQL_USER
+    file: ./env_vars/MYSQL_USER
   MYSQL_PASSWORD:
-    file: ./env_vars/.MYSQL_PASSWORD
+    file: ./env_vars/MYSQL_PASSWORD
   MYSQL_ROOT_PASSWORD:
-    file: ./env_vars/.MYSQL_ROOT_PASSWORD
+    file: ./env_vars/MYSQL_ROOT_PASSWORD
 
