@@ -28,6 +28,8 @@ PS1=$(ip route get 1.1.1.1 | awk -F"src " '"'"'NR == 1{ split($2, a," ");print a
 ### Initial Banner
 
 export PS1="\[$(tput bold)\]\[$(tput setaf 6)\]\@ \[$(tput setaf 2)\][\[$(tput setaf 3)\]\[$(tput setaf 39)\]\u\[$(tput setaf 81)\]@\[$(tput setaf 77)\]\h \[$(tput setaf 226)\]\w \[$(tput setaf 2)\]]\[$(tput setaf 4)\]\\$ \[$(tput sgr0)\]"
+export PS1="\[$(tput bold)\]\[$(tput setaf 6)\]\@ \033[38;5;209m\]┌[\033[38;5;141m\]\u\033[38;5;209m\]@\[$(tput setaf 196)\]\h\[$(tput setaf 226)\]\w \033[38;5;209m\]]\n\033[38;5;209m\]└\\[\033[38;5;209m\]$\[\033[37m\] "
+
 # Custom Aliases
 alias rm='rm -i'
 alias mv='mv -i'
