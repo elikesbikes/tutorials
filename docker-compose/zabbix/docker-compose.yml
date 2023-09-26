@@ -5,6 +5,7 @@ services:
     container_name: zabbix-server
     image: zabbix/zabbix-server-mysql:alpine-6.2-latest
     restart: always
+    user: 0:0
     ports:
       - "10051:10051"
     volumes:
@@ -65,6 +66,7 @@ services:
     container_name: zabbix-web
     image: zabbix/zabbix-web-nginx-mysql:alpine-6.2-latest
     restart: always
+    user: 0:0
     ports:
       - "8081:8080"
       - "8443:8443"
@@ -82,9 +84,9 @@ services:
     env_file:
       - ./env_vars/env_db_mysql
       - ./env_vars/env_web
-    secrets:
-      - MYSQL_USER
-      - MYSQL_PASSWORD
+    #secrets:
+    #  - MYSQL_USER
+    #  - MYSQL_PASSWORD
     depends_on:
       - zabbix-mysql
       - zabbix-server
@@ -123,6 +125,7 @@ services:
     image: mariadb:10.5
     restart: always
     hostname: zabbix-mysql
+    user: 0:0
     command:
       - mysqld
       - --character-set-server=utf8mb4
@@ -133,10 +136,10 @@ services:
       - ./zbx_env/var/lib/mysql:/var/lib/mysql:rw
     env_file:
       - ./env_vars/env_db_mysql
-    secrets:
-      - MYSQL_USER
-      - MYSQL_PASSWORD
-      - MYSQL_ROOT_PASSWORD
+    #secrets:
+    #  - MYSQL_USER
+    #  - MYSQL_PASSWORD
+    #  - MYSQL_ROOT_PASSWORD
     stop_grace_period: 1m
     logging:
       driver: syslog
@@ -157,7 +160,7 @@ services:
     image: zabbix/zabbix-agent:alpine-6.2-latest    
     restart: always
     ports:
-      - "10050:10050"
+      - "10059:10059"
     volumes:
       - ./etc/localtime:/etc/localtime:ro
       - ./etc/timezone:/etc/timezone:ro
