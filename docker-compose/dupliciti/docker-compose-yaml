@@ -1,0 +1,25 @@
+---
+version: "2.1"
+services:
+  duplicati:
+    image: lscr.io/linuxserver/duplicati:latest
+    container_name: duplicati
+    hostname: duplicati
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Los_Angeles
+      - CLI_ARGS= #optional
+    networks:
+        frontend:
+    volumes:
+      - ./config:/config
+      - ./backups:/backups
+      - ./source:/source
+    ports:
+      - 8200:8200
+    restart: unless-stopped
+
+networks:
+    frontend:
+        external: true

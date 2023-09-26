@@ -82,9 +82,9 @@ services:
     env_file:
       - ./env_vars/env_db_mysql
       - ./env_vars/env_web
-    secrets:
-      - MYSQL_USER
-      - MYSQL_PASSWORD
+    #secrets:
+    #  - MYSQL_USER
+    #  - MYSQL_PASSWORD
     depends_on:
       - zabbix-mysql
       - zabbix-server
@@ -133,10 +133,10 @@ services:
       - ./zbx_env/var/lib/mysql:/var/lib/mysql:rw
     env_file:
       - ./env_vars/env_db_mysql
-    secrets:
-      - MYSQL_USER
-      - MYSQL_PASSWORD
-      - MYSQL_ROOT_PASSWORD
+    #secrets:
+    #  - MYSQL_USER
+    #  - MYSQL_PASSWORD
+    #  - MYSQL_ROOT_PASSWORD
     stop_grace_period: 1m
     logging:
       driver: syslog
@@ -157,7 +157,7 @@ services:
     image: zabbix/zabbix-agent:alpine-6.2-latest    
     restart: always
     ports:
-      - "10050:10050"
+      - "10059:10059"
     volumes:
       - ./etc/localtime:/etc/localtime:ro
       - ./etc/timezone:/etc/timezone:ro
