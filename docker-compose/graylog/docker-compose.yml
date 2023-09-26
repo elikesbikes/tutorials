@@ -1,8 +1,8 @@
 version: '3'
 
 networks:
-  graynet:
-    driver: bridge
+  frontend:
+    external: true
 
 # This is how you persist data between container restarts
 volumes:
@@ -15,21 +15,21 @@ volumes:
 
 services:
   # Graylog stores configuration in MongoDB
-  mongo:
+  syslog_mongo:
     image: mongo:6.0.5-jammy
-    container_name: mongodb
+    container_name: syslog_mongodb  
     hostname: mongodb
     volumes:
-      - "mongo_data:/data/configdb"
+      - ./mongo_data:/data/configdb"
       
     networks:
-      - graynet
+      - frontend
     restart: unless-stopped
   
   # The logs themselves are stored in Opensearch
-  opensearch:
+  syslog_opensearch:
     image: opensearchproject/opensearch:2
-    container_name: opensearch
+    container_name: syslog_opensearch
     hostname: opensearch
     environment:
       - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
@@ -40,7 +40,7 @@ services:
       - "plugins.security.disabled=true"
     #volumes:
       #- "log_data:/usr/share/opensearch/data"
-      - "/home/ecloaiza/opensearch:/usr/share/opensearch/data"
+      - /mnt/prod3/graylog_opensearch:/usr/share/opensearch/data
     ulimits:
       memlock:
         soft: -1
@@ -51,13 +51,14 @@ services:
     ports:
       - 9200:9200/tcp
     networks:
-      - graynet
+      - frontend
     restart: unless-stopped
 
-  graylog:
+  syslog_graylog:
     image: graylog/graylog:5.1
-    container_name: graylog
+    container_name: syslog_graylog
     hostname: graylog
+    user: 0:0
     environment:
       # CHANGE ME (must be at least 16 characters)!
       GRAYLOG_PASSWORD_SECRET: "somepasswordpepper"
@@ -88,14 +89,14 @@ services:
       #- "/home/ecloaiza/graylog:/usr/share/graylog/data"
       #- "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
       #- "${PWD}/config/graylog/graylog.conf:/usr/share/graylog/config/graylog.conf"
-      - "graylog_data:/usr/share/graylog/data"
+      -  "graylog_data:/usr/share/graylog/data"
     networks:
-      - graynet
+      - frontend
     restart: always
     depends_on:
-      opensearch:
+      syslog_opensearch:
         condition: "service_started"
-      mongo:
+      syslog_mongo:
         condition: "service_started"
     ports:
       - 9010:9010/tcp   # Graylog web interface and REST API
