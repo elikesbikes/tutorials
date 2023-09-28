@@ -21,10 +21,12 @@ shopt -s checkwinsize
 
 export PS1="\[$(tput bold)\]\[$(tput setaf 6)\]\@ \[$(tput setaf 2)\][\[$(tput setaf 3)\]\[$(tput setaf 39)\]\u\[$(tput setaf 81)\]@\[$(tput setaf 77)\]\h \[$(tput setaf 226)\]\w \[$(tput setaf 2)\]]\[$(tput setaf 4)\]\\$ \[$(tput sgr0)\]"
 
-PS1=$(ip route get 1.1.1.1 | awk -F"src " '"'"'NR == 1{ split($2, a," ");print a[1]}'"'"')
-
+#PS1=$(ip route get 1.1.1.1 | awk -F"src " '"'"'NR == 1{ split($2, a," ");print a[1]}'"'"')
 #export PS1='\[\033[35;1m\]\u\[\033[0m\]@\[\033[31;1m\]\h \[\033[32;1m\]$PWD\[\033[0m\] [\[\033[35m\]\#\[\033[0m\]]\[\033[31m\]\$\[\033[0m\] '
 #export PS1="\[$(tput bold)\]\[$(tput setaf 6)\]\@ \033[38;5;209m\]┌[\033[38;5;141m\]\u\033[38;5;209m\]@\[$(tput setaf 196)\]\h\[$(tput setaf 226)\]\w \033[38;5;209m\]]\n\033[38;5;209m\]└\\[\033[38;5;209m\]$\[\033[37m\] "
+
+##Prompt Production
+PS1='\[\033[35;1m\]\u\[\033[0m\]@\[\033[31;1m\]\h \[\033[32;1m\]$PWD\[\033[0m\] [\[\033[35m\]\#\[\033[0m\]]\[\033[31m\]\$\[\033[0m\] '
 
 ###
 [[ $- != *i* ]] && return
