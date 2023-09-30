@@ -1,0 +1,15 @@
+version: '2.0'
+services:
+  nginx:
+   container_name: nginx-prod-2
+   restart: always
+   image: nginx
+   volumes:
+   - ./templates:/etc/nginx/templates:ro
+   ports:
+   - 8445:443
+   networks:
+     frontend:
+networks:
+    frontend:
+        external: true
