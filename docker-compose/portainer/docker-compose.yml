@@ -1,0 +1,36 @@
+version: "3.8"
+networks:
+  frontend:
+    external: true
+services:
+  portainer:
+    container_name: portainer-dev-1
+    image: portainer/portainer-ce:latest
+    ports:
+      - 9000:9000
+      - 8000:8000
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.portainer-dev-1.loadbalancer.server.port=9000"
+      - "traefik.http.services.portainer-dev-1.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.portainer-dev-1-http.entrypoints=web"
+      - "traefik.http.routers.portainer-dev-1-http.rule=Host(`dockerdev.home.elikesbikes.com`)"
+      - "traefik.http.routers.portainer-dev-1-https.entrypoints=websecure"
+      - "traefik.http.routers.portainer-dev-1-https.rule=Host(`dockerdev.home.elikesbikes.com`)"
+      - "traefik.http.routers.portainer-dev-1-https.tls=true"
+      - "traefik.http.routers.portainer-dev-1-https.tls.certresolver=production"                                                                    
+      - "traefik.http.routers.portainer-dev-1-https.tls.domains[0].main=dockerdev.home.elikesbikes.com"
+
+      
+      
+      
+
+    networks:
+      frontend:
+volumes:
+  portainer_data:
+    driver: local

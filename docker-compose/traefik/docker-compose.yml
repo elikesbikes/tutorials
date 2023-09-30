@@ -1,0 +1,20 @@
+---
+services:
+  traefik:
+    image: traefik:v2.10.4
+    container_name: traefik
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - ./config:/etc/traefik
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CF_DNS_API_TOKEN=xWJyPUNNH93Smi-0ajLziJGV3v9D6Ca6s0GMdOIs
+    networks:
+      frontend:
+    restart: unless-stopped
+networks:
+  frontend:
+    external: false
