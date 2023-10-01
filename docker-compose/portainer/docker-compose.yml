@@ -4,33 +4,30 @@ networks:
     external: true
 services:
   portainer:
-    container_name: portainer-dev-1
+    container_name: portainer-prod-3
     image: portainer/portainer-ce:latest
-    ports:
-      - 9000:9000
-      - 8000:8000
+    #ports:
+    #  - 9000:9000
+    #  - 8000:8000
     volumes:
       - portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.portainer-dev-1.loadbalancer.server.port=9000"
-      - "traefik.http.services.portainer-dev-1.loadbalancer.server.scheme=http"
-      - "traefik.http.routers.portainer-dev-1-http.entrypoints=web"
-      - "traefik.http.routers.portainer-dev-1-http.rule=Host(`dockerdev.home.elikesbikes.com`)"
-      - "traefik.http.routers.portainer-dev-1-https.entrypoints=websecure"
-      - "traefik.http.routers.portainer-dev-1-https.rule=Host(`dockerdev.home.elikesbikes.com`)"
-      - "traefik.http.routers.portainer-dev-1-https.tls=true"
-      - "traefik.http.routers.portainer-dev-1-https.tls.certresolver=production"                                                                    
-      - "traefik.http.routers.portainer-dev-1-https.tls.domains[0].main=dockerdev.home.elikesbikes.com"
-
-      
-      
-      
+      - "traefik.http.services.portainer-prod-3.loadbalancer.server.port=9000"
+      - "traefik.http.services.portainer-prod-3.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.portainer-prod-3-http.entrypoints=web"
+      - "traefik.http.routers.portainer-prod-3-http.rule=Host(`dockerprod3.home.elikesbikes.cloud`)"
+      - "traefik.http.routers.portainer-prod-3-https.entrypoints=websecure"
+      - "traefik.http.routers.portainer-prod-3-https.rule=Host(`dockerprod3.home.elikesbikes.cloud`)"
+      - "traefik.http.routers.portainer-prod-3-https.tls=true"
+      - "traefik.http.routers.portainer-prod-3-https.tls.certresolver=production"                                                                    
+      - "traefik.http.routers.portainer-prod-3-https.tls.domains[0].main=dockerprod3.home.elikesbikes.cloud"
 
     networks:
       frontend:
 volumes:
   portainer_data:
     driver: local
+
