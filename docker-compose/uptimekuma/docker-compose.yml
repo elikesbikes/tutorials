@@ -1,0 +1,34 @@
+version: '3.8'
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-prod-3
+    hostname: uptime-prod-3
+    environment:   
+      - "TZ=America/Los_Angeles"
+    volumes:
+      - uptime-kuma:/app/data
+    networks:
+      - frontend
+    #ports:
+    #  - "3001:3001"  # <Host Port>:<Container Port>
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.uptimeprod3-prod-3.loadbalancer.server.port=3001"
+      - "traefik.http.services.uptimeprod3-prod-3.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.uptimeprod3-prod-3-http.entrypoints=web"
+      - "traefik.http.routers.uptimeprod3-prod-3-http.rule=Host(`uptimeprod3.home.elikesbikes.cloud`)"
+      - "traefik.http.routers.uptimeprod3-prod-3-https.entrypoints=websecure"
+      - "traefik.http.routers.uptimeprod3-prod-3-https.rule=Host(`uptimeprod3.home.elikesbikes.cloud`)"
+      - "traefik.http.routers.uptimeprod3-prod-3-https.tls=true"
+      - "traefik.http.routers.uptimeprod3-prod-3-https.tls.certresolver=production"                                                                    
+      - "traefik.http.routers.uptimeprod3-prod-3-https.tls.domains[0].main=uptimeprod3.home.elikesbikes.cloud"
+
+
+volumes:
+  uptime-kuma:
+
+networks:
+  frontend:
+    external: true
