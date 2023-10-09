@@ -17,11 +17,11 @@ services:
       - MYSQL_PASSWORD=semaphore  # change!
     restart: unless-stopped
   semaphore:
-    container_name: ansibles-prod-1
+    container_name: ansible-prod-1
     image: semaphoreui/semaphore:v2.8.90
     user: "${UID}:${GID}"
     ports:
-      - 3010:3010
+      - 3010:3000
     environment:
       - SEMAPHORE_DB_USER=semaphore
       - SEMAPHORE_DB_PASS=semaphore  # change!
