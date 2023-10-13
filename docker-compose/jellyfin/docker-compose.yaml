@@ -2,18 +2,31 @@ version: '3.5'
 services:
   jellyfin:
     image: jellyfin/jellyfin
-    container_name: jellyfin
-    user: uid:gid
-    network_mode: 'host'
+    container_name: jellyfin-prod-1
+    user: 3000:3001
+    networks:
+      net.home.elikesbikes:
+        ipv4_address: 192.168.5.42
     volumes:
-      - /path/to/config:/config
-      - /path/to/cache:/cache
-      - /path/to/media:/media
-      - /path/to/media2:/media2:ro
+      - ./config:/config
+      - /mnt/eminas1/jellyfin_data/cache:/cache
+      - /mnt/eminas1/jellyfin_media:/media
+      #- /path/to/media2:/media2:ro
+    ports:
+      - 8096:8096    
     restart: 'unless-stopped'
     # Optional - alternative address used for autodiscovery
     environment:
       - JELLYFIN_PublishedServerUrl=http://example.com
     # Optional - may be necessary for docker healthcheck to pass if running in host network mode
+    #runtime: nvidia
+    #$deploy:
+    #$  resources:
+    #$    reservations:
+    #$      devices:
+    #$        - capabilities: [gpu]    
     extra_hosts:
       - "host.docker.internal:host-gateway"
+networks:
+  net.home.elikesbikes:
+    external: true
