@@ -1,0 +1,18 @@
+version: "3.8"
+networks:
+  frontend:
+    external: true
+services:      
+  idrive:
+    container_name: idrive-prod-1
+    image: idrive:latest
+    restart: unless-stopped  
+    networks:
+      frontend:
+    volumes:      
+      - ./idrive/config:/work/IDriveForLinux/idriveIt
+      - ./backup:/home/backup:ro       
+    environment:
+      - TZ=$TZ
+      - PGID=$PGID
+      - PUID=$PUID   
