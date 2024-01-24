@@ -4,7 +4,7 @@ networks:
     external: true
 services:
   portainer:
-    container_name: portainer-prod-3
+    container_name: portainer-prod-4
     image: portainer/portainer-ce:latest
     #ports:
     #  - 9000:9000
@@ -15,15 +15,15 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.portainer-prod-3.loadbalancer.server.port=9000"
-      - "traefik.http.services.portainer-prod-3.loadbalancer.server.scheme=http"
-      - "traefik.http.routers.portainer-prod-3-http.entrypoints=web"
-      - "traefik.http.routers.portainer-prod-3-http.rule=Host(`dockerprod3.home.elikesbikes.cloud`)"
-      - "traefik.http.routers.portainer-prod-3-https.entrypoints=websecure"
-      - "traefik.http.routers.portainer-prod-3-https.rule=Host(`dockerprod3.home.elikesbikes.cloud`)"
-      - "traefik.http.routers.portainer-prod-3-https.tls=true"
-      - "traefik.http.routers.portainer-prod-3-https.tls.certresolver=production"                                                                    
-      - "traefik.http.routers.portainer-prod-3-https.tls.domains[0].main=dockerprod3.home.elikesbikes.cloud"
+      - "traefik.http.services.portainer-prod-4.loadbalancer.server.port=9000"
+      - "traefik.http.services.portainer-prod-4.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.portainer-prod-4-http.entrypoints=web"
+      - "traefik.http.routers.portainer-prod-4-http.rule=Host(`ddocker-prod-4.home.elikesbikes.cloud`)"
+      - "traefik.http.routers.portainer-prod-4-https.entrypoints=websecure"
+      - "traefik.http.routers.portainer-prod-4-https.rule=Host(`docker-prod-4.home.elikesbikes.cloud`)"
+      - "traefik.http.routers.portainer-prod-4-https.tls=true"
+      - "traefik.http.routers.portainer-prod-4-https.tls.certresolver=production"                                                                    
+      - "traefik.http.routers.portainer-prod-4-https.tls.domains[0].main=docker-prod-4.home.elikesbikes.cloud"
 
     networks:
       frontend:
