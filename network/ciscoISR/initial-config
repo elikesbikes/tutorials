@@ -21,3 +21,4 @@ crypto key generate rsa
 
 aaa new-model
 aaa authentication login default local
+aaa authentication enable default enable
