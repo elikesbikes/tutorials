@@ -9,7 +9,43 @@ services:
     ports:
       - 9090:9090
     volumes:
-      - /etc/prometheus:/etc/prometheus
+      - /home/ecloaiza/prometheus:/etc/prometheus
       - prometheus-data:/prometheus
     command: "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      frontend:  
     restart: unless-stopped
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    networks:
+      frontend:  
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+
+      
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0     
+    container_name: cadvisor
+#    ports:
+#      - 8080:8080
+    networks:
+      frontend:  
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    #privileged: true
+    restart: unless-stopped
+networks:
+  frontend:
+    external: true
