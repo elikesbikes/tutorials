@@ -1,0 +1,24 @@
+line vty 0 4
+exec-timeout 15 0
+login local
+transport preferred ssh
+transport input ssh
+transport output ssh
+
+
+ip http server
+ip http secure-server
+ip http authentication local
+transport-map type persistent webui http-https-webui
+server
+secure-serverexit
+transport type persistent webui input http-https-webui
+
+
+
+crypto key generate rsa
+
+
+aaa new-model
+aaa authentication login default local
+aaa authentication enable default enable
