@@ -1,16 +1,15 @@
-version: '3.9'
-
+version: '3.8'
 services:
 
   wordpress:
     image: wordpress
     restart: always
-    container_name: wordpress-prod-1
-    hostname: elikesbikes.com
+    container_name: wordpress-prod-1-app
+    hostname: elikesbikes
     ports:
       - 8080:80
     environment:
-      WORDPRESS_DB_HOST: db-prod-1
+      WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
@@ -28,27 +27,27 @@ services:
       - "traefik.http.routers.wordpress-prod-1-https.rule=Host(`elikesbikes.com`,`emilikesbikes.home.elikesbikes.cloud`)"
       - "traefik.http.routers.wordpress-prod-1-https.tls=true"
       - "traefik.http.routers.wordpress-prod-1-https.tls.certresolver=production"
-      - "traefik.http.routers.wordpress-prod-1-https.tls.domains[1].main=emilikesbikes.home.elikesbikes.cloud"
-      - "traefik.http.routers.wordpress-prod-1-https.tls.domains[0].main=elikesbikes.com"
+      - "traefik.http.routers.wordpress-prod-1-https.tls.domains[0].main=emilikesbikes.home.elikesbikes.cloud"
+      - "traefik.http.routers.wordpress-prod-1-https.tls.domains[1].main=elikesbikes.com"
 
 
   db:
     image: mysql:8.0
-    hostname : db-prod-1
+    hostname : db
     restart: always
-    container_name: db-prod-1
+    container_name: wordpress-prod-1-db
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      #MYSQL_RANDOM_ROOT_PASSWORD: '1'
     volumes:
       - db:/var/lib/mysql
     env_file:
       - .env
     networks:
-      frontend: 
+      frontend:
 
 volumes:
   wordpress:
@@ -57,5 +56,3 @@ volumes:
 networks:
   frontend:
     external: true
-
-
