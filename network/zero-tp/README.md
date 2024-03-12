@@ -5,10 +5,8 @@ Sample project using Ansible to setup and manage a ZTP server for use Cisco ISR 
 In this project you'll find:
 - (1) **Introduction to ZTP**
 - (2) Setting up DHCP Server
-- (2) Setting up **Ansible** in a docker container
-- (3) **[Examples of ZTP configurations](conf)** files.
-- (4) **Playbook to play with ZTP roles** and update ZTP in a more complex project.
-- (5) A simple example playbook to configure a Mellanox Oynx-based network switch post-ZTP boot up.
+- (3) Setting up **Ansible** in a docker container
+- (4) **[Examples of ZTP configurations](conf)** files.
 
 # 1. Introduction to ZTP
 
@@ -30,7 +28,7 @@ will make another tutorial on how to set up a Windows DHCP Server. thought about
 
  All devices names, Ip addresses loopback addresses etc .. are defined in the [`elikesbikes Inventory`](https://github.com/elikesbikes/homelab/blob/main/ansible/inventory/home.elikesbikes.com)
 
-# 2. Playbooks
+# 4. Playbooks
 
 Available playbooks are listed below:
 - [`playbook-ztp-isr-init`](https://github.com/elikesbikes/tutorials/blob/main/network/zero-tp/conf/cisco/playbook-ztp-init.yaml): Setup ISR router with initial config
