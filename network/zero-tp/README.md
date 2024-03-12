@@ -15,23 +15,23 @@ In this project you'll find:
 
 This project is managing the creation of a ZTP server running on Windows DHCP Serrvice
 - `DHCP-Server` is used as part of the DHCP server to provide IP address on the management network.
-- `VSFTPd` is used to publish device's configuration and software packages.
+![alt text](image.png)
+
+- `Ansible` is used to publish device's configuration and software packages.
 
 All devices names, Ip addresses loopback addresses etc .. are defined in the [inventory file named "hosts"](hosts).
 
 # 2. Playbooks
 
 Available playbooks are listed below:
-- [`playbook-ztp-setup`](playbook-ztp-setup.yml): Setup all softwares on a single or multiple ZTP servers (inc. isc-dhcp-server and vsftpd)
 
 
 # 3. Variables
 
-All variables are stored in the  [hosts](hosts) file and [vars.yaml and ztp-variables.yaml](group_vars/all/). 
 
 # 4. Contributing
 
 
 # 5. Acknowledgement
 
-This work is partially-based on initial work by titom73 ([GitHub respository](https://github.com/elikesbikes/tutorials/blob/main/network/zero-tp))
+This work is partially-based on initial work by elikesbikes ([GitHub respository](https://github.com/elikesbikes/tutorials/blob/main/network/zero-tp))
