@@ -3,7 +3,7 @@
 Sample project using Ansible to setup and manage a ZTP server for use Cisco ISR Routers
 
 In this project you'll find:
-- (1) **Introduction to ZTP** with Playbooks
+- (1) **Introduction to ZTP**
 - (2) Setting up DHCP Server
 - (2) Setting up **Ansible** in a docker container
 - (3) **[Examples of ZTP configurations](conf)** files.
