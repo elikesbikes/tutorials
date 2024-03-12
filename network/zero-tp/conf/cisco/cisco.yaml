@@ -1,0 +1,31 @@
+---
+- name: Initialize Cisco Router Configuration
+  hosts: routers
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - name: Configure hostname
+      ios_config:
+        lines:
+          - hostname {{ router_hostname }}
+
+    - name: Configure interface
+      ios_config:
+        lines:
+          - interface {{ interface_name }}
+          - ip address {{ ip_address }} {{ subnet_mask }}
+
+    - name: Configure SSH
+      ios_config:
+        lines:
+          - ip domain-name {{ domain_name }}
+          - crypto key generate rsa modulus 2048
+          - username {{ username }} privilege 15 secret {{ password }}
+          - line vty 0 15
+          - transport input ssh
+          - login local
+
+    - name: Save Configuration
+      ios_config:
+        lines:
+          - write memory
