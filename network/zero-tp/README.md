@@ -5,7 +5,7 @@ Sample project using Ansible to setup and manage a ZTP server for use Cisco ISR 
 In this project you'll find:
 - (1) **A role to install all software on the remote server** with Playbooks
 - (2) Severals **ansible roles** packaged and documented into [Ansible roles](roles) to configure DHCP server and to deploy configuration files on all remote ZTP servers (FTP).
-- (3) **[Examples of ZTP configurations](conf/ztp)** files.
+- (3) **[Examples of ZTP configurations](conf)** files.
 - (4) **Playbook to play with ZTP roles** and update ZTP in a more complex project.
 - (5) A simple example playbook to configure a Mellanox Oynx-based network switch post-ZTP boot up.
 
