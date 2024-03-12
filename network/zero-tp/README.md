@@ -33,6 +33,7 @@ will make another tutorial on how to set up a Windows DHCP Server. thought about
 # 2. Playbooks
 
 Available playbooks are listed below:
+- [`playbook-ztp-isr-init`](/conf/cisco/playbook-ztp-init.yaml): Setup ISR router with initial config
 
 
 # 3. Variables
