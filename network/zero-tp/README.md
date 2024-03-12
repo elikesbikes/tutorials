@@ -24,11 +24,9 @@ This project is managing the creation of a ZTP server running on Windows DHCP Se
 will make another tutorial on how to set up a Windows DHCP Server. thought about for the purpose of this ZTP doing it on Linux, but since I already had a Windows AD server, I am using windows for now
 
 
-All devices names, Ip addresses loopback addresses etc .. are defined in the [inventory file named "hosts"](hosts).
-
 # 3. Setting up Ansible on a docker container
 
-- [`Ansible`](https://github.com/elikesbikes/tutorials/blob/main/docker-compose/ansible/docker-compose.yml): To setup ansible I am using a docker container using my favorite Ansible GUI
+- [`Ansible`](https://github.com/elikesbikes/tutorials/blob/main/docker-compose/ansible/docker-compose.yml): To setup ansible I am using a docker container using my favorite Ansible GUI. I can also make a step by step tutorial. but that would be it's own tutorial for a later time
 
  
 
