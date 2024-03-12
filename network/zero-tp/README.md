@@ -28,7 +28,7 @@ will make another tutorial on how to set up a Windows DHCP Server. thought about
 
 - [`Ansible`](https://github.com/elikesbikes/tutorials/blob/main/docker-compose/ansible/docker-compose.yml): To setup ansible I am using a docker container using my favorite Ansible GUI. I can also make a step by step tutorial. but that would be it's own tutorial for a later time
 
- 
+ All devices names, Ip addresses loopback addresses etc .. are defined in the [`Ansible`](https://github.com/elikesbikes/tutorials/blob/main/docker-compose/ansible/docker-compose.yml)
 
 # 2. Playbooks
 
