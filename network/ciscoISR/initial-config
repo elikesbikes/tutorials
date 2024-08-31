@@ -11,7 +11,8 @@ ip http secure-server
 ip http authentication local
 transport-map type persistent webui http-https-webui
 server
-secure-serverexit
+secure-server
+exit
 transport type persistent webui input http-https-webui
 
 
@@ -22,3 +23,12 @@ crypto key generate rsa
 aaa new-model
 aaa authentication login default local
 aaa authentication enable default enable
+
+
+
+
+ip address 192.168.5.3 255.255.255.0
+
+config t
+router ospf 1
+network 0.0.0.0 255.255.255.255 area 0.0.0.0
