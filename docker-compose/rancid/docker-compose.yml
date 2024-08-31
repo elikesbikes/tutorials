@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  rancid:
+    restart: always
+    container_name: rancid-prod-1
+    image: biwhite/rancid-git
+    networks:
+      - frontend
+    volumes:
+      - /home/ecloaiza/docker/rancid/config:/home/rancid
+      - /home/ecloaiza/docker/rancid/etc:/etc/rancid
+networks:
+  frontend:
+    external: true
