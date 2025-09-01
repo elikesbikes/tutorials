@@ -1,0 +1,5 @@
+=========initial configuration=======
+logging synchronous
+exec-timeout 0 0
+exit
+no ip domain-lookup
