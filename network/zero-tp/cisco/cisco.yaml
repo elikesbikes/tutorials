@@ -1,0 +1,24 @@
+---
+- name: Configure ZTP for Cisco Routers
+  hosts: routers
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - name: Configure ZTP
+      ios_config:
+        lines:
+          - ip dhcp pool ZTP
+          - network 192.168.1.0 255.255.255.0
+          - default-router 192.168.1.1
+          - domain-name example.com
+          - option 150 ip 192.168.1.10  # TFTP server IP address
+          - dns-server 8.8.8.8
+        parents: 
+          - interface GigabitEthernet0/0  # Modify interface as per your setup
+      register: config_result
+
+    - name: Save config
+      ios_config:
+        lines:
+          - write memory
+      when: config_result.changed
