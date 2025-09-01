@@ -6,7 +6,7 @@ services:
     ports:
       - 80:80
       - 443:443
-      #- 8080:8080
+      - 8080:8080
     volumes:
       - ./config:/etc/traefik
       - /var/run/docker.sock:/var/run/docker.sock:ro
