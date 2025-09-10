@@ -55,7 +55,7 @@ services:
     restart: unless-stopped
 
   syslog_graylog:
-    image: graylog/graylog:5.1
+    image: graylog/graylog:6.3
     container_name: syslog_graylog
     hostname: graylog
     user: 0:0
