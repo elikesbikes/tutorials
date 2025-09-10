@@ -3,8 +3,11 @@ services:
   homebridge:
     image: homebridge/homebridge:latest
     container_name: homebridge-prod-1
-    restart: always    
-    network_mode: "host"  
+    networks:
+      net.home.elikesbikes:
+        ipv4_address: 192.168.5.14
+    hostname: homebridge
+    restart: always
     volumes:
       - ./volumes/homebridge:/homebridge
     logging:
@@ -12,8 +15,17 @@ services:
       options:
         max-size: "10mb"
         max-file: "1"
-
-
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.homebridge.loadbalancer.server.port=8581"
+      - "traefik.http.services.homebridge.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.homebridge-http.entrypoints=web"
+      - "traefik.http.routers.homebridge-http.rule=Host(`homebridge.home.elikesbikes.com`)"
+      - "traefik.http.routers.homebridge-https.entrypoints=websecure"
+      - "traefik.http.routers.homebridge-https.rule=Host(`homebridge.home.elikesbikes.com`)"
+      - "traefik.http.routers.homebridge-https.tls=true"
+      - "traefik.http.routers.homebridge-https.tls.certresolver=production"                                                                    
+      - "traefik.http.routers.homebridge-https.tls.domains[0].main=homebridge.home.elikesbikes.com"
 networks:
-  frontend:
+  net.home.elikesbikes:
     external: true
