@@ -1,43 +1,24 @@
-version: '2'
-
-networks:
-  frontend:
-    driver: bridge
-
-volumes:
-  nextcloud:
-  db:
+version: "3.8"
 
 services:
-  db:
-    image: mariadb
+  nextcloud:
+    image: nextcloud/all-in-one:latest
     restart: always
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
-    hostname: emidocknextcloud-db.emi.dock
+    container_name: nextcloud-aio-mastercontainer
     volumes:
-      - db:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=602043297 #change this
-      - MYSQL_PASSWORD=60204397 #change this
-      - MYSQL_DATABASE=nextcloud
-      - MYSQL_USER=nextcloud
-    networks:
-      - frontend
- 
-  app:
-    image: nextcloud
-    hostname: emidocknextcloud-app.emi.dock
-    restart: always
+      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - 8888:80
-    links:
-      - db
-    volumes:
-      - nextcloud:/var/www/html
+      - 8085:8080
+      - 85:80
+      - 445:443
+      - 445:443/udp
+      - 8445:8443
     environment:
-      - MYSQL_PASSWORD=60204397  #change this to match the mysql_password above
-      - MYSQL_DATABASE=nextcloud
-      - MYSQL_USER=nextcloud
-      - MYSQL_HOST=emidocknextcloud-db.emi.dock
-    networks:
-      - frontend
+      - APACHE_PORT=11000
+      - APACHE_IP_BINDING=0.0.0.0
+      - SKIP_DOMAIN_VALIDATION=true
+
+volumes:
+  nextcloud_aio_mastercontainer:
+    name: nextcloud_aio_mastercontainer

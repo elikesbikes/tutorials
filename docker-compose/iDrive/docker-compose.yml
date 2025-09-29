@@ -1,18 +1,19 @@
-version: "3.8"
+services:
+  idrive:
+    hostname: idrive-prod-1
+    container_name: idrive-prod-1
+    image: renofischa/idrive:latest
+    restart: unless-stopped
+    volumes:
+      - config:/opt/IDriveForLinux/idriveIt
+      - files:/mnt/files
+      - /mnt_nfs:/mnt/backup:ro
+    environment:
+      - TZ=America/Los_Angeles
 networks:
   frontend:
     external: true
-services:      
-  idrive:
-    container_name: idrive-prod-1
-    image: idrive:latest
-    restart: unless-stopped  
-    networks:
-      frontend:
-    volumes:      
-      - ./idrive/config:/work/IDriveForLinux/idriveIt
-      - ./backup:/home/backup:ro       
-    environment:
-      - TZ=$TZ
-      - PGID=$PGID
-      - PUID=$PUID   
+volumes:
+  config: null
+  dependencies: null
+  files: null
