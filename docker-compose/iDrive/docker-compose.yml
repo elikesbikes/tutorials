@@ -4,16 +4,15 @@ services:
     container_name: idrive-prod-1
     image: renofischa/idrive:latest
     restart: unless-stopped
+    networks:
+      frontend:    
     volumes:
       - config:/opt/IDriveForLinux/idriveIt
-      - files:/mnt/files
+      - ./files:/mnt/files
       - /mnt_nfs:/mnt/backup:ro
     environment:
       - TZ=America/Los_Angeles
 networks:
   frontend:
     external: true
-volumes:
-  config: null
-  dependencies: null
-  files: null
+

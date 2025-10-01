@@ -11,7 +11,7 @@ services:
     volumes:
       - ./config:/etc/traefik
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
+    environment:1
       - CF_DNS_API_TOKEN=xWJyPUNNH93Smi-0ajLziJGV3v9D6Ca6s0GMdOIs
       - "TZ=America/Los_Angeles" 
     networks:

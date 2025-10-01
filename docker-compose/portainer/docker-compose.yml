@@ -17,10 +17,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.portainer-prod-4.loadbalancer.server.port=9000"
       - "traefik.http.services.portainer-prod-4.loadbalancer.server.scheme=http"
+      
       - "traefik.http.routers.portainer-prod-4-http.entrypoints=web"
-      - "traefik.http.routers.portainer-prod-4-http.rule=Host(`ddocker-prod-4.home.elikesbikes.cloud`)"
-      - "traefik.http.routers.portainer-prod-4-https.entrypoints=websecure"
+      - "traefik.http.routers.portainer-prod-4-http.rule=Host(`ddocker-prod-4.home.elikesbikes.cloud`)"      
+      
       - "traefik.http.routers.portainer-prod-4-https.rule=Host(`docker-prod-4.home.elikesbikes.cloud`)"
+      - "traefik.http.routers.portainer-prod-4-https.entrypoints=websecure"
+      
       - "traefik.http.routers.portainer-prod-4-https.tls=true"
       - "traefik.http.routers.portainer-prod-4-https.tls.certresolver=production"                                                                    
       - "traefik.http.routers.portainer-prod-4-https.tls.domains[0].main=docker-prod-4.home.elikesbikes.cloud"
