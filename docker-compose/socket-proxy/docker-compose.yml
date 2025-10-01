@@ -1,6 +1,10 @@
+version: "3.8"
+services:
   socket-proxy:
     restart: unless-stopped
     container_name: socket-proxy
+    networks:
+      frontend:
     environment:
       - ALLOW_START=0 #optional
       - ALLOW_STOP=0 #optional

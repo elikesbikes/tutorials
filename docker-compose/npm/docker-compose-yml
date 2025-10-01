@@ -1,15 +1,17 @@
-version: '3'
-
 services:
-  app:
-    hostname: emidock-nginx-app
+  nginx_npm-app:
+    hostname: nginxproxy-app-1
+    container_name: npm-app
     image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    networks:
+      frontend: 
     ports:
-      - '80:80'
-      - '81:81'
-      - '443:443'
+     #  - '80:80'
+      - '82:81'
+     # - '443:443'
     environment:
-      DB_MYSQL_HOST: "emidock-nginx-db"
+      DB_MYSQL_HOST: "nginxproxy-db-1"
       DB_MYSQL_PORT: 3306
       DB_MYSQL_USER: "npm"
       DB_MYSQL_PASSWORD: "npm"
@@ -17,13 +19,20 @@ services:
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
-  db:
+  nginx_npm-db:
     image: 'jc21/mariadb-aria:latest'
-    hostname: emidock-nginx-db
+    hostname: nginxproxy-db-1
+    container_name: npm-db
+    restart: unless-stopped
+    networks:
+      frontend: 
     environment:
       MYSQL_ROOT_PASSWORD: 'npm'
       MYSQL_DATABASE: 'npm'
       MYSQL_USER: 'npm'
       MYSQL_PASSWORD: 'npm'
     volumes:
-      - ./data/mysql:/var/lib/mysql
+      - ./mysql:/var/lib/mysql
+networks:
+  frontend:
+    external: true
