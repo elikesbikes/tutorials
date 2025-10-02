@@ -14,7 +14,7 @@ services:
       - /opt/omd/sites/cmk/tmp:uid=1000,gid=1000
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - data:/omd/sites:rw
+      - ./data:/omd/sites:rw
     networks:
       - frontend
     labels:
