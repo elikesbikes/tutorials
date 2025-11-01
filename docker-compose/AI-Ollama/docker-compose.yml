@@ -1,7 +1,8 @@
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: ollama
+    container_name: ai-ollama-prod-1
+    hostname: ai-ollama-prod-1    
     restart: unless-stopped
     ports:
       - "11434:11434"        # Ollama API endpoint
@@ -11,22 +12,47 @@ services:
       - OLLAMA_KEEP_ALIVE=24h   # Keep models loaded longer
     networks:
       - frontend                # Attach to your existing network
-    command: >
-      sh -c "
-        # Pull Llama model on container start
-        ollama pull llama3 &&
-        # Start Ollama API server
-        ollama api
-      "
-    # Uncomment these lines if you want GPU acceleration
-    # runtime: nvidia
-    # environment:
-    #   - NVIDIA_VISIBLE_DEVICES=all
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - capabilities: [gpu]
+
+  openwebui:
+    container_name: ai-openwebui-prod-1
+    hostname: ai-openwebui-prod-1
+    image: ghcr.io/open-webui/open-webui:latest    
+    restart: unless-stopped
+    ports:
+      - "3000:8080"           # Web UI
+    volumes:
+      #- ./models:/models      # separate OpenWebUI-compatible models
+      #- ./webui:/home/user    # persistent config/logs             
+      - ./openwebui_data:/app/backend/data   # Config, user data
+      - ./openwebui_models:/app/backend/models  # Pre-do
+    environment:        
+      - OLLAMA_API_URL=http://ai-ollama-prod-1:11434
+
+      - COMMANDLINE_ARGS=--model /models/llama3 --listen --port 3000
+      - TZ=UTC
+    extra_hosts:
+      - "host.docker.internal:host-gateway"    
+    networks:
+      - frontend
+
+
+
+  ai-python-agent-prod-1:
+    image: python:3.12-slim
+    container_name: ai-python-agent-prod-1
+    hostname: ai-python-agent-prod-1
+    restart: unless-stopped
+    command: sh -c "pip install --no-cache-dir requests && python agent.py"
+    volumes:
+      - ./agent:/app
+    working_dir: /app
+
+    networks:
+      - frontend
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_API_URL=http://ai-ollama-prod-1:11434/api/generate
 
 networks:
   frontend:
