@@ -2,32 +2,42 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ai-ollama-prod-1
-    hostname: ai-ollama-prod-1    
+    hostname: ai-ollama-prod-1   
     restart: unless-stopped
     ports:
-      - "11434:11434"        # Ollama API endpoint
+      - "11434:11434"           # Ollama API endpoint
     volumes:
       - ./ollama:/root/.ollama  # Persist model data
     environment:
       - OLLAMA_KEEP_ALIVE=24h   # Keep models loaded longer
     networks:
       - frontend                # Attach to your existing network
+    # ----------------------------------------------------------------
+    # ✨ ADDITIONS FOR GPU ACCESS ✨
+    # ----------------------------------------------------------------
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all          # Expose all available NVIDIA GPUs
+              # count: 1          # Alternatively, expose just one GPU
+              capabilities: [gpu]
+    # ----------------------------------------------------------------
 
   openwebui:
+    # ... (rest of the openwebui service is unchanged) ...
     container_name: ai-openwebui-prod-1
     hostname: ai-openwebui-prod-1
     image: ghcr.io/open-webui/open-webui:latest    
     restart: unless-stopped
     ports:
-      - "3000:8080"           # Web UI
+      - "3000:8080"             # Web UI
     volumes:
-      #- ./models:/models      # separate OpenWebUI-compatible models
-      #- ./webui:/home/user    # persistent config/logs             
       - ./openwebui_data:/app/backend/data   # Config, user data
-      - ./openwebui_models:/app/backend/models  # Pre-do
-    environment:        
+      - ./openwebui_models:/app/backend/models # Pre-do
+    environment:              
       - OLLAMA_API_URL=http://ai-ollama-prod-1:11434
-
       - COMMANDLINE_ARGS=--model /models/llama3 --listen --port 3000
       - TZ=UTC
     extra_hosts:
@@ -35,9 +45,8 @@ services:
     networks:
       - frontend
 
-
-
   ai-python-agent-prod-1:
+    # ... (rest of the ai-python-agent-prod-1 service is unchanged) ...
     image: python:3.12-slim
     container_name: ai-python-agent-prod-1
     hostname: ai-python-agent-prod-1
@@ -46,7 +55,6 @@ services:
     volumes:
       - ./agent:/app
     working_dir: /app
-
     networks:
       - frontend
     depends_on:
