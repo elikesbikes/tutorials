@@ -3,7 +3,7 @@
 import requests
 import time
 
-OLLAMA_API_URL = "http://localhost:11434/api/generate"
+OLLAMA_API_URL = "http://ai-ollama-prod-1:11434/api/generate"
 UPTIME_KUMA_API = "http://192.168.5.67:3001/api/v1/metrics"  # Corrected metrics endpoint
 UPTIME_KUMA_API_KEY = "uk2_9fmdiV_ddZweFdJ_WroQ-Gp_e-y3qyhbYd2InpH1"  # Replace with your API key
 UPTIME_KUMA_USERNAME = "ecloaiza"  # Replace with your Uptime Kuma username
