@@ -3,60 +3,14 @@ version: '3.8'
 services:
   ollama:
     image: ollama/ollama:latest
-<<<<<<< HEAD
-    container_name: ai-ollama-prod-1
-    hostname: ai-ollama-prod-1   
-    restart: unless-stopped
-    ports:
-      - "11434:11434"           # Ollama API endpoint
-=======
     container_name: ${OLLAMA_NAME} # <-- PARAMETERIZED
     hostname: ${OLLAMA_NAME} # <-- PARAMETERIZED
     restart: unless-stopped
     ports:
       - "${OLLAMA_PORT}:11434" # <-- PARAMETERIZED host port
->>>>>>> 74f6ef3 (update AI scripts)
     volumes:
       - ${OLLAMA_DATA_PATH}:/root/.ollama # <-- PARAMETERIZED path
     environment:
-<<<<<<< HEAD
-      - OLLAMA_KEEP_ALIVE=24h   # Keep models loaded longer
-    networks:
-      - frontend                # Attach to your existing network
-    # ----------------------------------------------------------------
-    # ✨ ADDITIONS FOR GPU ACCESS ✨
-    # ----------------------------------------------------------------
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all          # Expose all available NVIDIA GPUs
-              # count: 1          # Alternatively, expose just one GPU
-              capabilities: [gpu]
-    # ----------------------------------------------------------------
-
-  openwebui:
-    # ... (rest of the openwebui service is unchanged) ...
-    container_name: ai-openwebui-prod-1
-    hostname: ai-openwebui-prod-1
-    image: ghcr.io/open-webui/open-webui:latest    
-    restart: unless-stopped
-    ports:
-      - "3000:8080"             # Web UI
-    volumes:
-      - ./openwebui_data:/app/backend/data   # Config, user data
-      - ./openwebui_models:/app/backend/models # Pre-do
-    environment:              
-      - OLLAMA_API_URL=http://ai-ollama-prod-1:11434
-      - COMMANDLINE_ARGS=--model /models/llama3 --listen --port 3000
-      - TZ=UTC
-    extra_hosts:
-      - "host.docker.internal:host-gateway"    
-    networks:
-      - frontend
-
-=======
       - OLLAMA_KEEP_ALIVE=24h
     #deploy:
     #  resources:
@@ -89,9 +43,7 @@ services:
     depends_on:
       - ollama
 
->>>>>>> 74f6ef3 (update AI scripts)
   ai-python-agent-prod-1:
-    # ... (rest of the ai-python-agent-prod-1 service is unchanged) ...
     image: python:3.12-slim
     container_name: ${AGENT_NAME} # <-- PARAMETERIZED
     hostname: ${AGENT_NAME} # <-- PARAMETERIZED
