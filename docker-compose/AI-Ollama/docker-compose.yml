@@ -43,14 +43,13 @@ services:
     depends_on:
       - ollama
 
-  ai-python-agent-prod-1:
+  ai-python-agent-prod-2:
     image: python:3.12-slim
     container_name: ${AGENT_NAME} # <-- PARAMETERIZED
     hostname: ${AGENT_NAME} # <-- PARAMETERIZED
     restart: unless-stopped
-    command: > 
-      sh -c "pip install --no-cache-dir requests && python agent.py"
-      /bin/sh -c "python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
+    command: >
+      /bin/sh -c "pip install --no-cache-dir requests && python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
     volumes:
       - ./agent_output:/app/output
       - ./agent:/app
