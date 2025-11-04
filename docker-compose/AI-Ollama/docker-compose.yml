@@ -48,8 +48,11 @@ services:
     container_name: ${AGENT_NAME} # <-- PARAMETERIZED
     hostname: ${AGENT_NAME} # <-- PARAMETERIZED
     restart: unless-stopped
-    command: sh -c "pip install --no-cache-dir requests && python agent.py"
+    command: > 
+      sh -c "pip install --no-cache-dir requests && python agent.py"
+      /bin/sh -c "python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
     volumes:
+      - ./agent_output:/app/output
       - ./agent:/app
     working_dir: /app
     networks:
