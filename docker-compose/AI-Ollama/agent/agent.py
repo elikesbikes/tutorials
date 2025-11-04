@@ -83,7 +83,10 @@ def send_to_ollama_for_analysis(critical_events):
     }
 
     try:
-        ollama_response = requests.post(OLLAMA_API_URL, json=ollama_data, timeout=60)
+        # Increased timeout to 180 seconds (3 minutes) to allow time for processing 6000+ log lines
+        OLLAMA_TIMEOUT_SECONDS = 180 
+        ollama_response = requests.post(OLLAMA_API_URL, json=ollama_data, timeout=OLLAMA_TIMEOUT_SECONDS)
+        #ollama_response = requests.post(OLLAMA_API_URL, json=ollama_data, timeout=60)
         ollama_response.raise_for_status()
 
         # Ollama API returns a JSON object with the response text
