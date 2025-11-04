@@ -45,18 +45,30 @@ def fetch_ha_logs():
 
     return None
 
+# --- Log Analysis Parameters ---
+# ... (existing parameters)
+# Define the maximum number of critical lines to send to the LLM
+MAX_CRITICAL_LINES = 50 
+# ...
+
 def analyze_logs_for_critical_events(log_content):
     """Parses the log content to find critical lines."""
     critical_events = []
-
+    
     # Split the log into lines and iterate
     for line in log_content.splitlines():
         # Simple check for critical keywords
         if any(keyword in line for keyword in CRITICAL_KEYWORDS):
             critical_events.append(line.strip())
-
-    print(f"\n🔬 Found {len(critical_events)} critical log entries.")
+            
+    # --- NEW: Truncate the list to the most recent entries ---
+    if len(critical_events) > MAX_CRITICAL_LINES:
+        print(f"⚠️ Warning: Truncating {len(critical_events)} critical entries down to the last {MAX_CRITICAL_LINES}.")
+        critical_events = critical_events[-MAX_CRITICAL_LINES:]
+            
+    print(f"\n🔬 Found {len(critical_events)} critical log entries to analyze.")
     return critical_events
+
 
 def send_to_ollama_for_analysis(critical_events):
     """Sends critical log entries to Ollama for an advanced summary."""
