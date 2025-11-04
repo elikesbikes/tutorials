@@ -3,8 +3,6 @@ version: '3.8'
 services:
   ollama:
     image: ollama/ollama:latest
-<<<<<<< HEAD
-<<<<<<< HEAD
     container_name: ${OLLAMA_NAME} # <-- PARAMETERIZED
     hostname: ${OLLAMA_NAME} # <-- PARAMETERIZED
     restart: unless-stopped
@@ -24,36 +22,6 @@ services:
     networks:
       - frontend
 
-=======
-<<<<<<< HEAD
-    container_name: ai-ollama-prod-1
-    hostname: ai-ollama-prod-1   
-    restart: unless-stopped
-    ports:
-      - "11434:11434"           # Ollama API endpoint
-=======
-=======
->>>>>>> 08f0a92 (again)
-    container_name: ${OLLAMA_NAME} # <-- PARAMETERIZED
-    hostname: ${OLLAMA_NAME} # <-- PARAMETERIZED
-    restart: unless-stopped
-    ports:
-      - "${OLLAMA_PORT}:11434" # <-- PARAMETERIZED host port
-    volumes:
-      - ${OLLAMA_DATA_PATH}:/root/.ollama # <-- PARAMETERIZED path
-    environment:
-      - OLLAMA_KEEP_ALIVE=24h
-    #deploy:
-    #  resources:
-    #    reservations:
-    #      devices:
-    #        - driver: nvidia
-    #          count: all
-    #          capabilities: [gpu]
-    networks:
-      - frontend
-
->>>>>>> e05d7fd (update AI scripts)
   openwebui:
     container_name: ${WEBUI_NAME} # <-- PARAMETERIZED
     hostname: ${WEBUI_NAME} # <-- PARAMETERIZED
@@ -75,13 +43,6 @@ services:
     depends_on:
       - ollama
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 74f6ef3 (update AI scripts)
->>>>>>> e05d7fd (update AI scripts)
-=======
->>>>>>> 08f0a92 (again)
   ai-python-agent-prod-1:
     image: python:3.12-slim
     container_name: ${AGENT_NAME} # <-- PARAMETERIZED
