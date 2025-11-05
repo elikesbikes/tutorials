@@ -12,13 +12,13 @@ services:
       - ${OLLAMA_DATA_PATH}:/root/.ollama # <-- PARAMETERIZED path
     environment:
       - OLLAMA_KEEP_ALIVE=24h
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: all
+#              capabilities: [gpu]
     networks:
       - frontend
 
@@ -49,10 +49,14 @@ services:
     hostname: ${AGENT_NAME} # <-- PARAMETERIZED
     restart: unless-stopped
     command: >
-      /bin/sh -c "pip install --no-cache-dir requests && python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
+        /bin/sh -c "pip install --no-cache-dir requests && python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
+    #  command: >
+  #    /bin/sh -c "pip install --no-cache-dir requests && python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
     volumes:
       - ./agent_output:/app/output
       - ./agent:/app
+      - ./agent_logs:/app/logs
+
     working_dir: /app
     networks:
       - frontend
@@ -63,6 +67,8 @@ services:
       - HOME_ASSISTANT_URL=${HOME_ASSISTANT_URL}
       - HA_ACCESS_TOKEN=${HA_ACCESS_TOKEN}
       - OLLAMA_API_URL=${OLLAMA_API_URL}
+      # --- CRITICAL FIX: Add the HOST variable the script reads ---
+      - OLLAMA_HOST=${OLLAMA_HOST}
 
 networks:
   frontend:
