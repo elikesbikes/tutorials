@@ -1,132 +1,214 @@
-import os
+#!/usr/bin/env python3
 import requests
-import re
-from datetime import datetime
+import json
+import time
+import signal
+import sys
+import logging
+from logging.handlers import RotatingFileHandler
+from collections import deque
+import threading
+import os
 
-# --- Configuration (Pulled from Environment Variables) ---
-HA_URL = os.environ.get("HOME_ASSISTANT_URL")
-HA_TOKEN = os.environ.get("HA_ACCESS_TOKEN")
-OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL")
+# --- Configuration ---
+# Read the hostname from the environment, defaulting to the expected service name.
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "ai-ollama-prod-1")
+OLLAMA_URL = f"http://{OLLAMA_HOST}:11434/api/generate"
+OLLAMA_MODEL = "llama3"
 
-# --- Log Analysis Parameters ---
-LOG_ENDPOINT = "/api/error_log"
-HEADERS = {
-    "Authorization": f"Bearer {HA_TOKEN}",
-    "Content-Type": "application/json"
-}
-CRITICAL_KEYWORDS = ["ERROR", "CRITICAL", "Timeout", "Failed to connect", "Exception", "Traceback"]
-OLLAMA_MODEL = "llama3" # Default model for analysis
+LOG_FILE_PATH = "/app/logs/input_logs.log"
+RESULTS_FILE_PATH = "/app/output/llm_analysis_output.txt"
 
-def fetch_ha_logs():
-    """Fetches the raw error log from Home Assistant."""
-    if not HA_URL or not HA_TOKEN:
-        print("🚨 ERROR: Home Assistant URL or Access Token is missing from environment variables.")
-        return None
+MAX_CRITICAL_LINES = 50
+LOOP_DELAY_SECONDS = 300
+OLLAMA_TIMEOUT = 900              # Increased to 15 minutes (900s) for streaming safety
+OLLAMA_RETRIES = 3
+OLLAMA_RETRY_INITIAL_DELAY = 5
 
-    full_url = f"{HA_URL}{LOG_ENDPOINT}"
-    print(f"🔗 Attempting to connect to Home Assistant at: {full_url}")
+# Logging config
+LOG_STDOUT_LEVEL = logging.INFO
+LOG_FILE = "/app/logs/agent_runtime.log"
+LOG_FILE_MAX_BYTES = 5 * 1024 * 1024
+LOG_FILE_BACKUP_COUNT = 3
 
+SYSTEM_PROMPT = f"""
+You are an expert DevOps engineer specializing in analyzing application logs for stability issues.
+
+Your primary task is to review the provided log data and produce a concise, actionable report.
+
+Your response MUST STRICTLY follow this Markdown format:
+## 1. Summary
+[A 1-2 sentence summary of the current system status and any potential issues.]
+
+## 2. Critical Events
+[List the 3 most critical or recent ERROR/WARN events. For each event, provide the raw log line and a one-sentence technical explanation of its significance.]
+
+## 3. Recommended Action
+[Provide one clear, actionable step that should be taken next to investigate or resolve the root cause.]
+"""
+
+# --- Setup logging ---
+logger = logging.getLogger("ai_log_agent")
+logger.setLevel(logging.DEBUG)
+
+# ⬇️ FIX: Clear handlers to prevent duplicate messages ⬇️
+if logger.hasHandlers():
+    logger.handlers.clear()
+
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(LOG_STDOUT_LEVEL)
+ch_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+ch.setFormatter(ch_formatter)
+logger.addHandler(ch)
+
+try:
+    fh = RotatingFileHandler(LOG_FILE, maxBytes=LOG_FILE_MAX_BYTES, backupCount=LOG_FILE_BACKUP_COUNT)
+    fh.setLevel(logging.DEBUG)
+    fh_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    fh.setFormatter(fh_formatter)
+    logger.addHandler(fh)
+except Exception as e:
+    logger.warning("Could not set up file logging (%s). Proceeding with console only.", e)
+
+shutdown_event = threading.Event()
+
+# --- Helper functions ---
+
+def handle_exit(signum, frame):
+    """Signal handler to start graceful shutdown."""
+    logger.info("Received shutdown signal (%s). Initiating graceful shutdown...", signum)
+    shutdown_event.set()
+
+signal.signal(signal.SIGINT, handle_exit)
+signal.signal(signal.SIGTERM, handle_exit)
+
+def get_critical_logs(file_path):
+    # Temporarily includes "INFO" to force log analysis if critical errors are rare
+    keywords = ["ERROR", "WARN", "WARNING", "EXCEPTION", "FATAL", "CRITICAL", "FAILURE", "INFO"]
+    critical_lines = deque(maxlen=MAX_CRITICAL_LINES)
     try:
-        response = requests.get(full_url, headers=HEADERS, timeout=10)
-        response.raise_for_status() # Raises an exception for 4XX or 5XX status codes
-
-        # The /api/error_log endpoint returns the log content as plain text
-        print("✅ Successfully fetched Home Assistant error log.")
-        return response.text
-
-    except requests.exceptions.HTTPError as e:
-        print(f"❌ HTTP Error fetching logs: {e.response.status_code} - Check URL and Token permissions.")
-    except requests.exceptions.ConnectionError:
-        print("❌ Connection Error: Could not reach Home Assistant. Is the IP/Port correct?")
-    except requests.exceptions.Timeout:
-        print("❌ Timeout Error: Request took too long.")
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            for line in f:
+                if any(kw in line.upper() for kw in keywords):
+                    critical_lines.append(line.rstrip("\n"))
+    except FileNotFoundError:
+        logger.error("Log file not found at %s. Is the volume mounted correctly?", file_path)
+        return []
     except Exception as e:
-        print(f"❌ An unexpected error occurred: {e}")
+        logger.exception("Unexpected error while reading logs: %s", e)
+        return []
+    return list(critical_lines)
 
-    return None
+# NOTE: The streaming function below simplifies, skipping _post_with_retries
+# for a single, long-running streaming request.
 
-# --- Log Analysis Parameters ---
-# ... (existing parameters)
-# Define the maximum number of critical lines to send to the LLM
-MAX_CRITICAL_LINES = 50 
-# ...
+def analyze_logs(logs):
+    """
+    Build the prompt and send logs to Ollama for streaming analysis.
+    Prints output to stdout in real-time and returns the full combined response string.
+    """
+    if not logs:
+        return "No critical logs found to analyze."
 
-def analyze_logs_for_critical_events(log_content):
-    """Parses the log content to find critical lines."""
-    critical_events = []
-    
-    # Split the log into lines and iterate
-    for line in log_content.splitlines():
-        # Simple check for critical keywords
-        if any(keyword in line for keyword in CRITICAL_KEYWORDS):
-            critical_events.append(line.strip())
-            
-    # --- NEW: Truncate the list to the most recent entries ---
-    if len(critical_events) > MAX_CRITICAL_LINES:
-        print(f"⚠️ Warning: Truncating {len(critical_events)} critical entries down to the last {MAX_CRITICAL_LINES}.")
-        critical_events = critical_events[-MAX_CRITICAL_LINES:]
-            
-    print(f"\n🔬 Found {len(critical_events)} critical log entries to analyze.")
-    return critical_events
+    log_data_str = "\n".join(logs)
+    prompt_template = f"{SYSTEM_PROMPT}\n\n--- LOG DATA ---\n{log_data_str}"
 
-
-def send_to_ollama_for_analysis(critical_events):
-    """Sends critical log entries to Ollama for an advanced summary."""
-    if not OLLAMA_API_URL:
-        print("\n🟡 Skipping Ollama analysis: OLLAMA_API_URL is not set.")
-        return
-
-    print(f"\n🤖 Sending critical entries to Ollama for summary using model: {OLLAMA_MODEL}...")
-
-    # Join the critical events into a single block of text for the prompt
-    log_block = "\n".join(critical_events)
-
-    prompt = (
-        "Analyze the following Home Assistant log entries. Identify the root cause "
-        "of the issue (e.g., failed integration, network problem, entity error). "
-        "Provide a concise summary and suggest a specific action the user should take.\n\n"
-        f"--- LOG ENTRIES ---\n{log_block}"
-    )
-
-    ollama_data = {
+    payload = {
         "model": OLLAMA_MODEL,
-        "prompt": prompt,
-        "stream": False # Set to False for a single response
+        "prompt": prompt_template,
+        "stream": True,  # Enable streaming
+        "options": {
+            "num_ctx": 4096
+        }
     }
 
+    logger.info("Submitting request with %d critical lines to Ollama for streaming...", len(logs))
+
     try:
-        # Increased timeout to 180 seconds (3 minutes) to allow time for processing 6000+ log lines
-        OLLAMA_TIMEOUT_SECONDS = 180 
-        ollama_response = requests.post(OLLAMA_API_URL, json=ollama_data, timeout=OLLAMA_TIMEOUT_SECONDS)
-        #ollama_response = requests.post(OLLAMA_API_URL, json=ollama_data, timeout=60)
-        ollama_response.raise_for_status()
+        # Use requests.post for streaming; use a long timeout.
+        response = requests.post(OLLAMA_URL, json=payload, stream=True, timeout=OLLAMA_TIMEOUT)
+        response.raise_for_status()
 
-        # Ollama API returns a JSON object with the response text
-        summary = ollama_response.json().get("response", "No response text received from Ollama.")
+        full_response = ""
 
-        print("\n--- 🧠 AI Analysis Summary ---")
-        print(summary)
-        print("------------------------------")
+        # ⬇️ NEW LOGIC: Stream and print output in real-time ⬇️
+        print("\n--- 🧠 AI Analysis Stream Start ---")
 
-    except requests.exceptions.HTTPError as e:
-        print(f"❌ Ollama HTTP Error: {e.response.status_code}. Ensure Ollama is running and the model is loaded.")
-    except requests.exceptions.ConnectionError:
-        print("❌ Ollama Connection Error: Cannot connect to Ollama service.")
-    except requests.exceptions.Timeout:
-        print("❌ Ollama Timeout Error: Model took too long to generate a response.")
+        for line in response.iter_lines():
+            if line:
+                try:
+                    chunk = json.loads(line)
+                    # Get the response token and print it immediately
+                    if 'response' in chunk:
+                        response_token = chunk['response']
+
+                        # Print to stdout (which is captured by Docker logs and the output file)
+                        print(response_token, end="", flush=True)
+
+                        full_response += response_token
+
+                    # Exit condition: last chunk received
+                    if chunk.get("done"):
+                        break
+
+                except json.JSONDecodeError:
+                    continue # Ignore status/non-JSON lines
+
+        print("\n--- 🧠 AI Analysis Stream End ---")
+        return full_response
+
+    except requests.exceptions.RequestException as e:
+        msg = f"ERROR: Ollama streaming request failed: {e}"
+        logger.error(msg)
+        return msg
+
+def persist_analysis(result_text):
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    entry = f"\n\n--- Analysis at {timestamp} ---\n{result_text}"
+    try:
+        # The main output is captured by the command redirection, so we'll just log
+        # to the runtime log if streaming is active, but we keep this function structure.
+        pass
     except Exception as e:
-        print(f"❌ An unexpected error occurred during Ollama analysis: {e}")
+        logger.exception("Failed to persist analysis result: %s", e)
 
-def main():
-    log_content = fetch_ha_logs()
+# --- Main loop ---
+def main_loop():
+    logger.info("AI Log Analysis Agent started.")
+    logger.info("Targeting model: %s at %s", OLLAMA_MODEL, OLLAMA_HOST)
+    logger.info("Scanning log file: %s", LOG_FILE_PATH)
 
-    if log_content:
-        critical_events = analyze_logs_for_critical_events(log_content)
+    while not shutdown_event.is_set():
+        try:
+            critical_logs = get_critical_logs(LOG_FILE_PATH)
 
-        if critical_events:
-            send_to_ollama_for_analysis(critical_events)
-        else:
-            print("🎉 Log check complete: No critical errors found for AI analysis.")
+            if not critical_logs:
+                logger.info("No critical logs found in the last cycle.")
+            else:
+                # Analysis streams output to stdout immediately
+                analysis_result = analyze_logs(critical_logs)
+
+                # Since the command already redirects stdout, we don't need explicit file writes here.
+                logger.info("Analysis run complete. Results captured by Docker redirection.")
+
+        except Exception as e:
+            logger.exception("FATAL AGENT ERROR: %s", e)
+
+        logger.debug("Sleeping for %ds (or until shutdown)...", LOOP_DELAY_SECONDS)
+        shutdown_event.wait(LOOP_DELAY_SECONDS)
+
+    logger.info("Shutdown event detected. Exiting main loop.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main_loop()
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt received. Setting shutdown flag.")
+        shutdown_event.set()
+    finally:
+        logger.info("Agent shutdown complete.")
+        for h in logger.handlers:
+            try:
+                h.flush()
+            except Exception:
+                pass
