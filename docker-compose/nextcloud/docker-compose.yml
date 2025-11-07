@@ -1,60 +1,63 @@
-version: '3.8'
-
-# This file sets up Nextcloud, a MariaDB database, and a Redis caching server.
-# It uses bind mounts, so you must define the host paths in your .env file
-# and ensure these directories exist before running the stack.
 services:
   # Nextcloud Web App Service
   app:
     image: nextcloud:latest
     container_name: nextcloud_app
+    # Ensure the container restarts automatically unless manually stopped
     restart: unless-stopped
-    networks:
-      - frontend
-
     ports:
       # Map the container's internal port 80 to the host port defined in .env (default 8080)
+      # NPM or your proxy should point to this HOST_PORT.
       - ${HOST_PORT:-8080}:80
     links:
-      # Use the service name 'db' as the database host
       - db
       - redis
     volumes:
-      # Bind Mounts for persistent data on the host
-      # NEXTCLOUD_DIR: Contains Nextcloud code, config, and internal files
+      # Bind Mounts for persistent data on the host (defined in .env)
       - ${NEXTCLOUD_DIR}:/var/www/html
-      # DATA_DIR: Contains all user file uploads and actual Nextcloud data
+      # Data directory for user files (separate from config/code for easy upgrades)
       - ${DATA_DIR}:/var/www/html/data
     environment:
-      # Database Connection Variables (referencing the 'db' service)
+      # Database Connection Variables
       - MYSQL_HOST=db
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
-      # Redis Caching (highly recommended for performance)
+
+      # Redis Caching Configuration (for better performance)
       - REDIS_HOST=redis
       - REDIS_HOST_PORT=6379
-      # Set up trusted domains (important for security)
-      - NEXTCLOUD_TRUSTED_DOMAINS=localhost 127.0.0.1 192.168.5.20
+
+      # --- REVERSE PROXY CONFIGURATION (Crucial for NPM) ---
+      # NEXTCLOUD_TRUSTED_DOMAINS: Whitelists the domain for access.
+      # Domains are space-separated (localhost and 127.0.0.1 are good for local access).
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost 127.0.0.1 ${NC_DOMAIN}
+
+      # OVERWRITEHOST: Tells Nextcloud what external host name to use for links.
+      - OVERWRITEHOST=${NC_DOMAIN}
+
+      # OVERWRITEPROTOCOL: Tells Nextcloud to use HTTPS for generated links (as NPM handles SSL).
+      - OVERWRITEPROTOCOL=https
+      # ----------------------------------------------------
+
       # Recommended PHP limits
       - PHP_MEMORY_LIMIT=512M
       - PHP_UPLOAD_LIMIT=10G
+
     depends_on:
       - db
       - redis
 
   # Database Service (MariaDB)
   db:
-    image: mariadb:10.6 # Use 10.6 for compatibility with older Nextcloud versions, or 11.x
+    image: mariadb:10.6 # Recommended version for Nextcloud compatibility
     container_name: nextcloud_db
     restart: unless-stopped
     volumes:
-      # Bind Mount for MariaDB persistent storage on the host
+      # Bind Mount for MariaDB persistent storage
       - ${DB_DIR}:/var/lib/mysql
+    # Required command for Nextcloud compatibility with MariaDB
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
-    networks:
-    - frontend
-
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
@@ -66,11 +69,3 @@ services:
     image: redis:alpine
     container_name: nextcloud_redis
     restart: unless-stopped
-    networks:
-      - frontend
-
-
-networks:
-  frontend:
-    external: true
-# NOTE: The top-level 'volumes' block is removed as we are using bind mounts.
