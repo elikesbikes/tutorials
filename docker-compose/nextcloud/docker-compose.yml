@@ -35,7 +35,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_HOST_PORT=6379
       # Set up trusted domains (important for security)
-      - NEXTCLOUD_TRUSTED_DOMAINS=localhost 127.0.0.1
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost 127.0.0.1 192.168.5.20
       # Recommended PHP limits
       - PHP_MEMORY_LIMIT=512M
       - PHP_UPLOAD_LIMIT=10G
