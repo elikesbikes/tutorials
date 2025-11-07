@@ -1,24 +1,76 @@
-version: "3.8"
+version: '3.8'
 
+# This file sets up Nextcloud, a MariaDB database, and a Redis caching server.
+# It uses bind mounts, so you must define the host paths in your .env file
+# and ensure these directories exist before running the stack.
 services:
-  nextcloud:
-    image: nextcloud/all-in-one:latest
-    restart: always
-    container_name: nextcloud-aio-mastercontainer
-    volumes:
-      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - 8085:8080
-      - 85:80
-      - 445:443
-      - 445:443/udp
-      - 8445:8443
-    environment:
-      - APACHE_PORT=11000
-      - APACHE_IP_BINDING=0.0.0.0
-      - SKIP_DOMAIN_VALIDATION=true
+  # Nextcloud Web App Service
+  app:
+    image: nextcloud:latest
+    container_name: nextcloud_app
+    restart: unless-stopped
+    networks:
+      - frontend
 
-volumes:
-  nextcloud_aio_mastercontainer:
-    name: nextcloud_aio_mastercontainer
+    ports:
+      # Map the container's internal port 80 to the host port defined in .env (default 8080)
+      - ${HOST_PORT:-8080}:80
+    links:
+      # Use the service name 'db' as the database host
+      - db
+      - redis
+    volumes:
+      # Bind Mounts for persistent data on the host
+      # NEXTCLOUD_DIR: Contains Nextcloud code, config, and internal files
+      - ${NEXTCLOUD_DIR}:/var/www/html
+      # DATA_DIR: Contains all user file uploads and actual Nextcloud data
+      - ${DATA_DIR}:/var/www/html/data
+    environment:
+      # Database Connection Variables (referencing the 'db' service)
+      - MYSQL_HOST=db
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      # Redis Caching (highly recommended for performance)
+      - REDIS_HOST=redis
+      - REDIS_HOST_PORT=6379
+      # Set up trusted domains (important for security)
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost 127.0.0.1
+      # Recommended PHP limits
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_UPLOAD_LIMIT=10G
+    depends_on:
+      - db
+      - redis
+
+  # Database Service (MariaDB)
+  db:
+    image: mariadb:10.6 # Use 10.6 for compatibility with older Nextcloud versions, or 11.x
+    container_name: nextcloud_db
+    restart: unless-stopped
+    volumes:
+      # Bind Mount for MariaDB persistent storage on the host
+      - ${DB_DIR}:/var/lib/mysql
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    networks:
+    - frontend
+
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+
+  # Redis Caching Service
+  redis:
+    image: redis:alpine
+    container_name: nextcloud_redis
+    restart: unless-stopped
+    networks:
+      - frontend
+
+
+networks:
+  frontend:
+    external: true
+# NOTE: The top-level 'volumes' block is removed as we are using bind mounts.
