@@ -5,6 +5,8 @@ services:
     container_name: nextcloud_app
     # Ensure the container restarts automatically unless manually stopped
     restart: unless-stopped
+    networks:
+      frontend:
     ports:
       # Map the container's internal port 80 to the host port defined in .env (default 8080)
       # NPM or your proxy should point to this HOST_PORT.
@@ -53,6 +55,8 @@ services:
     image: mariadb:10.6 # Recommended version for Nextcloud compatibility
     container_name: nextcloud_db
     restart: unless-stopped
+    networks:
+      frontend:
     volumes:
       # Bind Mount for MariaDB persistent storage
       - ${DB_DIR}:/var/lib/mysql
@@ -69,3 +73,10 @@ services:
     image: redis:alpine
     container_name: nextcloud_redis
     restart: unless-stopped
+    networks:
+      frontend:
+
+
+networks:
+  frontend:
+    external: true
