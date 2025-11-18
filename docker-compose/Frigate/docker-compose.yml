@@ -7,11 +7,19 @@ services:
     stop_grace_period: 30s # allow enough time to shut down the various services
     image: ghcr.io/blakeblackshear/frigate:stable
     shm_size: "512mb" # update for your cameras based on calculation above
-    #devices:
+    runtime: nvidia
+    devices:
       #- /dev/bus/usb:/dev/bus/usb # Passes the USB Coral, needs to be modified for other versions
       #- /dev/apex_0:/dev/apex_0 # Passes a PCIe Coral, follow driver instructions here https://github.com/jnicolson/gasket-builder
       #- /dev/video11:/dev/video11 # For Raspberry Pi 4B
       #- /dev/dri/renderD128:/dev/dri/renderD128 # For intel hwaccel, needs to be updated for your hardware
+      - /dev/nvidia0:/dev/nvidia0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./config:/config
@@ -22,9 +30,18 @@ services:
           size: 1000000000
     ports:
       - "8971:8971"
-      # - "5000:5000" # Internal unauthenticated access. Expose carefully.
+      - "5001:5000" # Internal unauthenticated access. Expose carefully.
       - "8554:8554" # RTSP feeds
       - "8555:8555/tcp" # WebRTC over tcp
       - "8555:8555/udp" # WebRTC over udp
+
+    env_file:
+      - .env
     environment:
-      FRIGATE_RTSP_PASSWORD: "passwords"
+      - FRIGATE_RTSP_PASSWORD=${FRIGATE_RTSP_PASSWORD}
+    #network_mode: "host" # Allows direct network access for scanning
+    networks:
+      - frontend
+networks:
+  frontend:
+    external: true
