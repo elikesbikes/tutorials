@@ -1,0 +1,22 @@
+services:
+  restic:
+    image: restic/restic:latest
+    container_name: restic
+    hostname: restic
+    env_file:
+      - .env
+    volumes:
+      # Docker volumes (read-only)
+      - /var/lib/docker/volumes:/data/docker-volumes:ro
+
+      # Bind mounts you want to back up later
+      # - /srv:/data/srv:ro
+
+      # Restic repository (local for now)
+      - ./backup:/backup
+
+      # Optional: timezone consistency
+      - /etc/localtime:/etc/localtime:ro
+
+    entrypoint: ["restic"]
+
