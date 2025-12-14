@@ -18,5 +18,10 @@ services:
       # Optional: timezone consistency
       - /etc/localtime:/etc/localtime:ro
 
+      # Docker volumes (read-only)
+      - /home/ecloaiza:/data/bind-volumes:ro
+
+
+
     entrypoint: ["restic"]
 
