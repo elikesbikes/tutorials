@@ -1,0 +1,47 @@
+# ------------------------------------------------------------
+# docker-compose.yml
+#
+# Service: syncthing-health
+# Version: 1.1.2
+#
+# Description:
+# Bash-based Syncthing health endpoint exposed over HTTP
+# for monitoring via Uptime Kuma.
+#
+# Changelog:
+# - 1.1.0: Added external frontend network
+# - 1.1.1: Fixed RO volume startup failure (removed chmod)
+# - 1.1.2: Added bash runtime dependency for Alpine image
+# ------------------------------------------------------------
+
+version: "3.9"
+
+services:
+  syncthing-health:
+    image: alpine:3.20
+    container_name: syncthing-health
+
+    env_file:
+      - /home/ecloaiza/.syncthing-health.env
+
+    ports:
+      - "9123:9123"
+
+    networks:
+      - frontend
+
+    volumes:
+      - ./syncthing_health.sh:/app/syncthing_health.sh:ro
+      - ./syncthing_health_http.sh:/app/syncthing_health_http.sh:ro
+
+    command: >
+      sh -c "
+        apk add --no-cache bash curl jq netcat-openbsd &&
+        /app/syncthing_health_http.sh
+      "
+
+    restart: unless-stopped
+
+networks:
+  frontend:
+    external: true
