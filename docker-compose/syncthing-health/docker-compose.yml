@@ -2,19 +2,23 @@
 # docker-compose.yml
 #
 # Service: syncthing-health
-# Version: 1.1.2
+# Version: 1.4.0
 #
 # Description:
 # Bash-based Syncthing health endpoint exposed over HTTP
-# for monitoring via Uptime Kuma.
+# for monitoring via Uptime Kuma, with optional ntfy notifications.
 #
-# Changelog:
-# - 1.1.0: Added external frontend network
-# - 1.1.1: Fixed RO volume startup failure (removed chmod)
-# - 1.1.2: Added bash runtime dependency for Alpine image
+# Changelog (running):
+# - 1.4.0: Add persistent state volume for transition-based ntfy notifications
+# - 1.2.4: Removed obsolete top-level 'version:' key (Compose v2 rule)
+# - 1.2.3: Fix socat PATH issue by using absolute binary path
+# - 1.2.2: Fix invalid HTTP responses by switching from nc to socat
+# - 1.2.1: Converted changelog to cumulative format
+# - 1.2.0: Added optional debug logging
+# - 1.1.2: Added bash runtime dependency
+# - 1.1.1: Fixed RO volume startup failure
+# - 1.1.0: Added external frontend Docker network
 # ------------------------------------------------------------
-
-version: "3.9"
 
 services:
   syncthing-health:
@@ -33,10 +37,11 @@ services:
     volumes:
       - ./syncthing_health.sh:/app/syncthing_health.sh:ro
       - ./syncthing_health_http.sh:/app/syncthing_health_http.sh:ro
+      - ./state:/state
 
     command: >
       sh -c "
-        apk add --no-cache bash curl jq netcat-openbsd &&
+        apk add --no-cache bash curl jq socat &&
         /app/syncthing_health_http.sh
       "
 
