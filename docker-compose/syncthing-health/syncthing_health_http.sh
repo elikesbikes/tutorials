@@ -2,80 +2,41 @@
 # syncthing_health_http.sh
 #
 # Service: syncthing-health
-# Version: 1.5.0
+# Script: syncthing_health_http.sh
+# Version: 1.6.1
 #
 # Description:
-# HTTP router for Syncthing health checks used by Uptime Kuma.
-# Supports multiple endpoints mapped to backend scripts.
+# Minimal HTTP responder invoked by socat. Runs the main Syncthing health check
+# and returns HTTP status codes for Uptime Kuma.
 #
-# Endpoints:
-#   /health      -> syncthing_health.sh
-#   /device-lag  -> syncthing-device-sync-monitor.sh
-#
-# Exit code mapping:
-#   0 -> HTTP 200
-#   1 -> HTTP 503
-#   * -> HTTP 500
+# HTTP mapping:
+#   - exit 0 -> 200 OK
+#   - exit 1 -> 503 Service Unavailable
+#   - other  -> 500 Internal Server Error
 #
 # Changelog (running):
-# - 1.5.0: Add /device-lag endpoint for device-specific sync lag monitoring
-# - 1.4.0: Add persistent state volume for transition-based ntfy notifications
-# - 1.2.4: Removed obsolete top-level 'version:' key (Compose v2 rule)
-# - 1.2.3: Fix socat PATH issue by using absolute binary path
-# - 1.2.2: Fix invalid HTTP responses by switching from nc to socat
-# - 1.2.1: Converted changelog to cumulative format
-# - 1.2.0: Added optional debug logging
-# - 1.1.2: Added bash runtime dependency
-# - 1.1.1: Fixed RO volume startup failure
-# - 1.1.0: Added external frontend Docker network
+# - 1.6.1: Fix executable check bug; always run health script via /bin/bash
+# - 1.5.0: (deprecated attempt) path routing (removed)
+# - 1.4.0: Persistent state for transition-based ntfy notifications (handled by health script)
 #
 set -euo pipefail
 
-#######################################
-# CONFIG
-#######################################
+HEALTH_SCRIPT="/app/syncthing_health.sh"
+BASH_BIN="/bin/bash"
 
-SCRIPT_HEALTH="/app/syncthing_health.sh"
-SCRIPT_DEVICE_LAG="/app/syncthing-device-sync-monitor.sh"
-
-#######################################
-# READ REQUEST LINE (FROM SOCAT)
-#######################################
-
-# Read only the first request line: "GET /path HTTP/1.1"
-IFS=' ' read -r METHOD PATH _ || true
-
-#######################################
-# ROUTING
-#######################################
-
-case "$PATH" in
-  "/"|"/health")
-    TARGET="$SCRIPT_HEALTH"
-    ;;
-  "/device-lag")
-    TARGET="$SCRIPT_DEVICE_LAG"
-    ;;
-  *)
-    printf "HTTP/1.1 404 Not Found\r\n\r\nNot Found\n"
-    exit 0
-    ;;
-esac
-
-#######################################
-# VALIDATION
-#######################################
-
-if [[ ! -x "$TARGET" ]]; then
-  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nScript not executable: %s\n" "$TARGET"
+# Validate interpreter + target script (file existence is what matters; we run via bash)
+if [[ ! -x "$BASH_BIN" ]]; then
+  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nbash not found at %s\n" "$BASH_BIN"
   exit 0
 fi
 
-#######################################
-# EXECUTION
-#######################################
+if [[ ! -f "$HEALTH_SCRIPT" ]]; then
+  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nScript missing: %s\n" "$HEALTH_SCRIPT"
+  exit 0
+fi
 
-if "$TARGET"; then
+# Execute health script via bash to avoid /usr/bin/env issues inside Alpine
+if "$BASH_BIN" "$HEALTH_SCRIPT"; then
   printf "HTTP/1.1 200 OK\r\n\r\nOK\n"
   exit 0
 fi
@@ -84,7 +45,7 @@ RC=$?
 
 case "$RC" in
   1)
-    printf "HTTP/1.1 503 Service Unavailable\r\n\r\nService unhealthy\n"
+    printf "HTTP/1.1 503 Service Unavailable\r\n\r\nUnhealthy\n"
     ;;
   *)
     printf "HTTP/1.1 500 Internal Server Error\r\n\r\nService error\n"

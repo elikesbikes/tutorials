@@ -1,41 +1,52 @@
-#!/bin/sh
-# ------------------------------------------------------------
+#!/usr/bin/env bash
 # syncthing_device_lag_http.sh
 #
-# Version: 1.1.0
+# Service: syncthing-health
+# Script: syncthing_device_lag_http.sh
+# Version: 1.1.1
 #
 # Description:
-# HTTP wrapper for syncthing-device-sync-monitor.sh
-# Maps exit codes to HTTP responses for Uptime Kuma.
-# ------------------------------------------------------------
+# Minimal HTTP responder invoked by socat. Runs the device lag monitor
+# and returns HTTP status codes for Uptime Kuma.
+#
+# HTTP mapping:
+#   - exit 0 -> 200 OK
+#   - exit 1 -> 503 Service Unavailable
+#   - other  -> 500 Internal Server Error
+#
+# Changelog (running):
+# - 1.1.1: Fix executable check bug; always run monitor via /bin/bash
+# - 1.1.0: Initial version
+#
+set -euo pipefail
 
 MONITOR="/app/syncthing-device-sync-monitor.sh"
-BASH="/bin/bash"
+BASH_BIN="/bin/bash"
 
-# Validate runtime
-if [ ! -x "$BASH" ]; then
-  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nbash not available\n"
+if [[ ! -x "$BASH_BIN" ]]; then
+  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nbash not found at %s\n" "$BASH_BIN"
   exit 0
 fi
 
-if [ ! -f "$MONITOR" ]; then
-  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nMonitor script missing\n"
+if [[ ! -f "$MONITOR" ]]; then
+  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nScript missing: %s\n" "$MONITOR"
   exit 0
 fi
 
-# Execute monitor explicitly with bash
-$BASH "$MONITOR"
-RC=$?
-
-if [ "$RC" -eq 0 ]; then
+if "$BASH_BIN" "$MONITOR"; then
   printf "HTTP/1.1 200 OK\r\n\r\nOK\n"
   exit 0
 fi
 
-if [ "$RC" -eq 1 ]; then
-  printf "HTTP/1.1 503 Service Unavailable\r\n\r\nDevice behind too long\n"
-  exit 0
-fi
+RC=$?
 
-printf "HTTP/1.1 500 Internal Server Error\r\n\r\nMonitor error\n"
+case "$RC" in
+  1)
+    printf "HTTP/1.1 503 Service Unavailable\r\n\r\nDevice behind too long\n"
+    ;;
+  *)
+    printf "HTTP/1.1 500 Internal Server Error\r\n\r\nMonitor error\n"
+    ;;
+esac
+
 exit 0
