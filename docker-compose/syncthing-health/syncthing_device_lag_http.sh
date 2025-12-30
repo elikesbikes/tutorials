@@ -2,22 +2,19 @@
 # ------------------------------------------------------------
 # syncthing_device_lag_http.sh
 #
-# Version: 1.1.0
+# Version: 1.1.2
 #
-# Purpose:
+# Description:
 # HTTP wrapper for syncthing-device-sync-monitor.sh
-# Used by Uptime Kuma.
+# Maps exit codes to HTTP responses for Uptime Kuma.
 # ------------------------------------------------------------
-
-set -e
 
 MONITOR="/app/syncthing-device-sync-monitor.sh"
 
-# File must exist, but does NOT need +x
-if [[ ! -f "$MONITOR" ]]; then
+if [ ! -x "$MONITOR" ]; then
   printf "HTTP/1.1 500 Internal Server Error\r\n"
   printf "Content-Type: text/plain\r\n\r\n"
-  printf "Monitor script missing\n"
+  printf "Monitor script not executable\n"
   exit 0
 fi
 
@@ -28,16 +25,7 @@ if /bin/bash "$MONITOR"; then
   exit 0
 fi
 
-RC=$?
-
-if [[ "$RC" -eq 1 ]]; then
-  printf "HTTP/1.1 503 Service Unavailable\r\n"
-  printf "Content-Type: text/plain\r\n\r\n"
-  printf "Device behind too long\n"
-else
-  printf "HTTP/1.1 500 Internal Server Error\r\n"
-  printf "Content-Type: text/plain\r\n\r\n"
-  printf "Monitor error\n"
-fi
-
+printf "HTTP/1.1 500 Internal Server Error\r\n"
+printf "Content-Type: text/plain\r\n\r\n"
+printf "Monitor error\n"
 exit 0
