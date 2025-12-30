@@ -1,0 +1,23 @@
+# ------------------------------------------------------------
+# Dockerfile
+#
+# Image: syncthing-health
+# Base: alpine:3.20
+#
+# Description:
+# Prebuilt runtime image for Syncthing health and device-lag
+# monitoring. All dependencies are baked in to avoid runtime
+# installation and shell race conditions.
+# ------------------------------------------------------------
+
+FROM alpine:3.20
+
+# Install all runtime dependencies once, at build time
+RUN apk add --no-cache \
+    bash \
+    curl \
+    jq \
+    socat
+
+# All scripts are bind-mounted into /app
+WORKDIR /app
