@@ -2,13 +2,18 @@
 # docker-compose.yml
 #
 # Service: syncthing-health
-# Version: 1.4.0
+# Version: 1.5.0
 #
 # Description:
-# Bash-based Syncthing health endpoint exposed over HTTP
+# Bash-based Syncthing health endpoints exposed over HTTP
 # for monitoring via Uptime Kuma, with optional ntfy notifications.
 #
+# Endpoints:
+#   - Port 9123: Overall Syncthing health
+#   - Port 9124: Device-specific sync lag monitor
+#
 # Changelog (running):
+# - 1.5.0: Add second HTTP endpoint (port 9124) for device sync lag monitoring
 # - 1.4.0: Add persistent state volume for transition-based ntfy notifications
 # - 1.2.4: Removed obsolete top-level 'version:' key (Compose v2 rule)
 # - 1.2.3: Fix socat PATH issue by using absolute binary path
@@ -29,7 +34,8 @@ services:
       - /home/ecloaiza/.syncthing-health.env
 
     ports:
-      - "9123:9123"
+      - "9123:9123"   # Existing Syncthing health
+      - "9124:9124"   # Device sync lag monitor
 
     networks:
       - frontend
@@ -38,12 +44,14 @@ services:
       - ./syncthing_health.sh:/app/syncthing_health.sh:ro
       - ./syncthing_health_http.sh:/app/syncthing_health_http.sh:ro
       - ./syncthing-device-sync-monitor.sh:/app/syncthing-device-sync-monitor.sh:ro
-      - ./state:/state  
-      
+      - ./syncthing_device_lag_http.sh:/app/syncthing_device_lag_http.sh:ro
+      - ./state:/state
+
     command: >
       sh -c "
         apk add --no-cache bash curl jq socat &&
-        /app/syncthing_health_http.sh
+        socat TCP-LISTEN:9123,reuseaddr,fork EXEC:/app/syncthing_health_http.sh &
+        socat TCP-LISTEN:9124,reuseaddr,fork EXEC:/app/syncthing_device_lag_http.sh
       "
 
     restart: unless-stopped
