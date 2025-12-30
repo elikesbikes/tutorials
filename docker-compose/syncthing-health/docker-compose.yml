@@ -57,6 +57,7 @@ services:
       - ./syncthing-device-sync-monitor.sh:/app/syncthing-device-sync-monitor.sh:ro
       - ./syncthing_device_lag_http.sh:/app/syncthing_device_lag_http.sh:ro
       - ./state:/state
+      - /home/ecloaiza/.syncthing-health.env:/root/.syncthing-health.env:ro
 
     command: >
       sh -c "
