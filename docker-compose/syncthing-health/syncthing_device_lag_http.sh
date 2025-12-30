@@ -1,16 +1,39 @@
 #!/bin/sh
+# ------------------------------------------------------------
 # syncthing_device_lag_http.sh
+#
+# Version: 1.1.0
+#
+# Description:
+# HTTP wrapper for syncthing-device-sync-monitor.sh.
+# Used by Uptime Kuma.
+#
+# Exit code mapping:
+#   monitor exit 0 -> HTTP 200
+#   monitor exit 1 -> HTTP 503
+#   anything else  -> HTTP 500
+# ------------------------------------------------------------
 
-set -euo pipefail
+set -eu
 
-MONITOR="/app/syncthing-device-sync-monitor.sh"
+SCRIPT_NAME="$(basename "$0")"
+VERSION="1.1.0"
 
-if [[ ! -x "$MONITOR" ]]; then
-  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nMonitor script not executable\n"
+MONITOR_SCRIPT="/app/syncthing-device-sync-monitor.sh"
+
+# Validate target script exists and is executable
+if [ ! -f "$MONITOR_SCRIPT" ]; then
+  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nMissing script: %s\n" "$MONITOR_SCRIPT"
   exit 0
 fi
 
-if /bin/bash "$MONITOR"; then
+if [ ! -x "$MONITOR_SCRIPT" ]; then
+  printf "HTTP/1.1 500 Internal Server Error\r\n\r\nScript not executable: %s\n" "$MONITOR_SCRIPT"
+  exit 0
+fi
+
+# Execute explicitly with bash (never rely on shebang)
+if /bin/bash "$MONITOR_SCRIPT"; then
   printf "HTTP/1.1 200 OK\r\n\r\nOK\n"
   exit 0
 fi
