@@ -50,8 +50,8 @@ services:
     command: >
       sh -c "
         apk add --no-cache bash curl jq socat &&
-        socat TCP-LISTEN:9123,reuseaddr,fork EXEC:/app/syncthing_health_http.sh &
-        socat TCP-LISTEN:9124,reuseaddr,fork EXEC:/app/syncthing_device_lag_http.sh
+        /usr/bin/socat TCP-LISTEN:9123,reuseaddr,fork EXEC:/app/syncthing_health_http.sh &
+        /usr/bin/socat TCP-LISTEN:9124,reuseaddr,fork EXEC:/app/syncthing_device_lag_http.sh
       "
 
     restart: unless-stopped
