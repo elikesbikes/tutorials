@@ -2,12 +2,16 @@
 # ------------------------------------------------------------
 # syncthing_device_lag_http.sh
 #
-# Version: 1.1.2
+# Purpose:
+# HTTP wrapper for syncthing-device-sync-monitor.sh, suitable
+# for Uptime Kuma HTTP checks.
 #
-# Description:
-# HTTP wrapper for syncthing-device-sync-monitor.sh
-# Maps exit codes to HTTP responses for Uptime Kuma.
-# ------------------------------------------------------------
+# Version: 1.1.1
+#
+# Changelog (running):
+# - 1.1.1: Force /bin/bash execution; align exit-code mapping
+# - 1.1.0: Initial HTTP wrapper for device-lag monitor
+# -----------------------------------------------------------
 
 MONITOR="/app/syncthing-device-sync-monitor.sh"
 

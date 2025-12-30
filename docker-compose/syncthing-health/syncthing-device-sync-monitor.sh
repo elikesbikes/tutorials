@@ -2,15 +2,17 @@
 # ------------------------------------------------------------
 # syncthing-device-sync-monitor.sh
 #
-# Version: 1.1.2
+# Purpose:
+# Monitor a specific Syncthing folder + remote device and detect
+# when the device remains behind while connected for longer than
+# a threshold. Emits exit codes for Uptime Kuma and sends ntfy
+# notifications on state transitions.
 #
-# Description:
-# Monitor a specific Syncthing folder + remote device and report
-# unhealthy state when the device is connected but behind.
+# Version: 1.1.1
 #
-# Exit codes:
-#   0 = OK
-#   1 = Monitor failure / unhealthy
+# Changelog (running):
+# - 1.1.1: Fix env file resolution inside container; log to /state/logs
+# - 1.1.0: Initial production version with state tracking + ntfy alerts
 # ------------------------------------------------------------
 
 set -euo pipefail
