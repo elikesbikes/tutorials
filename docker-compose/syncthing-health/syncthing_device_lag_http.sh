@@ -1,9 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # syncthing_device_lag_http.sh
-#
-# HTTP wrapper for syncthing-device-sync-monitor.sh
-# Used by Uptime Kuma.
-#
 
 set -euo pipefail
 
@@ -14,7 +10,7 @@ if [[ ! -x "$MONITOR" ]]; then
   exit 0
 fi
 
-if "$MONITOR"; then
+if /bin/bash "$MONITOR"; then
   printf "HTTP/1.1 200 OK\r\n\r\nOK\n"
   exit 0
 fi

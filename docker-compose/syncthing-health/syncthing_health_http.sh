@@ -35,7 +35,7 @@ set -euo pipefail
 # CONFIG
 #######################################
 
-SCRIPT_HEALTH="/app/syncthing_health.sh"
+SCRIPT_HEALTH="/bin/bash /app/syncthing_health.sh"
 SCRIPT_DEVICE_LAG="/app/syncthing-device-sync-monitor.sh"
 
 #######################################
