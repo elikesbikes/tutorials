@@ -187,4 +187,42 @@ config_json="$(curl -sS -m 8 "${header_args[@]}" "$SYNCTHING_URL/rest/config" ||
 if [[ -z "$config_json" ]]; then
   reason="Syncthing config fetch failed"
   log "$reason"
-  maybe_notif_
+  maybe_notify_transition "DOWN" "$reason" "$now"
+  echo "ERROR: ${reason}"
+  exit 1
+fi
+
+# Iterate folders deterministically (no subshell exit traps)
+mapfile -t folder_lines < <(printf "%s" "$config_json" | jq -r '.folders[] | "\(.id)\t\(.paused)"')
+
+for line in "${folder_lines[@]}"; do
+  folder_id="${line%%$'\t'*}"
+  paused="${line#*$'\t'}"
+
+  if [[ "$paused" == "true" ]]; then
+    reason="Folder paused: ${folder_id}"
+    log "$reason"
+    maybe_notify_transition "DOWN" "$reason" "$now"
+    echo "ERROR: ${reason}"
+    exit 1
+  fi
+
+  db_json="$(curl -sS -m 8 "${header_args[@]}" "$SYNCTHING_URL/rest/db/status?folder=$folder_id" || true)"
+  state="$(printf "%s" "$db_json" | jq -r '.state // empty' 2>/dev/null || true)"
+
+  log "Folder '$folder_id' state = ${state:-<none>}"
+
+  if [[ "$state" == "error" ]]; then
+    reason="Folder error: ${folder_id}"
+    log "$reason"
+    maybe_notify_transition "DOWN" "$reason" "$now"
+    echo "ERROR: ${reason}"
+    exit 1
+  fi
+done
+
+# If we got here, all good
+maybe_notify_transition "UP" "All folders healthy" "$now"
+log "All folders healthy"
+echo "OK: All folders healthy"
+exit 0
