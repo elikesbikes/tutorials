@@ -1,60 +1,50 @@
 #!/usr/bin/env bash
+# ------------------------------------------------------------
 # syncthing-device-sync-monitor.sh
 #
 # Version: 1.1.0
 #
-# Purpose:
-#   Monitor a specific Syncthing folder + remote device and alert (via ntfy)
-#   if the device stays behind while connected for longer than a threshold.
+# Description:
+# Monitor a specific Syncthing folder and remote device.
+# Detects when the device is behind while connected longer
+# than a defined threshold. Sends ntfy alerts on transitions.
 #
-# Exit Codes:
-#   0 = OK / tracking / recovered / disconnected
-#   1 = PROBLEM (behind too long while connected)
-#   3 = Misconfiguration / API error
-#
+# Exit codes:
+#   0 = OK / tracking / recovered
+#   1 = Problem (behind too long while connected)
+#   3 = Configuration or API error
+# ------------------------------------------------------------
 
 set -euo pipefail
-
-#######################################
-# CONFIG / CONSTANTS
-#######################################
 
 SCRIPT_NAME="$(basename "$0")"
 VERSION="1.1.0"
 
+#######################################
+# CONFIG
+#######################################
+
 ENV_FILE="$HOME/.syncthing-health.env"
 
-# Required env vars
-REQUIRED_VARS=(
-  SYNCTHING_URL
-  SYNCTHING_API_KEY
-)
-
-# Monitored target (explicit, frozen for now)
 FOLDER_ID="eloaiza_Documents"
 DEVICE_ID="UJPF4VF-IYRANQA-CKEL2GU-W3OJZAW-CKU2ACA-W6QCGJ2-M7PKYNI-3AIRAQQ"
 
-# Threshold (minutes)
 MAX_BEHIND_MINUTES=30
 
-# Logging
 LOG_FILE="/var/log/syncthing-device-sync-monitor.log"
 
-# State tracking
 STATE_DIR="$HOME/.local/state/syncthing"
 STATE_FILE="$STATE_DIR/${FOLDER_ID}.${DEVICE_ID}.behind"
 
 #######################################
-# LOGGING
+# SETUP
 #######################################
 
-mkdir -p "$(dirname "$LOG_FILE")"
-mkdir -p "$STATE_DIR"
-
+mkdir -p "$(dirname "$LOG_FILE")" "$STATE_DIR"
 exec >>"$LOG_FILE" 2>&1
 
 log() {
-  echo "[$(date -Is)] [$SCRIPT_NAME] $*"
+  echo "[$(date -Is)] [$SCRIPT_NAME v$VERSION] $*"
 }
 
 #######################################
@@ -62,42 +52,42 @@ log() {
 #######################################
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  log "ERROR: Env file not found: $ENV_FILE"
+  log "ERROR: Missing env file: $ENV_FILE"
   exit 3
 fi
 
-# shellcheck source=/dev/null
+# shellcheck disable=SC1090
 source "$ENV_FILE"
 
-for v in "${REQUIRED_VARS[@]}"; do
-  if [[ -z "${!v:-}" ]]; then
-    log "ERROR: Required env var missing: $v"
+for var in SYNCTHING_URL SYNCTHING_API_KEY; do
+  if [[ -z "${!var:-}" ]]; then
+    log "ERROR: Missing env var: $var"
     exit 3
   fi
 done
 
 #######################################
-# NTFY (optional)
+# NTFY
 #######################################
 
 ntfy_enabled() {
-  [[ "${NTFY_ENABLED:-0}" == "1" ]] && [[ -n "${NTFY_URL:-}" ]] && [[ -n "${NTFY_TOPIC:-}" ]]
+  [[ "${NTFY_ENABLED:-0}" == "1" ]] &&
+  [[ -n "${NTFY_URL:-}" ]] &&
+  [[ -n "${NTFY_TOPIC:-}" ]]
 }
 
 ntfy_post() {
   local title="$1"
   local body="$2"
 
-  if ! ntfy_enabled; then
-    return 0
-  fi
+  ntfy_enabled || return 0
 
   curl -fsS --max-time 10 \
     -X POST \
     -H "Title: $title" \
     -d "$body" \
     "${NTFY_URL%/}/$NTFY_TOPIC" >/dev/null || \
-    log "WARN: Failed to send ntfy notification: $title"
+    log "WARN: ntfy failed: $title"
 }
 
 #######################################
@@ -111,18 +101,18 @@ api_get() {
 }
 
 state_read() {
-  local epoch="0"
+  local since="0"
   local alerted="0"
 
   if [[ -f "$STATE_FILE" ]]; then
-    epoch="$(sed -n '1p' "$STATE_FILE" 2>/dev/null || echo 0)"
-    alerted="$(sed -n '2p' "$STATE_FILE" 2>/dev/null || echo 0)"
+    since="$(sed -n '1p' "$STATE_FILE")"
+    alerted="$(sed -n '2p' "$STATE_FILE")"
   fi
 
-  [[ "$epoch" =~ ^[0-9]+$ ]] || epoch="0"
+  [[ "$since" =~ ^[0-9]+$ ]] || since="0"
   [[ "$alerted" == "1" ]] || alerted="0"
 
-  echo "$epoch $alerted"
+  echo "$since $alerted"
 }
 
 state_write() {
@@ -137,320 +127,54 @@ state_clear() {
 # MAIN
 #######################################
 
-# 1) Connection state
+log "Starting monitor run"
+
 CONN_JSON="$(api_get /rest/system/connections || true)"
-if [[ -z "$CONN_JSON" ]]; then
-  log "ERROR: Unable to query system connections"
-  exit 3
-fi
+[[ -n "$CONN_JSON" ]] || exit 3
 
-CONNECTED="$(echo "$CONN_JSON" | jq -r ".connections[\"$DEVICE_ID\"].connected // false")"
+CONNECTED="$(jq -r ".connections[\"$DEVICE_ID\"].connected // false" <<<"$CONN_JSON")"
 
-# 2) Completion state
 COMP_JSON="$(api_get "/rest/db/completion?folder=$FOLDER_ID&device=$DEVICE_ID" || true)"
-if [[ -z "$COMP_JSON" ]]; then
-  log "ERROR: Unable to query completion for folder=$FOLDER_ID device=$DEVICE_ID"
-  exit 3
-fi
+[[ -n "$COMP_JSON" ]] || exit 3
 
-NEED_ITEMS="$(echo "$COMP_JSON" | jq -r '.needItems // 0')"
-NEED_BYTES="$(echo "$COMP_JSON" | jq -r '.needBytes // 0')"
-COMPLETION="$(echo "$COMP_JSON" | jq -r '.completion // 0')"
+NEED_ITEMS="$(jq -r '.needItems // 0' <<<"$COMP_JSON")"
+COMPLETION="$(jq -r '.completion // 0' <<<"$COMP_JSON")"
 
-NOW_EPOCH="$(date +%s)"
-
+NOW="$(date +%s)"
 read -r BEHIND_SINCE ALERTED < <(state_read)
 
-# Device not connected → clear state, optional recovery
 if [[ "$CONNECTED" != "true" ]]; then
-  if [[ "$ALERTED" == "1" ]]; then
-    ntfy_post \
-      "Syncthing device recovered (offline)" \
-      "Device is no longer connected; alert cleared.
-
-Folder: $FOLDER_ID
-Device: $DEVICE_ID
-Time: $(date -Is)"
-  fi
-
-  log "INFO: Device not connected; clearing state"
+  [[ "$ALERTED" == "1" ]] && ntfy_post "Syncthing recovered (offline)" "Device disconnected."
   state_clear
   exit 0
 fi
 
-# Fully in sync → clear state, optional recovery
 if [[ "$NEED_ITEMS" -eq 0 ]]; then
-  if [[ "$ALERTED" == "1" ]]; then
-    ntfy_post \
-      "Syncthing device recovered" \
-      "Device is fully in sync again.
-
-Folder: $FOLDER_ID
-Device: $DEVICE_ID
-Completion: ${COMPLETION}%
-Time: $(date -Is)"
-  fi
-
-  log "OK: Device in sync; clearing state"
+  [[ "$ALERTED" == "1" ]] && ntfy_post "Syncthing recovered" "Device back in sync."
   state_clear
   exit 0
 fi
 
-# Behind + connected
-if [[ ! -f "$STATE_FILE" || "$BEHIND_SINCE" -eq 0 ]]; then
-  state_write "$NOW_EPOCH" "0"
-  log "WARN: Device behind; tracking started (needItems=$NEED_ITEMS)"
+if [[ "$BEHIND_SINCE" -eq 0 ]]; then
+  state_write "$NOW" "0"
+  log "Behind detected; tracking started"
   exit 0
 fi
 
-ELAPSED_MIN=$(((NOW_EPOCH - BEHIND_SINCE) / 60))
+ELAPSED_MIN=$(( (NOW - BEHIND_SINCE) / 60 ))
 
 if (( ELAPSED_MIN >= MAX_BEHIND_MINUTES )); then
   if [[ "$ALERTED" != "1" ]]; then
     ntfy_post \
       "Syncthing device behind too long" \
-      "Device is behind while connected past threshold.
-
-Folder: $FOLDER_ID
+      "Folder: $FOLDER_ID
 Device: $DEVICE_ID
-Behind: needItems=$NEED_ITEMS needBytes=$NEED_BYTES
-Duration: ${ELAPSED_MIN}m (threshold=${MAX_BEHIND_MINUTES}m)
-Started: $(date -d "@$BEHIND_SINCE" -Is)"
-
+Behind: $NEED_ITEMS items
+Duration: ${ELAPSED_MIN}m"
     state_write "$BEHIND_SINCE" "1"
   fi
-
-  log "ERROR: Device behind too long (${ELAPSED_MIN}m)"
   exit 1
 fi
 
-log "INFO: Device still behind but under threshold (${ELAPSED_MIN}m)"
-exit 0
-#!/usr/bin/env bash
-# syncthing-device-sync-monitor.sh
-#
-# Version: 1.1.0
-#
-# Purpose:
-#   Monitor a specific Syncthing folder + remote device and alert (via ntfy)
-#   if the device stays behind while connected for longer than a threshold.
-#
-# Exit Codes:
-#   0 = OK / tracking / recovered / disconnected
-#   1 = PROBLEM (behind too long while connected)
-#   3 = Misconfiguration / API error
-#
-
-set -euo pipefail
-
-#######################################
-# CONFIG / CONSTANTS
-#######################################
-
-SCRIPT_NAME="$(basename "$0")"
-VERSION="1.1.0"
-
-ENV_FILE="$HOME/.syncthing-health.env"
-
-# Required env vars
-REQUIRED_VARS=(
-  SYNCTHING_URL
-  SYNCTHING_API_KEY
-)
-
-# Monitored target (explicit, frozen for now)
-FOLDER_ID="eloaiza_Documents"
-DEVICE_ID="UJPF4VF-IYRANQA-CKEL2GU-W3OJZAW-CKU2ACA-W6QCGJ2-M7PKYNI-3AIRAQQ"
-
-# Threshold (minutes)
-MAX_BEHIND_MINUTES=30
-
-# Logging
-LOG_FILE="/var/log/syncthing-device-sync-monitor.log"
-
-# State tracking
-STATE_DIR="$HOME/.local/state/syncthing"
-STATE_FILE="$STATE_DIR/${FOLDER_ID}.${DEVICE_ID}.behind"
-
-#######################################
-# LOGGING
-#######################################
-
-mkdir -p "$(dirname "$LOG_FILE")"
-mkdir -p "$STATE_DIR"
-
-exec >>"$LOG_FILE" 2>&1
-
-log() {
-  echo "[$(date -Is)] [$SCRIPT_NAME] $*"
-}
-
-#######################################
-# LOAD ENV
-#######################################
-
-if [[ ! -f "$ENV_FILE" ]]; then
-  log "ERROR: Env file not found: $ENV_FILE"
-  exit 3
-fi
-
-# shellcheck source=/dev/null
-source "$ENV_FILE"
-
-for v in "${REQUIRED_VARS[@]}"; do
-  if [[ -z "${!v:-}" ]]; then
-    log "ERROR: Required env var missing: $v"
-    exit 3
-  fi
-done
-
-#######################################
-# NTFY (optional)
-#######################################
-
-ntfy_enabled() {
-  [[ "${NTFY_ENABLED:-0}" == "1" ]] && [[ -n "${NTFY_URL:-}" ]] && [[ -n "${NTFY_TOPIC:-}" ]]
-}
-
-ntfy_post() {
-  local title="$1"
-  local body="$2"
-
-  if ! ntfy_enabled; then
-    return 0
-  fi
-
-  curl -fsS --max-time 10 \
-    -X POST \
-    -H "Title: $title" \
-    -d "$body" \
-    "${NTFY_URL%/}/$NTFY_TOPIC" >/dev/null || \
-    log "WARN: Failed to send ntfy notification: $title"
-}
-
-#######################################
-# HELPERS
-#######################################
-
-api_get() {
-  curl -fsS --max-time 10 \
-    -H "X-API-Key: $SYNCTHING_API_KEY" \
-    "$SYNCTHING_URL$1"
-}
-
-state_read() {
-  local epoch="0"
-  local alerted="0"
-
-  if [[ -f "$STATE_FILE" ]]; then
-    epoch="$(sed -n '1p' "$STATE_FILE" 2>/dev/null || echo 0)"
-    alerted="$(sed -n '2p' "$STATE_FILE" 2>/dev/null || echo 0)"
-  fi
-
-  [[ "$epoch" =~ ^[0-9]+$ ]] || epoch="0"
-  [[ "$alerted" == "1" ]] || alerted="0"
-
-  echo "$epoch $alerted"
-}
-
-state_write() {
-  printf "%s\n%s\n" "$1" "$2" >"$STATE_FILE"
-}
-
-state_clear() {
-  rm -f "$STATE_FILE"
-}
-
-#######################################
-# MAIN
-#######################################
-
-# 1) Connection state
-CONN_JSON="$(api_get /rest/system/connections || true)"
-if [[ -z "$CONN_JSON" ]]; then
-  log "ERROR: Unable to query system connections"
-  exit 3
-fi
-
-CONNECTED="$(echo "$CONN_JSON" | jq -r ".connections[\"$DEVICE_ID\"].connected // false")"
-
-# 2) Completion state
-COMP_JSON="$(api_get "/rest/db/completion?folder=$FOLDER_ID&device=$DEVICE_ID" || true)"
-if [[ -z "$COMP_JSON" ]]; then
-  log "ERROR: Unable to query completion for folder=$FOLDER_ID device=$DEVICE_ID"
-  exit 3
-fi
-
-NEED_ITEMS="$(echo "$COMP_JSON" | jq -r '.needItems // 0')"
-NEED_BYTES="$(echo "$COMP_JSON" | jq -r '.needBytes // 0')"
-COMPLETION="$(echo "$COMP_JSON" | jq -r '.completion // 0')"
-
-NOW_EPOCH="$(date +%s)"
-
-read -r BEHIND_SINCE ALERTED < <(state_read)
-
-# Device not connected → clear state, optional recovery
-if [[ "$CONNECTED" != "true" ]]; then
-  if [[ "$ALERTED" == "1" ]]; then
-    ntfy_post \
-      "Syncthing device recovered (offline)" \
-      "Device is no longer connected; alert cleared.
-
-Folder: $FOLDER_ID
-Device: $DEVICE_ID
-Time: $(date -Is)"
-  fi
-
-  log "INFO: Device not connected; clearing state"
-  state_clear
-  exit 0
-fi
-
-# Fully in sync → clear state, optional recovery
-if [[ "$NEED_ITEMS" -eq 0 ]]; then
-  if [[ "$ALERTED" == "1" ]]; then
-    ntfy_post \
-      "Syncthing device recovered" \
-      "Device is fully in sync again.
-
-Folder: $FOLDER_ID
-Device: $DEVICE_ID
-Completion: ${COMPLETION}%
-Time: $(date -Is)"
-  fi
-
-  log "OK: Device in sync; clearing state"
-  state_clear
-  exit 0
-fi
-
-# Behind + connected
-if [[ ! -f "$STATE_FILE" || "$BEHIND_SINCE" -eq 0 ]]; then
-  state_write "$NOW_EPOCH" "0"
-  log "WARN: Device behind; tracking started (needItems=$NEED_ITEMS)"
-  exit 0
-fi
-
-ELAPSED_MIN=$(((NOW_EPOCH - BEHIND_SINCE) / 60))
-
-if (( ELAPSED_MIN >= MAX_BEHIND_MINUTES )); then
-  if [[ "$ALERTED" != "1" ]]; then
-    ntfy_post \
-      "Syncthing device behind too long" \
-      "Device is behind while connected past threshold.
-
-Folder: $FOLDER_ID
-Device: $DEVICE_ID
-Behind: needItems=$NEED_ITEMS needBytes=$NEED_BYTES
-Duration: ${ELAPSED_MIN}m (threshold=${MAX_BEHIND_MINUTES}m)
-Started: $(date -d "@$BEHIND_SINCE" -Is)"
-
-    state_write "$BEHIND_SINCE" "1"
-  fi
-
-  log "ERROR: Device behind too long (${ELAPSED_MIN}m)"
-  exit 1
-fi
-
-log "INFO: Device still behind but under threshold (${ELAPSED_MIN}m)"
+log "Still behind (${ELAPSED_MIN}m < ${MAX_BEHIND_MINUTES}m)"
 exit 0
