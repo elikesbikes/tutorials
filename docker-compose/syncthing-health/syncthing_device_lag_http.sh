@@ -1,43 +1,89 @@
-#!/bin/sh
+#!/bin/bash
 # ------------------------------------------------------------
 # syncthing_device_lag_http.sh
 #
-# Version: 1.1.0
+# Service: syncthing-health
+# Script: syncthing_device_lag_http.sh
+# Version: 1.6.0
 #
 # Description:
-# HTTP endpoint wrapper for syncthing-device-sync-monitor.sh
-# Designed for Uptime Kuma via socat.
+# HTTP wrapper for /app/syncthing-device-sync-monitor.sh used by Uptime Kuma.
+# Ensures strict HTTP/1.1 responses and prevents backend output from
+# corrupting the HTTP response stream.
 #
-# Exit code mapping:
+# Exit-code mapping (backend -> HTTP):
 #   0 -> 200 OK
 #   1 -> 503 Service Unavailable
 #   * -> 500 Internal Server Error
+#
+# Logging:
+#   /state/logs/syncthing_device_lag_http.log
+#   /state/logs/syncthing_device_lag_backend.log
+#
+# Changelog (running):
+# - 1.6.0: Fix executable-check bug; force /bin/bash backend execution;
+#         always emit valid HTTP/1.1 headers; isolate backend stdout/stderr
+#         to /state logs to prevent HTTP/0.9 + empty reply issues.
 # ------------------------------------------------------------
 
-set -eu
+set -euo pipefail
 
-MONITOR="/app/syncthing-device-sync-monitor.sh"
+VERSION="1.6.0"
 
-# Run monitor via explicit interpreter (never rely on shebangs)
-if /bin/bash "$MONITOR"; then
-  printf "HTTP/1.1 200 OK\r\n"
-  printf "Content-Type: text/plain\r\n\r\n"
-  printf "OK\n"
+STATE_DIR="/state"
+LOG_DIR="$STATE_DIR/logs"
+WRAP_LOG="$LOG_DIR/syncthing_device_lag_http.log"
+BACKEND_LOG="$LOG_DIR/syncthing_device_lag_backend.log"
+
+BACKEND_SCRIPT="/app/syncthing-device-sync-monitor.sh"
+
+mkdir -p "$LOG_DIR"
+
+log() {
+  echo "[$(date -Is)] [syncthing_device_lag_http] v$VERSION $*" >>"$WRAP_LOG"
+}
+
+http_reply() {
+  local code="$1" reason="$2" body="$3"
+  local len
+  len="$(printf '%s' "$body" | wc -c | tr -d ' ')"
+
+  printf "HTTP/1.1 %s %s\r\n" "$code" "$reason"
+  printf "Content-Type: text/plain\r\n"
+  printf "Content-Length: %s\r\n" "$len"
+  printf "Connection: close\r\n"
+  printf "\r\n"
+  printf "%s" "$body"
+}
+
+if [[ ! -x /bin/bash ]]; then
+  log "ERROR: /bin/bash not present or not executable"
+  http_reply 500 "Internal Server Error" "bash missing\n"
   exit 0
 fi
 
+if [[ ! -f "$BACKEND_SCRIPT" ]]; then
+  log "ERROR: Backend script missing: $BACKEND_SCRIPT"
+  http_reply 500 "Internal Server Error" "backend script missing\n"
+  exit 0
+fi
+
+set +e
+/bin/bash "$BACKEND_SCRIPT" >>"$BACKEND_LOG" 2>&1
 RC=$?
+set -e
+
+log "Backend exit code: $RC"
 
 case "$RC" in
+  0)
+    http_reply 200 "OK" "OK\n"
+    ;;
   1)
-    printf "HTTP/1.1 503 Service Unavailable\r\n"
-    printf "Content-Type: text/plain\r\n\r\n"
-    printf "Device behind too long\n"
+    http_reply 503 "Service Unavailable" "Device behind too long\n"
     ;;
   *)
-    printf "HTTP/1.1 500 Internal Server Error\r\n"
-    printf "Content-Type: text/plain\r\n\r\n"
-    printf "Monitor error\n"
+    http_reply 500 "Internal Server Error" "Monitor error\n"
     ;;
 esac
 
