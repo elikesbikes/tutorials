@@ -4,28 +4,40 @@
 #
 # Version: 1.1.0
 #
-# Purpose:
-# HTTP wrapper for syncthing-device-sync-monitor.sh
-# for Uptime Kuma.
+# Description:
+# HTTP endpoint wrapper for syncthing-device-sync-monitor.sh
+# Designed for Uptime Kuma via socat.
+#
+# Exit code mapping:
+#   0 -> 200 OK
+#   1 -> 503 Service Unavailable
+#   * -> 500 Internal Server Error
 # ------------------------------------------------------------
 
 set -eu
 
 MONITOR="/app/syncthing-device-sync-monitor.sh"
 
-# Always run via bash — never rely on shebang
-/bin/bash "$MONITOR"
+# Run monitor via explicit interpreter (never rely on shebangs)
+if /bin/bash "$MONITOR"; then
+  printf "HTTP/1.1 200 OK\r\n"
+  printf "Content-Type: text/plain\r\n\r\n"
+  printf "OK\n"
+  exit 0
+fi
+
 RC=$?
 
 case "$RC" in
-  0)
-    printf "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK"
-    ;;
   1)
-    printf "HTTP/1.1 503 Service Unavailable\r\nContent-Length: 18\r\n\r\nDevice behind too long"
+    printf "HTTP/1.1 503 Service Unavailable\r\n"
+    printf "Content-Type: text/plain\r\n\r\n"
+    printf "Device behind too long\n"
     ;;
   *)
-    printf "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 13\r\n\r\nMonitor error"
+    printf "HTTP/1.1 500 Internal Server Error\r\n"
+    printf "Content-Type: text/plain\r\n\r\n"
+    printf "Monitor error\n"
     ;;
 esac
 
