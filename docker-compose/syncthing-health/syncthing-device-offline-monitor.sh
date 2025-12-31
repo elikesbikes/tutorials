@@ -3,31 +3,32 @@
 # syncthing-device-offline-monitor.sh
 #
 # Purpose:
-# Report DOWN if a specific Syncthing device is not currently
-# connected. Uses /rest/system/connections (no time parsing).
-# Emits exit codes for Uptime Kuma and sends ntfy notifications
-# on state transitions.
+# Alert only if a Syncthing device remains offline for longer
+# than a configurable threshold.
 #
-# Version: 1.2.1
+# Uses /rest/system/connections (no timestamp parsing).
+#
+# Version: 1.3.0
 # Status: FROZEN
 #
 # Changelog (running):
-# - 1.2.1: Add ntfy notifications on offline/online transitions
-# - 1.2.0: Switch to /rest/system/connections (remove timestamps)
-# - 1.1.0: Timestamp-based logic (deprecated)
+# - 1.3.0: Add thresholded offline detection using shared env var
+# - 1.2.1: Immediate offline alerts
 # ------------------------------------------------------------
 
 set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
-VERSION="1.2.1"
+VERSION="1.3.0"
 
 ENV_FILE="$HOME/.syncthing-health.env"
 
 LOG_DIR="/state/logs"
 STATE_DIR="/state/state"
 LOG_FILE="$LOG_DIR/syncthing-device-offline-monitor.log"
+
 STATE_FILE="$STATE_DIR/device_offline.state"
+OFFLINE_SINCE_FILE="$STATE_DIR/device_offline_since"
 
 mkdir -p "$LOG_DIR" "$STATE_DIR"
 
@@ -63,19 +64,16 @@ transition() {
   old="$(read_state)"
 
   [[ "$old" == "$new" ]] && return 0
-
   write_state "$new"
 
   case "$new" in
     DOWN)
-      log "STATE CHANGE: UP → DOWN"
       notify "🚨 Syncthing device offline" \
-        "The monitored device is no longer connected to Syncthing."
+        "Device has been offline longer than the configured threshold."
       ;;
     UP)
-      log "STATE CHANGE: DOWN → UP"
       notify "✅ Syncthing device online" \
-        "The monitored device has reconnected to Syncthing."
+        "Device has reconnected to Syncthing."
       ;;
   esac
 }
@@ -83,8 +81,7 @@ transition() {
 log "Starting offline monitor"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  log "ERROR: Missing env file: $ENV_FILE"
-  transition DOWN
+  log "ERROR: Missing env file"
   exit 1
 fi
 
@@ -92,10 +89,11 @@ fi
 source "$ENV_FILE"
 
 if [[ -z "${SYNCTHING_URL:-}" || -z "${SYNCTHING_API_KEY:-}" ]]; then
-  log "ERROR: Missing required SYNCTHING_* variables"
-  transition DOWN
+  log "ERROR: Missing SYNCTHING config"
   exit 1
 fi
+
+THRESHOLD_SECONDS="${SYNCTHING_SYNC_BEHIND_THRESHOLD_SECONDS:-86400}"
 
 DEVICE_ID="UJPF4VF-IYRANQA-CKEL2GU-W3OJZAW-CKU2ACA-W6QCGJ2-M7PKYNI-3AIRAQQ"
 
@@ -106,12 +104,35 @@ CONNECTED="$(
   | jq -r --arg id "$DEVICE_ID" '.connections[$id].connected // false'
 )"
 
+NOW="$(date +%s)"
 log "Connected=$CONNECTED"
 
+# ----------------------------
+# Device is offline
+# ----------------------------
 if [[ "$CONNECTED" != "true" ]]; then
-  transition DOWN
-  exit 1
+  if [[ ! -f "$OFFLINE_SINCE_FILE" ]]; then
+    echo "$NOW" >"$OFFLINE_SINCE_FILE"
+    log "Device went offline at $NOW"
+    exit 0
+  fi
+
+  OFFLINE_SINCE="$(cat "$OFFLINE_SINCE_FILE")"
+  AGE="$(( NOW - OFFLINE_SINCE ))"
+
+  log "Offline for ${AGE}s (threshold=${THRESHOLD_SECONDS}s)"
+
+  if (( AGE >= THRESHOLD_SECONDS )); then
+    transition DOWN
+    exit 1
+  fi
+
+  exit 0
 fi
 
+# ----------------------------
+# Device is online
+# ----------------------------
+rm -f "$OFFLINE_SINCE_FILE"
 transition UP
 exit 0
