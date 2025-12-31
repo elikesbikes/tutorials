@@ -3,29 +3,32 @@
 # syncthing-device-sync-monitor.sh
 #
 # Purpose:
-# Monitor a specific Syncthing folder + remote device and detect
-# when the device remains behind. Emits exit codes for Uptime Kuma
-# and sends ntfy notifications on state transitions.
+# Alert only when a connected Syncthing device remains behind
+# (needItems > 0) for longer than a configurable threshold.
 #
-# Version: 1.2.0
+# Offline devices are explicitly ignored.
+#
+# Version: 1.2.1
+# Status: ACTIVE
 #
 # Changelog (running):
-# - 1.2.0: Add stateful ntfy notifications (DOWN/RECOVERY), no spam
-# - 1.1.1: Fix env file resolution inside container; log to /state/logs
-# - 1.1.0: Initial production version with state tracking
+# - 1.2.1: Make threshold env-configurable; ignore offline devices
+# - 1.2.0: Initial duration-based lag detection
 # ------------------------------------------------------------
 
 set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
-VERSION="1.2.0"
+VERSION="1.2.1"
 
 ENV_FILE="$HOME/.syncthing-health.env"
 
 LOG_DIR="/state/logs"
 STATE_DIR="/state/state"
 LOG_FILE="$LOG_DIR/syncthing-device-sync-monitor.log"
+
 STATE_FILE="$STATE_DIR/device_sync.state"
+BEHIND_SINCE_FILE="$STATE_DIR/device_sync_behind_since"
 
 mkdir -p "$LOG_DIR" "$STATE_DIR"
 
@@ -42,7 +45,7 @@ notify() {
 
   curl -fsS \
     -H "Title: $title" \
-    -H "Tags: syncthing" \
+    -H "Tags: syncthing,sync" \
     -d "$message" \
     "$NTFY_URL/$NTFY_TOPIC" >/dev/null || true
 }
@@ -61,26 +64,28 @@ transition() {
   old="$(read_state)"
 
   [[ "$old" == "$new" ]] && return 0
-
   write_state "$new"
 
   case "$new" in
     DOWN)
-      notify "🚨 Syncthing device behind" \
-        "Device is out of sync (needItems=$NEED_ITEMS)"
+      notify "⚠️ Syncthing device behind" \
+        "Device has been out of sync longer than the configured threshold."
       ;;
     UP)
-      notify "✅ Syncthing device recovered" \
-        "Device is fully back in sync"
+      notify "✅ Syncthing device back in sync" \
+        "Device is fully synchronized again."
       ;;
   esac
 }
 
-log "Starting monitor"
+# ----------------------------
+# Startup
+# ----------------------------
+
+log "Starting sync monitor"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  log "ERROR: Missing env file: $ENV_FILE"
-  transition DOWN
+  log "ERROR: Missing env file"
   exit 1
 fi
 
@@ -88,35 +93,71 @@ fi
 source "$ENV_FILE"
 
 if [[ -z "${SYNCTHING_URL:-}" || -z "${SYNCTHING_API_KEY:-}" ]]; then
-  log "ERROR: Missing required SYNCTHING_* variables"
-  transition DOWN
+  log "ERROR: Missing SYNCTHING config"
   exit 1
 fi
+
+THRESHOLD_SECONDS="${SYNCTHING_SYNC_BEHIND_THRESHOLD_SECONDS:-86400}"
 
 FOLDER_ID="eloaiza_Documents"
 DEVICE_ID="UJPF4VF-IYRANQA-CKEL2GU-W3OJZAW-CKU2ACA-W6QCGJ2-M7PKYNI-3AIRAQQ"
 
+# ----------------------------
+# Ignore offline devices
+# ----------------------------
+
+CONNECTED="$(
+  curl -fsS \
+    -H "X-API-Key: $SYNCTHING_API_KEY" \
+    "$SYNCTHING_URL/rest/system/connections" \
+  | jq -r --arg id "$DEVICE_ID" '.connections[$id].connected // false'
+)"
+
+log "Connected=$CONNECTED"
+
+if [[ "$CONNECTED" != "true" ]]; then
+  log "Device offline — sync monitor skipping"
+  exit 0
+fi
+
+# ----------------------------
+# Check sync status
+# ----------------------------
+
 COMPLETION_JSON="$(
   curl -fsS \
     -H "X-API-Key: $SYNCTHING_API_KEY" \
-    "$SYNCTHING_URL/rest/db/completion?folder=$FOLDER_ID&device=$DEVICE_ID" \
-    || true
+    "$SYNCTHING_URL/rest/db/completion?folder=$FOLDER_ID&device=$DEVICE_ID"
 )"
 
-if [[ -z "$COMPLETION_JSON" ]]; then
-  log "ERROR: Failed to query completion API"
-  transition DOWN
-  exit 1
-fi
-
 NEED_ITEMS="$(echo "$COMPLETION_JSON" | jq -r '.needItems // 0')"
+NOW="$(date +%s)"
 
-if [[ "$NEED_ITEMS" -gt 0 ]]; then
-  log "WARN: Device behind (needItems=$NEED_ITEMS)"
+log "needItems=$NEED_ITEMS"
+
+# Fully synced → reset immediately
+if [[ "$NEED_ITEMS" -eq 0 ]]; then
+  rm -f "$BEHIND_SINCE_FILE"
+  transition UP
+  exit 0
+fi
+
+# First detection of lag
+if [[ ! -f "$BEHIND_SINCE_FILE" ]]; then
+  echo "$NOW" >"$BEHIND_SINCE_FILE"
+  log "Device fell behind at $NOW"
+  exit 0
+fi
+
+BEHIND_SINCE="$(cat "$BEHIND_SINCE_FILE")"
+AGE="$(( NOW - BEHIND_SINCE ))"
+
+log "Behind for ${AGE}s (threshold=${THRESHOLD_SECONDS}s)"
+
+if (( AGE >= THRESHOLD_SECONDS )); then
   transition DOWN
   exit 1
 fi
 
-log "OK: Device fully in sync"
-transition UP
+# Still within grace period
 exit 0
