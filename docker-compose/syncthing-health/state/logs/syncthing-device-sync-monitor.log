@@ -49,3 +49,5 @@
 [2025-12-30T21:30:10+00:00] [syncthing-device-sync-monitor.sh v1.1.2] OK: Device fully in sync
 [2025-12-30T21:32:22+00:00] [syncthing-device-sync-monitor.sh v1.1.2] Starting monitor
 [2025-12-30T21:32:23+00:00] [syncthing-device-sync-monitor.sh v1.1.2] OK: Device fully in sync
+[2025-12-30T22:05:24+00:00] [syncthing-device-sync-monitor.sh v1.2.0] Starting monitor
+[2025-12-30T22:05:24+00:00] [syncthing-device-sync-monitor.sh v1.2.0] OK: Device fully in sync
