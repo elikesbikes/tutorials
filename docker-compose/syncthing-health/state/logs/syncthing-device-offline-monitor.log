@@ -1,0 +1,25 @@
+[2025-12-30T22:08:40+00:00] [syncthing-device-offline-monitor.sh v1.0.0] Starting offline monitor
+[2025-12-30T22:13:08+00:00] [syncthing-device-offline-monitor.sh v1.0.0] Starting offline monitor
+[2025-12-30T22:16:09+00:00] [syncthing-device-offline-monitor.sh v1.0.0] Starting offline monitor
+[2025-12-30T22:17:50+00:00] [syncthing-device-offline-monitor.sh v1.0.1] Starting offline monitor
+[2025-12-30T22:18:22+00:00] [syncthing-device-offline-monitor.sh v1.0.1] Starting offline monitor
+[2025-12-30T22:18:22+00:00] [syncthing-device-offline-monitor.sh v1.0.1] ERROR: Unable to parse lastSeen value: 2025-12-30T14:18:22-08:00
+[2025-12-30T22:18:27+00:00] [syncthing-device-offline-monitor.sh v1.0.1] Starting offline monitor
+[2025-12-30T22:18:27+00:00] [syncthing-device-offline-monitor.sh v1.0.1] ERROR: Unable to parse lastSeen value: 2025-12-30T14:18:27-08:00
+[2025-12-30T22:21:03+00:00] [syncthing-device-offline-monitor.sh v1.0.2] Starting offline monitor
+[2025-12-30T22:22:31+00:00] [syncthing-device-offline-monitor.sh v1.0.3] Starting offline monitor
+[2025-12-30T22:22:45+00:00] [syncthing-device-offline-monitor.sh v1.0.3] Starting offline monitor
+[2025-12-30T22:22:50+00:00] [syncthing-device-offline-monitor.sh v1.0.3] Starting offline monitor
+[2025-12-30T22:24:03+00:00] [syncthing-device-offline-monitor.sh v1.0.4] Starting offline monitor
+[2025-12-30T22:25:31+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-30T22:25:34+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-30T22:26:46+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-30T22:29:55+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-31T02:25:17+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-31T02:25:35+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-31T02:29:45+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-31T02:29:54+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-31T02:31:35+00:00] [syncthing-device-offline-monitor.sh v1.1.0] Starting offline monitor
+[2025-12-31T02:31:35+00:00] [syncthing-device-offline-monitor.sh v1.1.0] ERROR: Failed to parse lastSeen: 2025-12-30T17:52:02-08:00
+[2025-12-31T02:36:47+00:00] [syncthing-device-offline-monitor.sh v1.0.5] Starting offline monitor
+[2025-12-31T02:39:08+00:00] [syncthing-device-offline-monitor.sh v1.2.0] Connected=true
