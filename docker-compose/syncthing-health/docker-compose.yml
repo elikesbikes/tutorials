@@ -2,15 +2,17 @@
 # docker-compose.yml
 #
 # Service: syncthing-health
-# Version: 1.6.0
+# Version: 1.7.0
 #
 # Description:
-# Syncthing health and device-lag monitoring endpoints exposed
-# over HTTP for Uptime Kuma, with transition-based ntfy alerts.
+# Syncthing health, device sync lag, and device offline monitoring
+# endpoints exposed over HTTP for Uptime Kuma, with transition-based
+# ntfy alerts.
 #
 # Endpoints:
 #   - Port 9123: Overall Syncthing health
 #   - Port 9124: Device-specific sync lag monitor
+#   - Port 9125: Device offline / last-seen monitor
 #
 # Design notes:
 # - Uses a prebuilt Alpine image with dependencies baked in
@@ -19,6 +21,7 @@
 # - Single container, multiple listeners
 #
 # Changelog (running):
+# - 1.7.0: Add device offline (last-seen) monitoring endpoint on port 9125
 # - 1.6.0: Move all dependencies to Dockerfile; remove runtime apk installs
 # - 1.5.0: Add second HTTP endpoint (port 9124) for device sync lag monitoring
 # - 1.4.0: Add persistent state volume for transition-based ntfy notifications
@@ -47,6 +50,7 @@ services:
     ports:
       - "9123:9123"   # Overall Syncthing health
       - "9124:9124"   # Device sync lag monitor
+      - "9125:9125"   # Device offline / last-seen monitor
 
     networks:
       - frontend
@@ -56,13 +60,22 @@ services:
       - ./syncthing_health_http.sh:/app/syncthing_health_http.sh:ro
       - ./syncthing-device-sync-monitor.sh:/app/syncthing-device-sync-monitor.sh:ro
       - ./syncthing_device_lag_http.sh:/app/syncthing_device_lag_http.sh:ro
+
+      # Device offline / last-seen monitor
+      - ./syncthing-device-offline-monitor.sh:/app/syncthing-device-offline-monitor.sh:ro
+      - ./syncthing_device_offline_http.sh:/app/syncthing_device_offline_http.sh:ro
+
+      # Persistent state + logs
       - ./state:/state
+
+      # Explicit env mount for container root user
       - /home/ecloaiza/.syncthing-health.env:/root/.syncthing-health.env:ro
 
     command: >
       sh -c "
         /usr/bin/socat TCP-LISTEN:9123,reuseaddr,fork EXEC:'/bin/bash /app/syncthing_health_http.sh' &
         /usr/bin/socat TCP-LISTEN:9124,reuseaddr,fork EXEC:'/bin/bash /app/syncthing_device_lag_http.sh' &
+        /usr/bin/socat TCP-LISTEN:9125,reuseaddr,fork EXEC:'/bin/bash /app/syncthing_device_offline_http.sh' &
         wait
       "
 
