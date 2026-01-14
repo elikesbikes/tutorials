@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    # Loads all variables from .env into the container
+    env_file:
+      - .env
+    networks:
+      - frontend
+    volumes:
+      # Changed to a bind mount (relative path)
+      - ./joplin-data:/var/lib/postgresql/data
+    healthcheck:
+      # We use the variable here to ensure the check uses the correct user
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: joplin/server:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # Loads all variables from .env into the container
+    env_file:
+      - .env
+    networks:
+      - frontend
+    ports:
+      - "${APP_PORT}:22300"
+    environment:
+      # Joplin expects "POSTGRES_DATABASE", but our .env uses "POSTGRES_DB"
+      # We map it here manually.
+      - POSTGRES_DATABASE=${POSTGRES_DB}
+      # If you set this to 0 in your .env, uncomment the line below to disable signup
+      # - MAILER_ENABLED=${MAILER_ENABLED:-1}
+
+networks:
+  frontend:
+    external: true
