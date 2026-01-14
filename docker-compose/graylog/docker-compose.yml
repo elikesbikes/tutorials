@@ -41,7 +41,7 @@ services:
     volumes:
       # ONLY mount the journal to persist logs. 
       # DO NOT mount /usr/share/graylog/data directly.
-      - ./graylog_data/journal:/usr/share/graylog/data/journal
+      - ./graylog_data:/usr/share/graylog/data
     networks:
       - frontend
     restart: always
