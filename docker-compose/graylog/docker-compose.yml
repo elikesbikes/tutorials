@@ -24,21 +24,10 @@ services:
       - "bootstrap.memory_lock=true"
       - "discovery.type=single-node"
       - "action.auto_create_index=false"
-      - "plugins.security.disabled=true"
-      - "DISABLE_SECURITY_PLUGIN=${DISABLE_SECURITY_PLUGIN}"
+      - "DISABLE_SECURITY_PLUGIN=true" # Only use this one
       - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
-    volumes:
-      - /mnt/prod3/graylog_opensearch:/usr/share/opensearch/data
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    networks:
-      - frontend
-    restart: unless-stopped
+  
+
 
   syslog_graylog:
     image: graylog/graylog:7.0
