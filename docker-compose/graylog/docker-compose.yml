@@ -1,20 +1,20 @@
+version: '3.8'
+
 networks:
   frontend:
     external: true
 
 services:
-  # Graylog 7.0 requires MongoDB 7.0
   syslog_mongo:
     image: mongo:7.0
-    container_name: syslog_mongodb  
+    container_name: syslog_mongodb
     hostname: mongodb
     restart: unless-stopped
     volumes:
-      - ./mongo_data:/data/db # Bind mount for persistence
+      - ./mongo_data:/data/db
     networks:
       - frontend
 
-  # Opensearch 2.x
   syslog_opensearch:
     image: opensearchproject/opensearch:2.19.0
     container_name: syslog_opensearch
@@ -24,10 +24,11 @@ services:
       - "bootstrap.memory_lock=true"
       - "discovery.type=single-node"
       - "action.auto_create_index=false"
-      - "plugins.security.ssl.http.enabled=false"
       - "plugins.security.disabled=true"
+      - "DISABLE_SECURITY_PLUGIN=${DISABLE_SECURITY_PLUGIN}"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
     volumes:
-      - ./opensearch:/usr/share/opensearch/data
+      - /mnt/prod3/graylog_opensearch:/usr/share/opensearch/data
     ulimits:
       memlock:
         soft: -1
@@ -39,44 +40,22 @@ services:
       - frontend
     restart: unless-stopped
 
-  # Graylog 7.0 with your custom ports and SMTP settings
   syslog_graylog:
     image: graylog/graylog:7.0
     container_name: syslog_graylog
     hostname: graylog
-    user: 0:0
+    user: "1100:1100"
     depends_on:
       - syslog_opensearch
       - syslog_mongo
-    environment:
-      GRAYLOG_PASSWORD_SECRET: "somepasswordpepper"
-      GRAYLOG_ROOT_PASSWORD_SHA2: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
-      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9010"
-      GRAYLOG_HTTP_EXTERNAL_URI: "http://192.168.5.20:9010/" 
-      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
-      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
-      GRAYLOG_TIMEZONE: "America/Los_Angeles"
-      TZ: "America/Los_Angeles"
-      # Your SMTP Settings
-      GRAYLOG_TRANSPORT_EMAIL_PROTOCOL: "smtp"
-      GRAYLOG_TRANSPORT_EMAIL_WEB_INTERFACE_URL: "http://192.168.5.20:9010/"
-      GRAYLOG_TRANSPORT_EMAIL_HOSTNAME: "outbound.mailhop.org"
-      GRAYLOG_TRANSPORT_EMAIL_ENABLED: "true"
-      GRAYLOG_TRANSPORT_EMAIL_PORT: "587"
-      GRAYLOG_TRANSPORT_EMAIL_USE_AUTH: "true"
-      GRAYLOG_TRANSPORT_EMAIL_AUTH_USERNAME: "xxxxx"
-      GRAYLOG_TRANSPORT_EMAIL_AUTH_PASSWORD: "xxxxx"
-      GRAYLOG_TRANSPORT_EMAIL_USE_TLS: "true"
-      GRAYLOG_TRANSPORT_EMAIL_USE_SSL: "false"
-      GRAYLOG_TRANSPORT_FROM_EMAIL: "smarth@elikesbikes.com"
-      GRAYLOG_TRANSPORT_SUBJECT_PREFIX: "[graylog]"
+    env_file: .env  # This automatically loads all GRAYLOG_ variables
     volumes:
-      - ./graylog_data:/usr/share/graylog/data # Bind mount
+      - ./graylog_data:/usr/share/graylog/data
     networks:
       - frontend
     restart: always
     ports:
-      - 9010:9010/tcp   # Web interface/API
-      - 1514:1514/tcp   # Syslog
-      - 1514:1514/udp   # Syslog
-      - 1515:1515/udp   # Truenas
+      - "9010:9010/tcp"
+      - "1514:1514/tcp"
+      - "1514:1514/udp"
+      - "1515:1515/udp"
