@@ -37,9 +37,10 @@ services:
     depends_on:
       - syslog_opensearch
       - syslog_mongo
-    env_file: .env  # This automatically loads all GRAYLOG_ variables
+    env_file: .env
     volumes:
-      - ./graylog_data:/usr/share/graylog/data
+      # We only bind the journal and attachments to keep the internal config clean
+      - ./graylog_data/journal:/usr/share/graylog/data/journal
     networks:
       - frontend
     restart: always
