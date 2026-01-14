@@ -33,7 +33,7 @@ services:
     image: graylog/graylog:7.0
     container_name: syslog_graylog
     hostname: graylog
-    #user: "1100:1100"
+    user: "1100:1100"
     depends_on:
       - syslog_opensearch
       - syslog_mongo
