@@ -33,13 +33,14 @@ services:
     image: graylog/graylog:7.0
     container_name: syslog_graylog
     hostname: graylog
-    user: "1100:1100"
+    #user: "1100:1100"
     depends_on:
       - syslog_opensearch
       - syslog_mongo
     env_file: .env
     volumes:
-      # We only bind the journal and attachments to keep the internal config clean
+      # ONLY mount the journal to persist logs. 
+      # DO NOT mount /usr/share/graylog/data directly.
       - ./graylog_data/journal:/usr/share/graylog/data/journal
     networks:
       - frontend
