@@ -26,7 +26,10 @@ services:
       - "action.auto_create_index=false"
       - "DISABLE_SECURITY_PLUGIN=true" # Only use this one
       - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
-  
+    ports:
+      - 9200:9200/tcp  
+    networks:
+      - frontend      
 
 
   syslog_graylog:
