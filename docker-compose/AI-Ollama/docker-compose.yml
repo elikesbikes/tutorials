@@ -43,30 +43,28 @@ services:
 
   ai-python-agent-prod-2:
     image: python:3.12-slim
-    container_name: ${AGENT_NAME} # <-- PARAMETERIZED
-    hostname: ${AGENT_NAME} # <-- PARAMETERIZED
+    container_name: ${AGENT_NAME}
+    hostname: ${AGENT_NAME}
     restart: unless-stopped
     command: >
-        /bin/sh -c "pip install --no-cache-dir requests && python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
-    #  command: >
-  #    /bin/sh -c "pip install --no-cache-dir requests && python3 /app/agent.py > /app/output/llm_analysis_output.txt 2>&1"
+        /bin/sh -c "pip install --no-cache-dir requests && python3 -u /app/agent.py"
     volumes:
       - ./agent_output:/app/output
       - ./agent:/app
-      - ./agent_logs:/app/logs
-
-    working_dir: /app
     networks:
       - frontend
-    depends_on:
-      - ollama
+    env_file: .env      
     environment:
-      # --- Credentials and URLs (All read from .env) ---
-      - HOME_ASSISTANT_URL=${HOME_ASSISTANT_URL}
-      - HA_ACCESS_TOKEN=${HA_ACCESS_TOKEN}
-      - OLLAMA_API_URL=${OLLAMA_API_URL}
-      # --- CRITICAL FIX: Add the HOST variable the script reads ---
-      - OLLAMA_HOST=${OLLAMA_HOST}
+      # These MUST be listed here to be accessible by the Python script
+      - GRAYLOG_API_URL
+      - GRAYLOG_API_TOKEN
+      - GRAYLOG_STREAM_ID
+      - OLLAMA_API_URL
+      - HOME_ASSISTANT_URL
+      - HA_ACCESS_TOKEN
+      - CHECK_INTERVAL_SECONDS
+      - OLLAMA_MODEL
+      - AGENT_VERSION
 
 networks:
   frontend:
