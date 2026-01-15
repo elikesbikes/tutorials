@@ -68,6 +68,6 @@ services:
 #      # --- CRITICAL FIX: Add the HOST variable the script reads ---
 #      - OLLAMA_HOST=${OLLAMA_HOST}
 
-#networks:
-#  frontend:
-#    external: true
+networks:
+  frontend:
+    external: true
