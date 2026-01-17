@@ -26,6 +26,7 @@ services:
     hostname: ${WEBUI_NAME} # <-- PARAMETERIZED
     image: ghcr.io/open-webui/open-webui:latest
     restart: unless-stopped
+
     env_file: .env
     ports:
       - "${WEBUI_PORT}:8080" # <-- PARAMETERIZED host port
@@ -47,7 +48,7 @@ services:
     image: python:3.12-slim
     container_name: ${AGENT_NAME}
     hostname: ${AGENT_NAME}
-    restart: unless-stopped
+    restart: none
     command: >
         /bin/sh -c "pip install --no-cache-dir requests && python3 -u /app/agent.py"
     volumes:
