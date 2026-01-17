@@ -50,7 +50,8 @@ services:
     hostname: ${AGENT_NAME}
     restart: none
     command: >
-        /bin/sh -c "pip install --no-cache-dir requests && python3 -u /app/agent.py"
+        /bin/sh -c "pip install --no-cache-dir requests python-dotenv && python3 -u /app/agent.py"
+    # ... rest of your config
     volumes:
       - ./agent_output:/app/output
       - ./agent:/app
