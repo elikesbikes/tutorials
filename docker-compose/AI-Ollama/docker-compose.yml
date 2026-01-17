@@ -68,6 +68,7 @@ services:
       - CHECK_INTERVAL_SECONDS
       - OLLAMA_MODEL
       - AGENT_VERSION
+      - OLLAMA_NUM_CTX=${OLLAMA_NUM_CTX}
 
 networks:
   frontend:
