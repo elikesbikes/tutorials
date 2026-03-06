@@ -1,17 +1,18 @@
-version: '3.8'
 services:
   uptime-kuma:
-    image: louislam/uptime-kuma:1
-    container_name: uptime-prod-3
+    #image: louislam/uptime-kuma:beta
+    image: louislam/uptime-kuma:2.1.3
+    container_name: uptime-prod-1
     hostname: uptime-prod-3
     environment:   
       - "TZ=America/Los_Angeles"
     volumes:
-      - uptime-kuma:/app/data
+      - ./uptime-kuma:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock  
     networks:
       - frontend
-    #ports:
-    #  - "3001:3001"  # <Host Port>:<Container Port>
+    ports:
+      - "3002:3001"  # <Host Port>:<Container Port>
     restart: always
     labels:
       - "traefik.enable=true"
@@ -28,7 +29,6 @@ services:
 
 volumes:
   uptime-kuma:
-
 networks:
   frontend:
     external: true
