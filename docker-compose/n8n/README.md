@@ -591,49 +591,44 @@ What MCP tools do you have access to?
 
 You should see `get_connected_clients`, `get_error_logs`, and `get_high_tx_retries` listed under the UniFi server.
 
-**Step 3 — Test `get_connected_clients`:**
+**Step 3 — Test the tools interactively:**
 
-```bash
-claude --print "Use the get_connected_clients tool and tell me how many devices are on my network right now."
-```
-
-**Step 4 — Test `get_error_logs`:**
-
-```bash
-claude --print "Use the get_error_logs tool and tell me if there are any active alarms on my UniFi network."
-```
-
-**Step 5 — Test `get_high_tx_retries`:**
-
-```bash
-claude --print "Use the get_high_tx_retries tool and tell me which access points have poor WiFi performance."
-```
-
-**Step 6 — Run a combined diagnostic:**
-
-You can also ask Claude to use multiple tools in one prompt:
-
-```bash
-claude --print "Give me a full network health summary: how many devices are connected, any active alarms, and any APs with high TX retries."
-```
-
-**Step 7 — Interactive mode for deeper analysis:**
-
-For follow-up questions and richer investigation, open an interactive Claude session:
+Because MCP tool calls require your approval, you must run Claude in interactive mode. Start a session:
 
 ```bash
 claude
 ```
 
-Then ask naturally:
+Then ask one of the following prompts and approve the tool call when prompted:
 
+**Test `get_connected_clients`:**
+```
+Use the get_connected_clients tool and tell me how many devices are on my network right now.
+```
+
+**Test `get_error_logs`:**
+```
+Use the get_error_logs tool and tell me if there are any active alarms on my UniFi network.
+```
+
+**Test `get_high_tx_retries`:**
+```
+Use the get_high_tx_retries tool and tell me which access points have poor WiFi performance.
+```
+
+**Run a combined diagnostic:**
+```
+Give me a full network health summary: how many devices are connected, any active alarms, and any APs with high TX retries.
+```
+
+**For deeper follow-up analysis:**
 ```
 Is my laptop connected to WiFi? What signal strength is it showing?
 Did anything go wrong on the network in the last 24 hours?
 Why might the WiFi be slow near the office?
 ```
 
-Claude will automatically invoke the appropriate UniFi tools and respond with live data.
+Claude will prompt you to approve each tool call before executing it, then respond with live network data.
 
 **Expected output examples:**
 
