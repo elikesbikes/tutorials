@@ -550,72 +550,90 @@ docker exec n8n n8n import:workflow --input=/home/node/shared/UniFi\ MCP\ Server
 
 ### Testing the Workflow
 
-Once the workflow is imported and active, you can test each tool directly from the command line using `curl`. The MCP Server Trigger exposes an HTTP endpoint on the n8n instance.
+Once the workflow is imported and active, you can test each tool directly from Claude Code CLI. Claude uses the MCP server to call the tools and return live network data.
 
-**Step 1 — Confirm the workflow is active:**
+**Step 1 — Confirm the MCP server is configured:**
+
+Verify that the UniFi MCP server is registered in your Claude Code config:
 
 ```bash
-# Check that n8n is running and the workflow trigger is registered
-curl -s http://localhost:5678/healthz
+cat ~/.claude.json | grep -A5 unifi
 ```
 
-**Step 2 — Get your MCP webhook URL:**
+You should see an entry pointing to your n8n MCP webhook URL. If not, add it:
 
-Open the workflow in the n8n UI and click the **MCP Server Trigger** node. The webhook URL will be displayed in the node panel. It follows this pattern:
+```json
+{
+  "mcpServers": {
+    "unifi": {
+      "type": "sse",
+      "url": "http://localhost:5678/mcp/<workflow-id>/sse"
+    }
+  }
+}
+```
+
+> Get the `<workflow-id>` by opening the workflow in the n8n UI and clicking the **MCP Server Trigger** node — the URL is shown in the node panel.
+
+**Step 2 — Verify Claude can see the UniFi tools:**
+
+Open Claude Code and check that the tools are available:
+
+```bash
+claude
+```
+
+Then in the interactive session, ask:
 
 ```
-http://localhost:5678/mcp/<workflow-id>/sse
+What MCP tools do you have access to?
 ```
+
+You should see `get_connected_clients`, `get_error_logs`, and `get_high_tx_retries` listed under the UniFi server.
 
 **Step 3 — Test `get_connected_clients`:**
 
 ```bash
-curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
-  -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "get_connected_clients", "arguments": {}}}'
+claude --print "Use the get_connected_clients tool and tell me how many devices are on my network right now."
 ```
 
 **Step 4 — Test `get_error_logs`:**
 
 ```bash
-curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
-  -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "get_error_logs", "arguments": {}}}'
+claude --print "Use the get_error_logs tool and tell me if there are any active alarms on my UniFi network."
 ```
 
 **Step 5 — Test `get_high_tx_retries`:**
 
 ```bash
-curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
-  -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "get_high_tx_retries", "arguments": {}}}'
+claude --print "Use the get_high_tx_retries tool and tell me which access points have poor WiFi performance."
 ```
 
-**Step 6 — Pretty-print the JSON response:**
+**Step 6 — Run a combined diagnostic:**
 
-Pipe any of the above commands through `jq` to make the output readable:
+You can also ask Claude to use multiple tools in one prompt:
 
 ```bash
-curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
-  -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "get_connected_clients", "arguments": {}}}' \
-  | jq .
+claude --print "Give me a full network health summary: how many devices are connected, any active alarms, and any APs with high TX retries."
 ```
 
-**Step 7 — Test via Claude Code directly:**
+**Step 7 — Interactive mode for deeper analysis:**
 
-With the MCP server configured in Claude Code (`~/.claude/claude_desktop_config.json`), you can trigger the tools naturally from the CLI:
+For follow-up questions and richer investigation, open an interactive Claude session:
 
 ```bash
-# Ask Claude a question that requires live network data
-claude --print "How many devices are on my network right now?"
-
-# Check for active alerts
-claude --print "Are there any active alarms on my UniFi network?"
-
-# Check for WiFi performance issues
-claude --print "Which access points have high TX retries?"
+claude
 ```
+
+Then ask naturally:
+
+```
+Is my laptop connected to WiFi? What signal strength is it showing?
+Did anything go wrong on the network in the last 24 hours?
+Why might the WiFi be slow near the office?
+```
+
+Claude will automatically invoke the appropriate UniFi tools and respond with live data.
 
 **Expected output examples:**
 
