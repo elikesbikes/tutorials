@@ -8,21 +8,57 @@ Self-hosted [n8n](https://n8n.io) workflow automation running via Docker Compose
 
 ## Table of Contents
 
-1. [MCP Server Overview](#1-mcp-server-overview)
-2. [Prerequisites](#2-prerequisites)
-3. [Architecture Overview](#3-architecture-overview)
-4. [Setup Guide](#4-setup-guide)
-   - [4.1 Deploy n8n with Docker](#41-deploy-n8n-with-docker)
-   - [4.2 Install Claude Code on Ubuntu](#42-install-claude-code-on-ubuntu)
-   - [4.3 Configure n8n SSH Credentials](#43-configure-n8n-ssh-credentials)
-   - [4.4 Test the Connection](#44-test-the-connection)
-5. [Use Case - UniFi Network](#5-use-case---unifi-network)
-6. [Session Management](#6-session-management)
-7. [Troubleshooting](#7-troubleshooting)
+1. [n8n Overview](#1-n8n-overview)
+2. [MCP Server Overview](#2-mcp-server-overview)
+3. [Prerequisites](#3-prerequisites)
+4. [Architecture Overview](#4-architecture-overview)
+5. [Setup Guide](#5-setup-guide)
+   - [5.1 Deploy n8n with Docker](#51-deploy-n8n-with-docker)
+   - [5.2 Install Claude Code on Ubuntu](#52-install-claude-code-on-ubuntu)
+   - [5.3 Configure n8n SSH Credentials](#53-configure-n8n-ssh-credentials)
+   - [5.4 Test the Connection](#54-test-the-connection)
+6. [Use Case - UniFi Network](#6-use-case---unifi-network)
+7. [Session Management](#7-session-management)
+8. [Troubleshooting](#8-troubleshooting)
 
 ---
 
-## 1. MCP Server Overview
+## 1. n8n Overview
+
+Okay, imagine you have a bunch of apps you use every day — like Gmail, Google Calendar, Slack, a smart home app, whatever. Normally, these apps don't talk to each other. You have to do everything yourself: copy this, paste that, check this, send that.
+
+**n8n** is like a magic robot helper that connects all those apps together and does the boring stuff for you automatically.
+
+> Think of n8n like a set of LEGO instructions. You snap pieces together — "when THIS happens, do THAT" — and n8n follows the instructions every time, all by itself.
+
+**Here's a simple example:**
+
+> "Every morning at 8am, check my email for any orders that came in overnight, add them to a spreadsheet, and send me a Slack message with a summary."
+
+You set that up **once** in n8n, and it just... does it. Forever. While you sleep.
+
+**How does it work?**
+
+n8n uses something called **workflows**. A workflow is just a chain of steps:
+
+1. **Trigger** — something that starts the workflow (like "a new email arrives" or "every hour")
+2. **Nodes** — the actions that happen (like "read the email", "add a row to Google Sheets", "send a Slack message")
+3. **Connections** — the arrows between steps that say "do this, then do that"
+
+**Why is this cool?**
+
+- No coding required for simple stuff (just drag and drop)
+- It runs on your own computer or server, so **your data stays private**
+- It can connect to hundreds of apps (Google, GitHub, Slack, databases, webhooks, and way more)
+- It can also run code (JavaScript or Python) when you need something custom
+
+**In this setup:**
+
+We run n8n inside Docker (a little isolated box on your computer) so it's always on, always ready, and doesn't mess with anything else on your system. We then connect it to Claude (the AI) so that Claude can trigger automations or respond to things n8n detects on your network.
+
+---
+
+## 2. MCP Server Overview
 
 Okay, so imagine you have a really smart helper (that's Claude — the AI). Now imagine you want that helper to actually **do things** for you — like check your calendar, read your emails, look at your network devices, or control other apps — not just talk about them.
 
@@ -52,7 +88,7 @@ So basically: MCP servers = superpowers for Claude. They let it interact with th
 
 ---
 
-## 2. Prerequisites
+## 3. Prerequisites
 
 Before starting, ensure the following are installed and available on your Ubuntu host:
 
@@ -107,7 +143,7 @@ node --version
 
 ---
 
-## 3. Architecture Overview
+## 4. Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -169,9 +205,9 @@ n8n/
 
 ---
 
-## 4. Setup Guide
+## 5. Setup Guide
 
-### 4.1 Deploy n8n with Docker
+### 5.1 Deploy n8n with Docker
 
 **Step 1 — Create the external Docker network:**
 
@@ -275,7 +311,7 @@ docker compose logs -f n8n    # Follow logs
 
 ---
 
-### 4.2 Install Claude Code on Ubuntu
+### 5.2 Install Claude Code on Ubuntu
 
 Claude Code is Anthropic's official CLI tool for AI-assisted development.
 
@@ -322,7 +358,7 @@ claude --print "Hello, are you working?"
 
 ---
 
-### 4.3 Configure n8n SSH Credentials
+### 5.3 Configure n8n SSH Credentials
 
 To allow n8n to execute commands on the host (e.g., run Claude Code), set up SSH access from the container to the host.
 
@@ -370,7 +406,7 @@ Copy the full output (including `-----BEGIN...` and `-----END...` lines).
 
 ---
 
-### 4.4 Test the Connection
+### 5.4 Test the Connection
 
 **Test SSH from inside the n8n container:**
 
@@ -399,7 +435,7 @@ docker exec -it n8n cat /home/node/shared/test.txt
 
 ---
 
-## 5. Use Case - UniFi Network
+## 6. Use Case - UniFi Network
 
 This workflow (`workflows/UniFi MCP Server.json`) turns n8n into a **live MCP server** that gives Claude direct read access to your UniFi network. Once active, Claude can answer real questions about your network without you having to log into the UniFi controller yourself.
 
@@ -512,7 +548,7 @@ docker exec n8n n8n import:workflow --input=/home/node/shared/UniFi\ MCP\ Server
 
 ---
 
-## 6. Session Management
+## 7. Session Management
 
 **n8n container lifecycle:**
 
@@ -569,7 +605,7 @@ sudo systemctl enable docker
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 **n8n container won't start:**
 
