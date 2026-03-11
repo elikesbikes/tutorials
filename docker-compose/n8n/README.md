@@ -105,6 +105,7 @@ node --version
 │   │                    .env file                             │  │
 │   │  N8N_HOST, N8N_PORT, N8N_ENCRYPTION_KEY, WEBHOOK_URL    │  │
 │   │  N8N_BASIC_AUTH_USER / PASSWORD, GENERIC_TIMEZONE       │  │
+│   │  UNIFI_USER, UNIFI_PASS                                  │  │
 │   └──────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 
@@ -116,6 +117,8 @@ node --version
 - The `host.docker.internal` alias lets the container call the Ubuntu host (where Claude Code runs)
 - The `./shared` folder is mounted in both the container (`/home/node/shared`) and readable by Claude Code on the host, enabling file-based communication between n8n workflows and Claude
 - Workflow data, credentials, and the SQLite database are persisted in `./n8n_data`
+- `UNIFI_USER` and `UNIFI_PASS` are passed into the container via the `environment:` block so n8n workflows can interact with a UniFi controller
+- `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` allows workflow nodes to read those env vars via `$env` expressions
 - The external `frontend` Docker network allows integration with reverse proxies (e.g. Nginx, Traefik)
 
 **Directory structure:**
@@ -165,6 +168,10 @@ GENERIC_TIMEZONE=America/New_York
 N8N_COMMUNITY_PACKAGES_ENABLED=true
 N8N_ENCRYPTION_KEY=your-random-encryption-key-here
 N8N_API_DISABLED=false
+
+# UniFi integration (used by n8n workflows)
+UNIFI_USER=your-unifi-username
+UNIFI_PASS=your-unifi-password
 EOF
 ```
 
@@ -186,11 +193,17 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - UNIFI_USER=${UNIFI_USER}
+      - UNIFI_PASS=${UNIFI_PASS}
     ports:
       - "5678:5678"
     volumes:
       - ./n8n_data:/home/node/.n8n
+      # Mount a local folder so Claude Code can read/write shared files
       - ./shared:/home/node/shared
+    # Allow n8n to reach Claude Code CLI running on the host machine
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -198,6 +211,8 @@ networks:
   frontend:
     external: true
 ```
+
+> `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` allows n8n workflow nodes to access environment variables (like `UNIFI_USER`/`UNIFI_PASS`) via `$env` expressions. The `env_file` loads base config while the `environment` block explicitly forwards specific variables into the container.
 
 **Step 5 — Create data directories and start:**
 
