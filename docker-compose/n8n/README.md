@@ -548,6 +548,101 @@ docker exec n8n n8n import:workflow --input=/home/node/shared/UniFi\ MCP\ Server
 
 ---
 
+### Testing the Workflow
+
+Once the workflow is imported and active, you can test each tool directly from the command line using `curl`. The MCP Server Trigger exposes an HTTP endpoint on the n8n instance.
+
+**Step 1 — Confirm the workflow is active:**
+
+```bash
+# Check that n8n is running and the workflow trigger is registered
+curl -s http://localhost:5678/healthz
+```
+
+**Step 2 — Get your MCP webhook URL:**
+
+Open the workflow in the n8n UI and click the **MCP Server Trigger** node. The webhook URL will be displayed in the node panel. It follows this pattern:
+
+```
+http://localhost:5678/mcp/<workflow-id>/sse
+```
+
+**Step 3 — Test `get_connected_clients`:**
+
+```bash
+curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/call", "params": {"name": "get_connected_clients", "arguments": {}}}'
+```
+
+**Step 4 — Test `get_error_logs`:**
+
+```bash
+curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/call", "params": {"name": "get_error_logs", "arguments": {}}}'
+```
+
+**Step 5 — Test `get_high_tx_retries`:**
+
+```bash
+curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/call", "params": {"name": "get_high_tx_retries", "arguments": {}}}'
+```
+
+**Step 6 — Pretty-print the JSON response:**
+
+Pipe any of the above commands through `jq` to make the output readable:
+
+```bash
+curl -s -X POST http://localhost:5678/mcp/<workflow-id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/call", "params": {"name": "get_connected_clients", "arguments": {}}}' \
+  | jq .
+```
+
+**Step 7 — Test via Claude Code directly:**
+
+With the MCP server configured in Claude Code (`~/.claude/claude_desktop_config.json`), you can trigger the tools naturally from the CLI:
+
+```bash
+# Ask Claude a question that requires live network data
+claude --print "How many devices are on my network right now?"
+
+# Check for active alerts
+claude --print "Are there any active alarms on my UniFi network?"
+
+# Check for WiFi performance issues
+claude --print "Which access points have high TX retries?"
+```
+
+**Expected output examples:**
+
+```json
+// get_connected_clients (truncated)
+{
+  "clients": [
+    { "name": "MacBook-Pro", "ip": "192.168.1.42", "mac": "aa:bb:cc:dd:ee:ff",
+      "type": "WiFi", "network": "HomeNet", "signal": -55, "manufacturer": "Apple" },
+    { "name": "NAS", "ip": "192.168.1.10", "mac": "11:22:33:44:55:66",
+      "type": "Wired", "network": "Wired", "signal": null, "manufacturer": "Synology" }
+  ]
+}
+
+// get_high_tx_retries (clean network — no results)
+{ "high_retry_aps": [] }
+
+// get_high_tx_retries (problem detected)
+{
+  "high_retry_aps": [
+    { "ap_name": "Office AP", "mac": "aa:bb:cc:11:22:33", "radio": "ng",
+      "channel": 6, "tx_packets": 50000, "tx_retries": 12000, "retry_percent": 24 }
+  ]
+}
+
+---
+
 ## 7. Session Management
 
 **n8n container lifecycle:**
