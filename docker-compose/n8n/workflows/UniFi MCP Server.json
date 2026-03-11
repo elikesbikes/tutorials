@@ -1,0 +1,113 @@
+{
+  "name": "UniFi MCP Server",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "a65e26aa-0f3a-47d2-8cc0-5da81b8e9765"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "name": "MCP Server Trigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -128
+      ],
+      "id": "a236f0c9-3c30-498d-bae2-df441baffefa",
+      "webhookId": "a65e26aa-0f3a-47d2-8cc0-5da81b8e9765"
+    },
+    {
+      "parameters": {
+        "name": "get_connected_clients",
+        "description": "Get all devices and clients currently connected to the UniFi network",
+        "jsCode": "const loginResponse = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://router.home.elikesbikes.com/api/auth/login',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ username: $env.UNIFI_USER, password: $env.UNIFI_PASS }),\n  returnFullResponse: true,\n  skipSslCertificateValidation: true\n});\n\nconst cookies = Array.isArray(loginResponse.headers['set-cookie'])\n  ? loginResponse.headers['set-cookie'].join('; ')\n  : loginResponse.headers['set-cookie'] || '';\nconst csrf = loginResponse.headers['x-csrf-token'] || '';\n\nconst clientsResponse = await this.helpers.httpRequest({\n  method: 'GET',\n  url: 'https://router.home.elikesbikes.com/proxy/network/api/s/default/stat/sta',\n  headers: { 'Cookie': cookies, 'X-Csrf-Token': csrf },\n  skipSslCertificateValidation: true\n});\n\nconst clients = (clientsResponse.data || []).map(c => ({\n  name: c.name || c.hostname || 'Unknown',\n  ip: c.ip,\n  mac: c.mac,\n  type: c.is_wired ? 'Wired' : 'WiFi',\n  network: c.essid || c.network || 'Wired',\n  signal: c.signal ? `${c.signal} dBm` : 'N/A',\n  manufacturer: c.oui || 'Unknown'\n}));\n\nreturn JSON.stringify({ total: clients.length, clients });"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "name": "get_connected_clients",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ],
+      "id": "ed33f4de-e5ff-4fdf-996c-9e71ead1304e"
+    },
+    {
+      "parameters": {
+        "description": "Get error logs, alarms and alerts from the UniFi network. Use this when asked about network errors, warnings, issues, problems, alarms or anything that went wrong on the network",
+        "jsCode": "const loginResponse = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://router.home.elikesbikes.com/api/auth/login',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ username: $env.UNIFI_USER, password: $env.UNIFI_PASS }),\n  returnFullResponse: true,\n  skipSslCertificateValidation: true\n});\n\nconst cookies = Array.isArray(loginResponse.headers['set-cookie'])\n  ? loginResponse.headers['set-cookie'].join('; ')\n  : loginResponse.headers['set-cookie'] || '';\nconst csrf = loginResponse.headers['x-csrf-token'] || '';\n\nconst logsResponse = await this.helpers.httpRequest({\n  method: 'GET',\n  url: 'https://router.home.elikesbikes.com/proxy/network/api/s/default/stat/alarm',\n  headers: { 'Cookie': cookies, 'X-Csrf-Token': csrf },\n  skipSslCertificateValidation: true\n});\n\nconst logs = (logsResponse.data || []).map(e => ({\n  time: new Date(e.datetime).toLocaleString(),\n  type: e.key || 'Unknown',\n  message: e.msg || 'No message',\n  severity: e.archived ? 'resolved' : 'active',\n  device: e.ap_displayName || e.gw_displayName || e.sw_displayName || 'Unknown'\n}));\n\nreturn JSON.stringify({ total: logs.length, logs: logs.slice(0, 50) });"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        208
+      ],
+      "id": "33115339-7fa2-4f7d-8850-c40bd6661372",
+      "name": "get_error_logs"
+    },
+    {
+      "parameters": {
+        "description": "Get access points with high TX retry rates on the UniFi network. Use this when asked about TX retries, wireless performance issues, access point problems, or poor WiFi quality",
+        "jsCode": "const loginResponse = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://router.home.elikesbikes.com/api/auth/login',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ username: $env.UNIFI_USER, password: $env.UNIFI_PASS }),\n  returnFullResponse: true,\n  skipSslCertificateValidation: true\n});\n\nconst cookies = Array.isArray(loginResponse.headers['set-cookie'])\n  ? loginResponse.headers['set-cookie'].join('; ')\n  : loginResponse.headers['set-cookie'] || '';\nconst csrf = loginResponse.headers['x-csrf-token'] || '';\n\nconst apResponse = await this.helpers.httpRequest({\n  method: 'GET',\n  url: 'https://router.home.elikesbikes.com/proxy/network/api/s/default/stat/device',\n  headers: { 'Cookie': cookies, 'X-Csrf-Token': csrf },\n  skipSslCertificateValidation: true\n});\n\nconst results = [];\n\nfor (const device of (apResponse.data || [])) {\n  if (device.type !== 'uap') continue;\n\n  const radios = device.radio_table_stats || [];\n  for (const radio of radios) {\n    const tx = radio.tx_packets || 0;\n    const retries = radio.tx_retries || 0;\n    const total = tx + retries;\n    if (total === 0) continue;\n\n    // Same formula UniFi UI uses: retries / (packets + retries)\n    const retryPct = (retries / total) * 100;\n    if (retryPct > 20) {\n      results.push({\n        ap_name: device.name || device.hostname || 'Unknown',\n        mac: device.mac,\n        radio: radio.name || 'Unknown',\n        channel: radio.channel,\n        tx_packets: tx,\n        tx_retries: retries,\n        retry_percent: retryPct.toFixed(1) + '%'\n      });\n    }\n  }\n}\n\nresults.sort((a, b) => parseFloat(b.retry_percent) - parseFloat(a.retry_percent));\n\nreturn JSON.stringify({\n  total_problematic_aps: results.length,\n  threshold: '20%',\n  access_points: results\n});"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "cb82d837-0ef9-4c56-a1ec-60b8b36cc4b7",
+      "name": "get_high_tx_retries"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "get_connected_clients": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_error_logs": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_high_tx_retries": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "America/Los_Angeles"
+  },
+  "versionId": "fb8a9359-0740-4f3b-b471-0ff232192be5",
+  "meta": {
+    "instanceId": "3c77990184b8455d361f10b7d85885b60cdedde8a0f813b6584113fafa9146bc"
+  },
+  "id": "wfl207jEKuPoulWD",
+  "tags": []
+}
