@@ -1,5 +1,7 @@
 # n8n + Claude Code — Docker Setup Guide
 
+**Author:** Tars (ELIKESBIKES)
+
 Self-hosted [n8n](https://n8n.io) workflow automation running via Docker Compose on Ubuntu, integrated with Claude Code CLI running on the host machine.
 
 ---
