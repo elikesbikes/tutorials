@@ -661,6 +661,8 @@ Claude will prompt you to approve each tool call before executing it, then respo
 
 **Expected output examples:**
 
+![alt text](image.png)
+
 ```json
 // get_connected_clients (truncated)
 {
