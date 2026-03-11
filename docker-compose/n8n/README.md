@@ -704,7 +704,7 @@ Claude will prompt you to approve each tool call before executing it, then respo
 }
 
 ---
-
+```
 ## 7. Session Management
 
 **n8n container lifecycle:**
