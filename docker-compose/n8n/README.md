@@ -8,20 +8,51 @@ Self-hosted [n8n](https://n8n.io) workflow automation running via Docker Compose
 
 ## Table of Contents
 
-1. [Prerequisites](#1-prerequisites)
-2. [Architecture Overview](#2-architecture-overview)
-3. [Setup Guide](#3-setup-guide)
-   - [3.1 Deploy n8n with Docker](#31-deploy-n8n-with-docker)
-   - [3.2 Install Claude Code on Ubuntu](#32-install-claude-code-on-ubuntu)
-   - [3.3 Configure n8n SSH Credentials](#33-configure-n8n-ssh-credentials)
-   - [3.4 Test the Connection](#34-test-the-connection)
-4. [Basic Use](#4-basic-use)
-5. [Session Management](#5-session-management)
-6. [Troubleshooting](#6-troubleshooting)
+1. [MCP Server Overview](#1-mcp-server-overview)
+2. [Prerequisites](#2-prerequisites)
+3. [Architecture Overview](#3-architecture-overview)
+4. [Setup Guide](#4-setup-guide)
+   - [4.1 Deploy n8n with Docker](#41-deploy-n8n-with-docker)
+   - [4.2 Install Claude Code on Ubuntu](#42-install-claude-code-on-ubuntu)
+   - [4.3 Configure n8n SSH Credentials](#43-configure-n8n-ssh-credentials)
+   - [4.4 Test the Connection](#44-test-the-connection)
+5. [Use Case - UniFi Network](#5-use-case---unifi-network)
+6. [Session Management](#6-session-management)
+7. [Troubleshooting](#7-troubleshooting)
 
 ---
 
-## 1. Prerequisites
+## 1. MCP Server Overview
+
+Okay, so imagine you have a really smart helper (that's Claude — the AI). Now imagine you want that helper to actually **do things** for you — like check your calendar, read your emails, look at your network devices, or control other apps — not just talk about them.
+
+That's where an **MCP server** comes in.
+
+**MCP** stands for **Model Context Protocol**. It's basically a special plug-in system that lets Claude reach outside of itself and connect to real tools and services.
+
+Think of it like this:
+
+> Claude is the brain. MCP servers are the hands.
+
+Without MCP, Claude can only read what you type and type back. With MCP servers connected, Claude can actually **go do stuff** — look up live data, run commands, fetch files, and more.
+
+**How does it work? (super simple version)**
+
+1. You set up an MCP server for a tool you want Claude to use (like Google Calendar, Gmail, or your UniFi network).
+2. That server sits there waiting, like a translator between Claude and the tool.
+3. When Claude needs to do something (like "check my schedule"), it talks to the MCP server, which talks to the actual app, and brings the answer back.
+
+**In this setup, we use MCP servers for things like:**
+
+- Checking who's connected to the UniFi network (`mcp__unifi`)
+- Reading and drafting Gmail messages (`mcp__claude_ai_Gmail`)
+- Creating and managing Google Calendar events (`mcp__claude_ai_Google_Calendar`)
+
+So basically: MCP servers = superpowers for Claude. They let it interact with the real world instead of just chatting.
+
+---
+
+## 2. Prerequisites
 
 Before starting, ensure the following are installed and available on your Ubuntu host:
 
@@ -76,7 +107,7 @@ node --version
 
 ---
 
-## 2. Architecture Overview
+## 3. Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -138,9 +169,9 @@ n8n/
 
 ---
 
-## 3. Setup Guide
+## 4. Setup Guide
 
-### 3.1 Deploy n8n with Docker
+### 4.1 Deploy n8n with Docker
 
 **Step 1 — Create the external Docker network:**
 
@@ -244,7 +275,7 @@ docker compose logs -f n8n    # Follow logs
 
 ---
 
-### 3.2 Install Claude Code on Ubuntu
+### 4.2 Install Claude Code on Ubuntu
 
 Claude Code is Anthropic's official CLI tool for AI-assisted development.
 
@@ -291,7 +322,7 @@ claude --print "Hello, are you working?"
 
 ---
 
-### 3.3 Configure n8n SSH Credentials
+### 4.3 Configure n8n SSH Credentials
 
 To allow n8n to execute commands on the host (e.g., run Claude Code), set up SSH access from the container to the host.
 
@@ -339,7 +370,7 @@ Copy the full output (including `-----BEGIN...` and `-----END...` lines).
 
 ---
 
-### 3.4 Test the Connection
+### 4.4 Test the Connection
 
 **Test SSH from inside the n8n container:**
 
@@ -368,45 +399,120 @@ docker exec -it n8n cat /home/node/shared/test.txt
 
 ---
 
-## 4. Basic Use
+## 5. Use Case - UniFi Network
 
-**Access the n8n UI:**
-- URL: `http://localhost:5678`
-- Default credentials: set in your `.env` file
+This workflow (`workflows/UniFi MCP Server.json`) turns n8n into a **live MCP server** that gives Claude direct read access to your UniFi network. Once active, Claude can answer real questions about your network without you having to log into the UniFi controller yourself.
 
-**Run Claude Code from an n8n workflow:**
+**Workflow name:** `UniFi MCP Server`
+**Trigger type:** MCP Server Trigger (webhook-based, always-on)
+**Status:** Active
 
-Use the **SSH node** with the host credential and run commands like:
+---
 
-```bash
-# Run Claude non-interactively
-claude --print "Summarize this file" < /home/node/shared/input.txt > /home/node/shared/output.txt
+### How it works
 
-# Run a specific task
-claude --print "Review this code for bugs" < /home/node/shared/code.py
+The workflow exposes 3 tools through the MCP protocol. Each tool logs into the UniFi controller at `https://router.home.elikesbikes.com` using the `UNIFI_USER` and `UNIFI_PASS` environment variables from your `.env` file, makes an API call, and returns structured data back to Claude.
+
 ```
-
-**Pass files between n8n and Claude Code:**
-
-The `./shared` directory is the bridge:
-
-| Path in n8n workflow | Path on host |
-|---|---|
-| `/home/node/shared/` | `./shared/` |
-
-Write input files from n8n → Claude reads from `./shared/` → writes output → n8n reads result.
-
-**Export a workflow backup:**
-
-```bash
-mkdir -p workflows
-docker exec n8n n8n export:workflow --all --output=/home/node/shared/
-mv shared/*.json workflows/
+Claude (MCP client)
+       │
+       ▼
+MCP Server Trigger (n8n webhook)
+       │
+       ├──► get_connected_clients
+       ├──► get_error_logs
+       └──► get_high_tx_retries
+                    │
+                    ▼
+         UniFi Controller API
+         router.home.elikesbikes.com
 ```
 
 ---
 
-## 5. Session Management
+### Tools
+
+#### `get_connected_clients`
+Returns every device currently connected to the network.
+
+**What it returns per client:**
+
+| Field | Description |
+|---|---|
+| `name` | Device name or hostname |
+| `ip` | Current IP address |
+| `mac` | MAC address |
+| `type` | `Wired` or `WiFi` |
+| `network` | SSID (for WiFi) or `Wired` |
+| `signal` | Signal strength in dBm (WiFi only) |
+| `manufacturer` | OUI vendor lookup |
+
+**Example Claude prompts:**
+- *"How many devices are on my network right now?"*
+- *"Is my laptop connected to WiFi?"*
+- *"List everything on the wired network."*
+
+---
+
+#### `get_error_logs`
+Returns alarms and alerts from the UniFi controller (up to 50 most recent).
+
+**What it returns per log entry:**
+
+| Field | Description |
+|---|---|
+| `time` | Human-readable timestamp |
+| `type` | Alarm key/type |
+| `message` | Alert message text |
+| `severity` | `active` or `resolved` |
+| `device` | AP, gateway, or switch that triggered it |
+
+**Example Claude prompts:**
+- *"Are there any active network alerts?"*
+- *"Did anything go wrong on the network today?"*
+- *"Show me unresolved alarms."*
+
+---
+
+#### `get_high_tx_retries`
+Scans all access points and flags any with TX retry rates above **20%** — the same threshold the UniFi UI uses to indicate poor wireless performance.
+
+**What it returns per problematic AP:**
+
+| Field | Description |
+|---|---|
+| `ap_name` | Access point name |
+| `mac` | AP MAC address |
+| `radio` | Radio band (e.g. `ng`, `na`, `6e`) |
+| `channel` | Channel number |
+| `tx_packets` | Total transmitted packets |
+| `tx_retries` | Number of retried packets |
+| `retry_percent` | Retry rate as a percentage |
+
+**Example Claude prompts:**
+- *"Which access points have bad WiFi performance?"*
+- *"Are there any TX retry issues on my APs?"*
+- *"Why is the WiFi slow in the office?"*
+
+---
+
+### Importing the workflow
+
+```bash
+# From the n8n UI
+# 1. Go to Workflows → Import from file
+# 2. Select: workflows/UniFi MCP Server.json
+# 3. Save and activate
+
+# Or via CLI
+docker exec n8n n8n import:workflow --input=/home/node/shared/UniFi\ MCP\ Server.json
+```
+
+> Make sure `UNIFI_USER` and `UNIFI_PASS` are set in your `.env` file and that `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` is configured — the workflow reads these at runtime via `$env`.
+
+---
+
+## 6. Session Management
 
 **n8n container lifecycle:**
 
@@ -463,7 +569,7 @@ sudo systemctl enable docker
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 **n8n container won't start:**
 
