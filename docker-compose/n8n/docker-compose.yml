@@ -12,12 +12,10 @@ services:
       - UNIFI_PASS=${UNIFI_PASS}
     ports:
       - "5678:5678"
-
     volumes:
       - ./n8n_data:/home/node/.n8n
       # Mount a local folder so Claude Code can read/write shared files
       - ./shared:/home/node/shared
-
     # Allow n8n to reach Claude Code CLI running on the host machine
     extra_hosts:
       - "host.docker.internal:host-gateway"
