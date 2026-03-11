@@ -1,0 +1,29 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - N8N_BLOCK_ENV_ACCESS_IN_EXPR- N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - UNIFI_USER=${UNIFI_USER}
+      - UNIFI_PASS=${UNIFI_PASS}
+    ports:
+      - "5678:5678"
+
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      # Mount a local folder so Claude Code can read/write shared files
+      - ./shared:/home/node/shared
+
+    # Allow n8n to reach Claude Code CLI running on the host machine
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+
+networks:
+  frontend:
+    external: true
