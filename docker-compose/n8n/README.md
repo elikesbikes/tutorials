@@ -447,7 +447,7 @@ This workflow (`workflows/UniFi MCP Server.json`) turns n8n into a **live MCP se
 
 ### How it works
 
-The workflow exposes 3 tools through the MCP protocol. Each tool logs into the UniFi controller at `https://router.home.elikesbikes.com` using the `UNIFI_USER` and `UNIFI_PASS` environment variables from your `.env` file, makes an API call, and returns structured data back to Claude.
+The workflow exposes 4 tools through the MCP protocol. Each tool logs into the UniFi controller at `https://router.home.elikesbikes.com` using the `UNIFI_USER` and `UNIFI_PASS` environment variables from your `.env` file, makes an API call, and returns structured data back to Claude.
 
 ```
 Claude (MCP client)
@@ -457,7 +457,8 @@ MCP Server Trigger (n8n webhook)
        │
        ├──► get_connected_clients
        ├──► get_error_logs
-       └──► get_high_tx_retries
+       ├──► get_high_tx_retries
+       └──► get_channel_conflicts
                     │
                     ▼
          UniFi Controller API
@@ -532,6 +533,29 @@ Scans all access points and flags any with TX retry rates above **20%** — the 
 
 ---
 
+#### `get_channel_conflicts`
+Scans all access points and identifies co-channel interference — cases where multiple APs share the same channel and can hear each other, degrading WiFi performance.
+
+**What it returns per conflict:**
+
+| Field | Description |
+|---|---|
+| `channel_key` | Unique key combining band and channel (e.g. `2.4GHz_ch6`) |
+| `band` | `2.4GHz`, `5GHz`, or `6GHz` |
+| `channel` | Channel number |
+| `ap_count` | Number of APs sharing this channel |
+| `access_points` | List of APs on the channel (name, MAC, tx_power) |
+
+> For 2.4GHz, only channels 1, 6, and 11 are non-overlapping. For 5GHz, UniFi should auto-assign non-overlapping channels.
+
+**Example Claude prompts:**
+- *"Are there any channel conflicts on my WiFi network?"*
+- *"Which APs are causing co-channel interference?"*
+- *"Why is my 2.4GHz WiFi slow — are there channel collisions?"*
+- *"Do any of my access points share the same channel?"*
+
+---
+
 ### Importing the workflow
 
 ```bash
@@ -589,7 +613,7 @@ Then in the interactive session, ask:
 What MCP tools do you have access to?
 ```
 
-You should see `get_connected_clients`, `get_error_logs`, and `get_high_tx_retries` listed under the UniFi server.
+You should see `get_connected_clients`, `get_error_logs`, `get_high_tx_retries`, and `get_channel_conflicts` listed under the UniFi server.
 
 **Step 3 — Test the tools interactively:**
 
@@ -616,9 +640,14 @@ Use the get_error_logs tool and tell me if there are any active alarms on my Uni
 Use the get_high_tx_retries tool and tell me which access points have poor WiFi performance.
 ```
 
+**Test `get_channel_conflicts`:**
+```
+Use the get_channel_conflicts tool and tell me if any of my access points are sharing the same WiFi channel.
+```
+
 **Run a combined diagnostic:**
 ```
-Give me a full network health summary: how many devices are connected, any active alarms, and any APs with high TX retries.
+Give me a full network health summary: how many devices are connected, any active alarms, any APs with high TX retries, and any channel conflicts.
 ```
 
 **For deeper follow-up analysis:**
@@ -651,6 +680,26 @@ Claude will prompt you to approve each tool call before executing it, then respo
   "high_retry_aps": [
     { "ap_name": "Office AP", "mac": "aa:bb:cc:11:22:33", "radio": "ng",
       "channel": 6, "tx_packets": 50000, "tx_retries": 12000, "retry_percent": 24 }
+  ]
+}
+
+// get_channel_conflicts (clean — no conflicts)
+{ "total_conflicts": 0, "conflicts": [] }
+
+// get_channel_conflicts (conflict detected)
+{
+  "total_conflicts": 1,
+  "conflicts": [
+    {
+      "channel_key": "2.4GHz_ch6",
+      "band": "2.4GHz",
+      "channel": 6,
+      "ap_count": 2,
+      "access_points": [
+        { "ap_name": "Living Room AP", "mac": "aa:bb:cc:11:22:33", "band": "2.4GHz", "channel": 6, "tx_power": 20 },
+        { "ap_name": "Kitchen AP",     "mac": "dd:ee:ff:44:55:66", "band": "2.4GHz", "channel": 6, "tx_power": 20 }
+      ]
+    }
   ]
 }
 
