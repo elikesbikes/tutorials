@@ -1,5 +1,7 @@
 # Graylog WiFi MCP Server Workflow
 
+**Author:** Tars (Emmanuel Loaiza)
+
 ## Overview
 
 This n8n workflow (`graylog-wifi-mcp-v7.json`) exposes a **Model Context Protocol (MCP) server** that gives AI assistants (like Claude) direct access to WiFi error logs stored in Graylog. It acts as a bridge between an AI tool and your Graylog log management platform.
