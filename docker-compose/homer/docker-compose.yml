@@ -1,0 +1,10 @@
+services:
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    volumes:
+      - ./config.yml:/www/assets/config.yml
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+# test deploy
