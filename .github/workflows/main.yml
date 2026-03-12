@@ -1,0 +1,19 @@
+name: Deploy Stack
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mystack/docker-compose.yml'  # only triggers if this file changed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Validate compose file
+        run: docker compose -f mystack/docker-compose.yml config
+
+      - name: Trigger Portainer redeploy
+        run: curl -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
