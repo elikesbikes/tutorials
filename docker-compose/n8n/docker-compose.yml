@@ -10,6 +10,8 @@ services:
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - UNIFI_USER=${UNIFI_USER}
       - UNIFI_PASS=${UNIFI_PASS}
+      - GRAYLOG_API_TOKEN=${GRAYLOG_API_TOKEN}
+      - GRAYLOG_STREAM_ID=${GRAYLOG_STREAM_ID}
     ports:
       - "5678:5678"
     volumes:
