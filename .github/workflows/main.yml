@@ -1,4 +1,21 @@
-- name: Connect to Tailscale
+name: Deploy Homer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose/homer/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Validate compose file
+        run: docker compose -f docker-compose/homer/docker-compose.yml config
+
+      - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
