@@ -1,19 +1,19 @@
-name: Deploy Stack
+- name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'mystack/docker-compose.yml'  # only triggers if this file changed
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Validate compose file
-        run: docker compose -f mystack/docker-compose.yml config
-
-      - name: Trigger Portainer redeploy
-        run: curl -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
+      - name: Deploy on tars
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /home/ecloaiza/devops/docker/homer &&
+            docker compose pull &&
+            docker compose up -d
+          "
