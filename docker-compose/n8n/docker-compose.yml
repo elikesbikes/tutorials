@@ -6,12 +6,14 @@ services:
     env_file:
       - .env
     environment:
-      - N8N_BLOCK_ENV_ACCESS_IN_EXPR- N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_BLOCK_ENV_ACCESS_IN_EXPR=false
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - UNIFI_USER=${UNIFI_USER}
       - UNIFI_PASS=${UNIFI_PASS}
       - GRAYLOG_API_TOKEN=${GRAYLOG_API_TOKEN}
       - GRAYLOG_STREAM_ID=${GRAYLOG_STREAM_ID}
+      - HA_URL=${HA_URL}
+      - HA_TOKEN=${HA_TOKEN}
     ports:
       - "5678:5678"
     volumes:

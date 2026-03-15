@@ -147,33 +147,33 @@ node --version
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Ubuntu Host Machine                       │
+│                        Ubuntu Host Machine                      │
 │                                                                 │
 │   ┌─────────────────────────────────┐                           │
 │   │        Docker Engine            │                           │
 │   │                                 │                           │
 │   │  ┌──────────────────────────┐   │                           │
-│   │  │    n8n Container         │   │   ┌─────────────────┐    │
-│   │  │                          │   │   │  Claude Code    │    │
-│   │  │  image: n8nio/n8n:latest │   │   │  CLI (host)     │    │
-│   │  │  port: 5678              │◄──┼───►                 │    │
-│   │  │                          │   │   │  $ claude       │    │
-│   │  │  volumes:                │   │   └────────┬────────┘    │
-│   │  │  ./n8n_data → .n8n/      │   │            │             │
-│   │  │  ./shared   → shared/    │   │            │ reads/writes│
-│   │  │                          │   │            ▼             │
-│   │  │  extra_hosts:            │   │   ┌─────────────────┐    │
-│   │  │  host.docker.internal    │   │   │  ./shared/      │    │
-│   │  │  → host-gateway          │   │   │  (shared vol.)  │    │
-│   │  └──────────────────────────┘   │   └─────────────────┘    │
+│   │  │    n8n Container         │   │   ┌─────────────────┐     │
+│   │  │                          │   │   │  Claude Code    │     │
+│   │  │  image: n8nio/n8n:latest │   │   │  CLI (host)     │     │
+│   │  │  port: 5678              │◄──┼───►                 │     │
+│   │  │                          │   │   │  $ claude       │     │
+│   │  │  volumes:                │   │   └────────┬────────┘     │
+│   │  │  ./n8n_data → .n8n/      │   │            │              │
+│   │  │  ./shared   → shared/    │   │            │ reads/writes │
+│   │  │                          │   │            ▼              │
+│   │  │  extra_hosts:            │   │   ┌─────────────────┐     │
+│   │  │  host.docker.internal    │   │   │  ./shared/      │     │
+│   │  │  → host-gateway          │   │   │  (shared vol.)  │     │
+│   │  └──────────────────────────┘   │   └─────────────────┘     │
 │   │                                 │                           │
 │   │  Docker network: frontend       │                           │
 │   └─────────────────────────────────┘                           │
 │                                                                 │
 │   ┌──────────────────────────────────────────────────────────┐  │
 │   │                    .env file                             │  │
-│   │  N8N_HOST, N8N_PORT, N8N_ENCRYPTION_KEY, WEBHOOK_URL    │  │
-│   │  N8N_BASIC_AUTH_USER / PASSWORD, GENERIC_TIMEZONE       │  │
+│   │  N8N_HOST, N8N_PORT, N8N_ENCRYPTION_KEY, WEBHOOK_URL     │  │
+│   │  N8N_BASIC_AUTH_USER / PASSWORD, GENERIC_TIMEZONE        │  │
 │   │  UNIFI_USER, UNIFI_PASS                                  │  │
 │   └──────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
