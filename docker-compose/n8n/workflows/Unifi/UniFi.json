@@ -1,0 +1,142 @@
+{
+  "name": "UniFi",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f6dc8ee7-d993-411d-aa2e-b195530ce72c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://router.home.elikesbikes.com/api/auth/login",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "={{ $env.UNIFI_USER }}"
+            },
+            {
+              "name": "password",
+              "value": "={{ $env.UNIFI_PASS }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "name": "Login to UniFi1",
+      "typeVersion": 4,
+      "position": [
+        752,
+        464
+      ],
+      "id": "c9895ce2-ee5a-4ad2-b56c-e0c6ae792099"
+    },
+    {
+      "parameters": {
+        "url": "https://192.168.1.1/proxy/network/api/s/default/stat/sta",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ $json.headers['set-cookie']?.join('; ') }}"
+            },
+            {
+              "name": "X-Csrf-Token",
+              "value": "={{ $json.headers['x-csrf-token'] }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "name": "Get Clients1",
+      "typeVersion": 4,
+      "position": [
+        976,
+        464
+      ],
+      "id": "aff87b9f-d4d1-4eb0-b6e6-d6f0f4c63ce9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const clients = $input.first().json.data || [];\n\nconst formatted = clients.map(c => ({\n  name: c.name || c.hostname || 'Unknown',\n  ip: c.ip,\n  mac: c.mac,\n  network: c.essid || c.network || 'Wired',\n  signal: c.signal ? `${c.signal} dBm` : 'N/A',\n  type: c.is_wired ? 'Wired' : 'WiFi',\n  manufacturer: c.oui || 'Unknown'\n}));\n\nreturn [{ json: { total: formatted.length, clients: formatted } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "name": "Format Response1",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        464
+      ],
+      "id": "a5772bcd-1d13-41b3-859f-ad548f2970b3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Login to UniFi1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login to UniFi1": {
+      "main": [
+        [
+          {
+            "node": "Get Clients1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Clients1": {
+      "main": [
+        [
+          {
+            "node": "Format Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "dcd25d37-febe-4d93-9deb-8fdc08b3b4bb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3c77990184b8455d361f10b7d85885b60cdedde8a0f813b6584113fafa9146bc"
+  },
+  "id": "SgdozAyRpYJPPG13",
+  "tags": []
+}
