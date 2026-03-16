@@ -1,6 +1,9 @@
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    build:
+      context: .
+      dockerfile: workflows/Garmin/Dockerfile
+    image: n8n-garmin
     container_name: n8n
     restart: unless-stopped
     env_file:
@@ -14,12 +17,16 @@ services:
       - GRAYLOG_STREAM_ID=${GRAYLOG_STREAM_ID}
       - HA_URL=${HA_URL}
       - HA_TOKEN=${HA_TOKEN}
+      - GARMIN_EMAIL=${GARMIN_EMAIL}
+      - GARMIN_PASSWORD=${GARMIN_PASSWORD}
     ports:
       - "5678:5678"
     volumes:
       - ./n8n_data:/home/node/.n8n
       # Mount a local folder so Claude Code can read/write shared files
       - ./shared:/home/node/shared
+      # Garmin integration — scripts, tokens, and CSV output all in one place
+      - ./workflows/Garmin:/home/node/garmin
     # Allow n8n to reach Claude Code CLI running on the host machine
     extra_hosts:
       - "host.docker.internal:host-gateway"
