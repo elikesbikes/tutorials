@@ -31,6 +31,7 @@ BASE_DIR = Path("/home/node/garmin")
 TOKEN_DIR = BASE_DIR / ".garth"
 ACTIVITIES_CSV = BASE_DIR / "activities.csv"
 SLEEP_CSV = BASE_DIR / "sleep_epochs.csv"
+HRV_CSV = BASE_DIR / "hrv.csv"
 
 ACTIVITIES_HEADER = [
     "activity_id", "start_time_local", "activity_name", "activity_type",
@@ -43,6 +44,11 @@ SLEEP_HEADER = [
     "date", "sleep_score", "sleep_start_gmt", "sleep_end_gmt",
     "total_sleep_s", "deep_sleep_s", "light_sleep_s", "rem_sleep_s", "awake_s",
     "fetched_at",
+]
+
+HRV_HEADER = [
+    "date", "last_night_avg", "weekly_avg", "last_night_5min_high",
+    "status", "baseline_low", "baseline_high", "fetched_at",
 ]
 
 
@@ -127,7 +133,7 @@ end_date = today - timedelta(days=1)
 start_date = end_date - timedelta(days=6)
 fetched_at = datetime.utcnow().isoformat() + "Z"
 
-stats = {"activities_added": 0, "sleep_days_added": 0, "errors": []}
+stats = {"activities_added": 0, "sleep_days_added": 0, "hrv_days_added": 0, "errors": []}
 
 # ── activities ────────────────────────────────────────────────────────────────
 
@@ -211,6 +217,42 @@ for i in range(7):
     ])
 
 stats["sleep_days_added"] = append_rows(SLEEP_CSV, SLEEP_HEADER, new_sleep_rows)
+
+# ── HRV status (one row per night) ───────────────────────────────────────────
+
+seen_hrv_dates = load_seen_ids(HRV_CSV, key_col=0)
+new_hrv_rows = []
+
+for i in range(7):
+    day = end_date - timedelta(days=i)
+    date_str = fmt_date(day)
+
+    if date_str in seen_hrv_dates:
+        continue
+
+    try:
+        data = client.get_hrv_data(date_str)
+    except Exception as e:
+        stats["errors"].append(f"HRV fetch failed for {date_str}: {e}")
+        continue
+
+    summary = (data or {}).get("hrvSummary") or {}
+    if not summary:
+        continue
+
+    baseline = summary.get("baseline") or {}
+    new_hrv_rows.append([
+        date_str,
+        summary.get("lastNightAvg", ""),
+        summary.get("weeklyAvg", ""),
+        summary.get("lastNight5MinHigh", ""),
+        summary.get("status", ""),
+        baseline.get("balancedLow", ""),
+        baseline.get("balancedUpper", ""),
+        fetched_at,
+    ])
+
+stats["hrv_days_added"] = append_rows(HRV_CSV, HRV_HEADER, new_hrv_rows)
 
 # ── output ────────────────────────────────────────────────────────────────────
 
