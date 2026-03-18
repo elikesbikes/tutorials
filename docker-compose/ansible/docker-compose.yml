@@ -9,35 +9,35 @@ services:
     volumes:
       - semaphore-mysql:/var/lib/mysql
     networks:
-      frontend: 
+      frontend:
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=semaphore
-      - MYSQL_USER=semaphore
-      - MYSQL_PASSWORD=semaphore  # change!
+      - MYSQL_USER=${SEMAPHORE_DB_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     restart: unless-stopped
   semaphore:
     container_name: ansible-prod-1
     image: semaphoreui/semaphore:v2.8.90
-    user: "${UID}:${GID}"
+    user: 0:0
     ports:
       - 3010:3000
     environment:
-      - SEMAPHORE_DB_USER=semaphore
-      - SEMAPHORE_DB_PASS=semaphore  # change!
+      - SEMAPHORE_DB_USER=${SEMAPHORE_DB_USER}
+      - SEMAPHORE_DB_PASS=${SEMAPHORE_DB_PASS}
       - SEMAPHORE_DB_HOST=mysql
       - SEMAPHORE_DB_PORT=3306
       - SEMAPHORE_DB_DIALECT=mysql
       - SEMAPHORE_DB=semaphore
       - SEMAPHORE_PLAYBOOK_PATH=/tmp/semaphore/
-      - SEMAPHORE_ADMIN_PASSWORD=semaphore  # change!
-      - SEMAPHORE_ADMIN_NAME=admin
-      - SEMAPHORE_ADMIN_EMAIL=smarth@elikesbikes.com
+      - SEMAPHORE_ADMIN_PASSWORD=${SEMAPHORE_ADMIN_PASSWORD}
+      - SEMAPHORE_ADMIN_NAME=${SEMAPHORE_ADMIN_NAME}
+      - SEMAPHORE_ADMIN_EMAIL=${SEMAPHORE_ADMIN_EMAIL}
       - SEMAPHORE_ADMIN=admin
-      - SEMAPHORE_ACCESS_KEY_ENCRYPTION=  # add to your access key encryption !
-      - ANSIBLE_HOST_KEY_CHECKING=false  # (optional) change to true if you want to enable host key checking
+      - SEMAPHORE_ACCESS_KEY_ENCRYPTION=${SEMAPHORE_ACCESS_KEY_ENCRYPTION}
+      - ANSIBLE_HOST_KEY_CHECKING=false
     networks:
-      frontend: 
+      frontend:
     volumes:
       - ./inventory/:/inventory:ro
       - ./authorized-keys/:/authorized-keys:ro
@@ -45,6 +45,20 @@ services:
     restart: unless-stopped
     depends_on:
       - mysql
+  ansible-mcp:
+    container_name: ansible-mcp-1
+    build: ./mcp-server
+    ports:
+      - 8765:8765
+    environment:
+      - SEMAPHORE_URL=http://semaphore:3000
+      - SEMAPHORE_ADMIN=${SEMAPHORE_ADMIN_NAME}
+      - SEMAPHORE_PASS=${SEMAPHORE_ADMIN_PASSWORD}
+    networks:
+      frontend:
+    restart: unless-stopped
+    depends_on:
+      - semaphore
 networks:
   frontend:
     external: true
