@@ -1,0 +1,66 @@
+{
+  "name": "Garmin CSV Export",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "command": "python3 /home/node/garmin/garmin_fetch.py"
+      },
+      "id": "node-fetch",
+      "name": "Run Garmin Fetch",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the JSON output from garmin_fetch.py and surface it cleanly.\n// Exit code != 0 will already cause the Execute Command node to fail;\n// this node just makes the result readable in the execution log.\n\nconst raw = $input.first().json.stdout ?? '';\n\nlet result;\ntry {\n  result = JSON.parse(raw);\n} catch (_) {\n  result = { status: 'error', message: 'Could not parse script output', raw };\n}\n\nif (result.status === 'error') {\n  throw new Error(\n    `Garmin fetch errors: ${(result.errors ?? [result.message]).join('; ')}`\n  );\n}\n\nconsole.log(\n  `Garmin sync complete: +${result.activities_added} activities, ` +\n  `+${result.sleep_epochs_added} sleep epochs (${result.date_range})`\n);\n\nreturn [{ json: result }];\n"
+      },
+      "id": "node-parse",
+      "name": "Parse Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          { "node": "Run Garmin Fetch", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Run Garmin Fetch": {
+      "main": [
+        [
+          { "node": "Parse Result", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "last",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": ["garmin", "health", "csv"]
+}

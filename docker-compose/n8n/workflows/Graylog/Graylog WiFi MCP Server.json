@@ -1,0 +1,86 @@
+{
+  "name": "Graylog WiFi MCP Server",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "graylog-wifi-mcp"
+      },
+      "id": "e69ba3c5-4a6d-4c3b-81f3-0ecab9bfe5a5",
+      "name": "MCP Server Trigger",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        -128
+      ],
+      "webhookId": "graylog-wifi-mcp"
+    },
+    {
+      "parameters": {
+        "description": "Fetches WiFi-related error logs from Graylog. Parameters: minutes (integer, how far back to search, default 60), min_level (integer, max severity: 0=Emergency 1=Alert 2=Critical 3=Error 4=Warning, default 3).",
+        "jsCode": "const minutes = query.minutes ?? 60;\nconst minLevel = query.min_level ?? 3;\nconst rangeSeconds = minutes * 60;\n\nconst token = $env.GRAYLOG_API_TOKEN;\nconst streamId = $env.GRAYLOG_STREAM_ID;\nconst encoded = Buffer.from(`${token}:token`).toString('base64');\n\nconst graylogQuery = `streams:${streamId} AND level:<=${minLevel}`;\nconst qs = `query=${encodeURIComponent(graylogQuery)}&range=${rangeSeconds}&limit=50&fields=timestamp%2Csource%2Cmessage%2Clevel%2Cfacility&sort=timestamp%3Adesc`;\n\nconst response = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `http://192.168.5.20:9000/api/search/universal/relative?${qs}`,\n  headers: {\n    'Authorization': `Basic ${encoded}`,\n    'Accept': 'application/json',\n    'X-Requested-By': 'n8n'\n  }\n});\n\nconst messages = (response.messages || []);\n\nif (messages.length === 0) {\n  return 'No WiFi errors found in the specified time range.';\n}\n\nconst levelMap = { 0:'EMERGENCY', 1:'ALERT', 2:'CRITICAL', 3:'ERROR', 4:'WARNING', 5:'NOTICE', 6:'INFO', 7:'DEBUG' };\n\nconst formatted = messages.map(m => {\n  const f = m.message;\n  const level = levelMap[f.level] || `LEVEL_${f.level}`;\n  return `[${f.timestamp}] ${level} | ${f.source} | ${f.message}`;\n}).join('\\n');\n\nreturn `Found ${messages.length} WiFi log entries:\\n\\n${formatted}`;"
+      },
+      "id": "2d494dc7-c838-435d-9dbb-5010f66932ee",
+      "name": "get_wifi_errors",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        -800,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Searches WiFi logs in Graylog using a custom query string. Use this for targeted searches like 'deauth', 'auth fail', 'disassoc', 'beacon loss', etc. Parameters: query (string, Graylog search terms, default 'wifi OR wlan OR wireless'), minutes (integer, time range in minutes, default 60), limit (integer, max results, default 50).",
+        "jsCode": "const searchQuery = query.query || 'wifi OR wlan OR wireless';\nconst minutes = query.minutes ?? 60;\nconst limit = query.limit ?? 50;\nconst rangeSeconds = minutes * 60;\n\nconst token = $env.GRAYLOG_API_TOKEN;\nconst streamId = $env.GRAYLOG_STREAM_ID;\nconst encoded = Buffer.from(`${token}:token`).toString('base64');\n\nconst fullQuery = `streams:${streamId} AND (${searchQuery})`;\nconst qs = `query=${encodeURIComponent(fullQuery)}&range=${rangeSeconds}&limit=${limit}&fields=timestamp%2Csource%2Cmessage%2Clevel%2Cfacility&sort=timestamp%3Adesc`;\n\nconst response = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `http://192.168.5.20:9000/api/search/universal/relative?${qs}`,\n  headers: {\n    'Authorization': `Basic ${encoded}`,\n    'Accept': 'application/json',\n    'X-Requested-By': 'n8n'\n  }\n});\n\nconst messages = (response.messages || []);\n\nif (messages.length === 0) {\n  return `No logs found for query \"${searchQuery}\" in the last ${minutes} minutes.`;\n}\n\nconst levelMap = { 0:'EMERGENCY', 1:'ALERT', 2:'CRITICAL', 3:'ERROR', 4:'WARNING', 5:'NOTICE', 6:'INFO', 7:'DEBUG' };\n\nconst formatted = messages.map(m => {\n  const f = m.message;\n  const level = levelMap[f.level] || `LEVEL_${f.level}`;\n  return `[${f.timestamp}] ${level} | ${f.source} | ${f.message}`;\n}).join('\\n');\n\nreturn `Found ${messages.length} log entries for query \"${searchQuery}\":\\n\\n${formatted}`;"
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "search_wifi_logs",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        -800,
+        400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "get_wifi_errors": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_wifi_logs": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2144fa9e-723b-4163-83da-1737bc77bcec",
+  "meta": {
+    "instanceId": "3c77990184b8455d361f10b7d85885b60cdedde8a0f813b6584113fafa9146bc"
+  },
+  "id": "kACIqgpZ8wgt7G3P",
+  "tags": []
+}

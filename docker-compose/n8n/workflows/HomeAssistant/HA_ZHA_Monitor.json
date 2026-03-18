@@ -1,0 +1,36 @@
+{
+  "id": "ur3QtEjOnDWORazL",
+  "name": "ZHA Zigbee Error Monitor",
+  "active": false,
+  "nodes": [
+    {
+      "id": "zha_trigger",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "parameters": {}
+    },
+    {
+      "id": "zha_code",
+      "name": "ZHA Health Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 300],
+      "parameters": {
+        "jsCode": "// ============================================================\n// ZHA Error Monitoring — fetches HA API and formats report\n// ============================================================\nconst LQI_THRESHOLD = 50;\nconst MAX_LOG_LINES = 30;\n\nconst haUrl = $env.HA_URL;\nconst haToken = $env.HA_TOKEN;\nconst headers = { 'Authorization': `Bearer ${haToken}` };\n\n// Fetch all three endpoints in parallel\nconst [errorLogRes, statesRes, logbookRes] = await Promise.all([\n  fetch(`${haUrl}/api/error_log`, { headers }),\n  fetch(`${haUrl}/api/states`, { headers }),\n  fetch(`${haUrl}/api/logbook`, { headers })\n]);\n\nconst errorLogRaw = await errorLogRes.text();\nconst states = await statesRes.json();\nconst logbook = await logbookRes.json();\n\nconst ZHA_PATTERN = /zha|zigbee/i;\n\n// SECTION 1 — ZHA Error Log Entries\nconst errorLogLines = errorLogRaw\n  .split('\\n')\n  .filter(line => line.trim().length > 0 && ZHA_PATTERN.test(line))\n  .slice(-MAX_LOG_LINES);\n\nlet section1 = '## Section 1: ZHA Error Log Entries\\n';\nif (errorLogLines.length === 0) {\n  section1 += '_No ZHA/Zigbee errors found in the HA error log._\\n';\n} else {\n  section1 += `_${errorLogLines.length} matching line(s) (most recent ${MAX_LOG_LINES} shown):_\\n\\n`;\n  section1 += '```\\n' + errorLogLines.join('\\n') + '\\n```\\n';\n}\n\n// SECTION 2 — Unavailable ZHA Devices\nconst isZHAEntity = (e) => {\n  const attrs = e.attributes || {};\n  return attrs.lqi !== undefined || attrs.rssi !== undefined;\n};\n\nconst unavailableDevices = states.filter(e => e.state === 'unavailable' && isZHAEntity(e));\n\nlet section2 = '## Section 2: Unavailable ZHA Devices\\n';\nif (unavailableDevices.length === 0) {\n  section2 += '_No unavailable ZHA devices._\\n';\n} else {\n  section2 += `_${unavailableDevices.length} unavailable device(s):_\\n\\n`;\n  section2 += '| Entity ID | Friendly Name | Last Changed |\\n';\n  section2 += '|-----------|--------------|-------------|\\n';\n  for (const e of unavailableDevices) {\n    const name = e.attributes?.friendly_name ?? e.entity_id;\n    const changed = e.last_changed\n      ? new Date(e.last_changed).toLocaleString('en-US', { timeZone: 'America/New_York' })\n      : 'Unknown';\n    section2 += `| \\`${e.entity_id}\\` | ${name} | ${changed} |\\n`;\n  }\n  section2 += '\\n';\n}\n\n// SECTION 3 — Weak Signal Devices (LQI < threshold)\nconst weakSignalDevices = states\n  .filter(e => {\n    const lqi = e.attributes?.lqi;\n    return lqi !== undefined && Number(lqi) < LQI_THRESHOLD;\n  })\n  .sort((a, b) => Number(a.attributes.lqi) - Number(b.attributes.lqi));\n\nlet section3 = `## Section 3: Weak Signal Devices (LQI < ${LQI_THRESHOLD})\\n`;\nif (weakSignalDevices.length === 0) {\n  section3 += `_No ZHA devices with LQI below ${LQI_THRESHOLD}._\\n`;\n} else {\n  section3 += `_${weakSignalDevices.length} device(s) with weak signal:_\\n\\n`;\n  section3 += '| Entity ID | Friendly Name | LQI | RSSI | Last Seen |\\n';\n  section3 += '|-----------|--------------|-----|------|----------|\\n';\n  for (const e of weakSignalDevices) {\n    const attrs = e.attributes || {};\n    const name = attrs.friendly_name ?? e.entity_id;\n    const lqi = attrs.lqi ?? 'N/A';\n    const rssi = attrs.rssi ?? 'N/A';\n    const lastSeen = attrs.last_seen\n      ? new Date(attrs.last_seen).toLocaleString('en-US', { timeZone: 'America/New_York' })\n      : 'Unknown';\n    section3 += `| \\`${e.entity_id}\\` | ${name} | ${lqi} | ${rssi} | ${lastSeen} |\\n`;\n  }\n  section3 += '\\n';\n}\n\n// SECTION 4 — ZHA Logbook Events\nconst zhaEvents = logbook\n  .filter(e =>\n    ZHA_PATTERN.test(e.name || '') ||\n    ZHA_PATTERN.test(e.message || '') ||\n    ZHA_PATTERN.test(e.domain || '') ||\n    ZHA_PATTERN.test(e.entity_id || '')\n  )\n  .slice(0, 20);\n\nlet section4 = '## Section 4: Recent ZHA Logbook Events\\n';\nif (zhaEvents.length === 0) {\n  section4 += '_No recent ZHA logbook events._\\n';\n} else {\n  section4 += `_${zhaEvents.length} recent event(s):_\\n\\n`;\n  for (const e of zhaEvents) {\n    const when = e.when\n      ? new Date(e.when).toLocaleString('en-US', { timeZone: 'America/New_York' })\n      : 'Unknown';\n    section4 += `- **${when}** — \\`${e.entity_id ?? e.domain ?? 'unknown'}\\` — ${e.message ?? e.name ?? 'no message'}\\n`;\n  }\n  section4 += '\\n';\n}\n\n// SUMMARY\nconst runTime = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });\nconst summary =\n  `# ZHA Health Report\\n` +\n  `**Run time:** ${runTime}\\n\\n` +\n  `**Summary:** ` +\n  `${errorLogLines.length} error log entries | ` +\n  `${unavailableDevices.length} unavailable devices | ` +\n  `${weakSignalDevices.length} weak signal devices | ` +\n  `${zhaEvents.length} logbook events\\n\\n` +\n  `---\\n\\n`;\n\nconst fullReport = summary + section1 + '\\n' + section2 + '\\n' + section3 + '\\n' + section4;\n\nreturn [{ json: { report: fullReport } }];"
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [[{"node": "ZHA Health Report", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  }
+}

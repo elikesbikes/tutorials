@@ -1,7 +1,7 @@
 ---
 # Homepage configuration
 # See https://fontawesome.com/v5/search for icons options
-
+# # test ci/cd deploy
 title: "ELIKESBIKES"
 subtitle: "Home Lab"
 logo: "logo.png"
@@ -248,3 +248,4 @@ services:
         subtitle: "Virtual Data Center"
         tag: "cloud"
         url: "https://cloud.linode.com/linodes"
+# test deploy
