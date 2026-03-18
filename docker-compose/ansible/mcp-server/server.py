@@ -2,6 +2,7 @@ import os
 import json
 import re
 import httpx
+from contextlib import asynccontextmanager
 from mcp.server.fastmcp import FastMCP
 
 SEMAPHORE_URL = os.environ.get("SEMAPHORE_URL", "http://semaphore:3000")
@@ -11,22 +12,23 @@ SEMAPHORE_PASS = os.environ.get("SEMAPHORE_PASS", "")
 mcp = FastMCP("ansible", host="0.0.0.0", port=8765)
 
 
-async def semaphore_client() -> httpx.AsyncClient:
-    """Return an authenticated httpx client."""
-    client = httpx.AsyncClient(base_url=SEMAPHORE_URL, timeout=30)
-    resp = await client.post(
-        "/api/auth/login",
-        json={"auth": SEMAPHORE_ADMIN, "password": SEMAPHORE_PASS},
-    )
-    if resp.status_code != 204:
-        raise RuntimeError(f"Semaphore login failed: {resp.status_code}")
-    return client
+@asynccontextmanager
+async def semaphore_client():
+    """Async context manager yielding an authenticated httpx client."""
+    async with httpx.AsyncClient(base_url=SEMAPHORE_URL, timeout=30) as client:
+        resp = await client.post(
+            "/api/auth/login",
+            json={"auth": SEMAPHORE_ADMIN, "password": SEMAPHORE_PASS},
+        )
+        if resp.status_code != 204:
+            raise RuntimeError(f"Semaphore login failed: {resp.status_code}")
+        yield client
 
 
 @mcp.tool()
 async def list_projects() -> str:
     """List all Ansible projects in Semaphore."""
-    async with await semaphore_client() as c:
+    async with semaphore_client() as c:
         r = await c.get("/api/projects")
         projects = r.json()
         return json.dumps(
@@ -42,7 +44,7 @@ async def list_playbook_templates(project_id: int = 1) -> str:
     Args:
         project_id: Semaphore project ID (default 1)
     """
-    async with await semaphore_client() as c:
+    async with semaphore_client() as c:
         r = await c.get(f"/api/project/{project_id}/templates")
         templates = r.json()
         return json.dumps(
@@ -79,7 +81,7 @@ async def run_playbook(template_id: int, project_id: int = 1, limit: str = "", d
         "environment": "{}",
         "limit": limit,
     }
-    async with await semaphore_client() as c:
+    async with semaphore_client() as c:
         r = await c.post(f"/api/project/{project_id}/tasks", json=payload)
         if r.status_code not in (200, 201):
             return f"Error: {r.status_code} {r.text}"
@@ -98,7 +100,7 @@ async def get_job_status(task_id: int, project_id: int = 1) -> str:
         task_id: The task ID returned by run_playbook
         project_id: Semaphore project ID (default 1)
     """
-    async with await semaphore_client() as c:
+    async with semaphore_client() as c:
         r = await c.get(f"/api/project/{project_id}/tasks/{task_id}")
         task = r.json()
         output_r = await c.get(f"/api/project/{project_id}/tasks/{task_id}/output")
@@ -125,7 +127,7 @@ async def list_recent_jobs(project_id: int = 1, limit: int = 20) -> str:
         project_id: Semaphore project ID (default 1)
         limit: Number of recent tasks to return (default 20)
     """
-    async with await semaphore_client() as c:
+    async with semaphore_client() as c:
         r = await c.get(f"/api/project/{project_id}/tasks?limit={limit}")
         tasks = r.json()
         return json.dumps(
@@ -151,7 +153,7 @@ async def list_inventory(project_id: int = 1) -> str:
     Args:
         project_id: Semaphore project ID (default 1)
     """
-    async with await semaphore_client() as c:
+    async with semaphore_client() as c:
         r = await c.get(f"/api/project/{project_id}/inventory")
         inventories = r.json()
         return json.dumps(
@@ -178,7 +180,7 @@ async def add_host(hostname: str, group: str, inventory_id: int = 1, project_id:
         inventory_id: Semaphore inventory ID (default 1 = HomeLab)
         project_id: Semaphore project ID (default 1)
     """
-    async with await semaphore_client() as c:
+    async with semaphore_client() as c:
         r = await c.get(f"/api/project/{project_id}/inventory/{inventory_id}")
         if r.status_code != 200:
             return f"Error fetching inventory: {r.status_code}"
