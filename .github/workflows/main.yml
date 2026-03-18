@@ -1,0 +1,64 @@
+name: Deploy Changed Stacks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose/**'
+
+jobs:
+
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.changed.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed stacks
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'docker-compose/' \
+            | grep 'docker-compose/' \
+            | cut -d'/' -f2 \
+            | sort -u \
+            | jq -R . \
+            | jq -sc .)
+          echo "matrix=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Changed stacks: $CHANGED"
+
+  deploy:
+    needs: detect
+    if: ${{ needs.detect.outputs.matrix != '[]' && needs.detect.outputs.matrix != '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack: ${{ fromJson(needs.detect.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose file
+        run: docker compose -f docker-compose/${{ matrix.stack }}/docker-compose.yml config
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy ${{ matrix.stack }}
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /home/ecloaiza/devops/docker/${{ matrix.stack }} &&
+            docker compose pull &&
+            docker compose up -d
+          "
