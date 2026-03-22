@@ -30,7 +30,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse the JSON output from garmin_fetch.py and surface it cleanly.\n// Exit code != 0 will already cause the Execute Command node to fail;\n// this node just makes the result readable in the execution log.\n\nconst raw = $input.first().json.stdout ?? '';\n\nlet result;\ntry {\n  result = JSON.parse(raw);\n} catch (_) {\n  result = { status: 'error', message: 'Could not parse script output', raw };\n}\n\nif (result.status === 'error') {\n  throw new Error(\n    `Garmin fetch errors: ${(result.errors ?? [result.message]).join('; ')}`\n  );\n}\n\nconsole.log(\n  `Garmin sync complete: +${result.activities_added} activities, ` +\n  `+${result.sleep_epochs_added} sleep epochs (${result.date_range})`\n);\n\nreturn [{ json: result }];\n"
+        "jsCode": "// Parse the JSON output from garmin_fetch.py and surface it cleanly.\n// Exit code != 0 will already cause the Execute Command node to fail;\n// this node just makes the result readable in the execution log.\n\nconst raw = $input.first().json.stdout ?? '';\n\nlet result;\ntry {\n  result = JSON.parse(raw);\n} catch (_) {\n  result = { status: 'error', message: 'Could not parse script output', raw };\n}\n\nif (result.status === 'error') {\n  throw new Error(\n    `Garmin fetch errors: ${(result.errors ?? [result.message]).join('; ')}`\n  );\n}\n\nconsole.log(\n  `Garmin sync complete: +${result.activities_added} activities, ` +\n  `+${result.sleep_days_added} sleep days, ` +\n  `+${result.hrv_days_added} HRV days, ` +\n  `+${result.rhr_days_added} RHR days (${result.date_range})`\n);\n\nreturn [{ json: result }];\n"
       },
       "id": "node-parse",
       "name": "Parse Result",
