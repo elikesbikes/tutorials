@@ -32,6 +32,7 @@ TOKEN_DIR = BASE_DIR / ".garth"
 ACTIVITIES_CSV = BASE_DIR / "activities.csv"
 SLEEP_CSV = BASE_DIR / "sleep_epochs.csv"
 HRV_CSV = BASE_DIR / "hrv.csv"
+RHR_CSV = BASE_DIR / "rhr.csv"
 
 ACTIVITIES_HEADER = [
     "activity_id", "start_time_local", "activity_name", "activity_type",
@@ -50,6 +51,8 @@ HRV_HEADER = [
     "date", "last_night_avg", "weekly_avg", "last_night_5min_high",
     "status", "baseline_low", "baseline_high", "fetched_at",
 ]
+
+RHR_HEADER = ["date", "resting_hr", "fetched_at"]
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -126,14 +129,14 @@ except Exception as e:
     print(json.dumps({"status": "error", "message": f"Token load/refresh failed: {e}"}))
     sys.exit(1)
 
-# ── date range: yesterday back 7 days ────────────────────────────────────────
+# ── date range: today back 7 days ────────────────────────────────────────────
 
 today = datetime.utcnow().date()
-end_date = today - timedelta(days=1)
+end_date = today
 start_date = end_date - timedelta(days=6)
 fetched_at = datetime.utcnow().isoformat() + "Z"
 
-stats = {"activities_added": 0, "sleep_days_added": 0, "hrv_days_added": 0, "errors": []}
+stats = {"activities_added": 0, "sleep_days_added": 0, "hrv_days_added": 0, "rhr_days_added": 0, "errors": []}
 
 # ── activities ────────────────────────────────────────────────────────────────
 
@@ -253,6 +256,34 @@ for i in range(7):
     ])
 
 stats["hrv_days_added"] = append_rows(HRV_CSV, HRV_HEADER, new_hrv_rows)
+
+# ── RHR (resting heart rate, one row per day) ────────────────────────────────
+
+seen_rhr_dates = load_seen_ids(RHR_CSV, key_col=0)
+new_rhr_rows = []
+
+for i in range(7):
+    day = end_date - timedelta(days=i)
+    date_str = fmt_date(day)
+
+    if date_str in seen_rhr_dates:
+        continue
+
+    try:
+        data = client.get_rhr_day(date_str)
+    except Exception as e:
+        stats["errors"].append(f"RHR fetch failed for {date_str}: {e}")
+        continue
+
+    entries = ((data or {}).get("allMetrics") or {}).get("metricsMap") or {}
+    rhr_list = entries.get("WELLNESS_RESTING_HEART_RATE") or []
+    rhr_value = rhr_list[0].get("value") if rhr_list else None
+    if rhr_value is None:
+        continue
+
+    new_rhr_rows.append([date_str, rhr_value, fetched_at])
+
+stats["rhr_days_added"] = append_rows(RHR_CSV, RHR_HEADER, new_rhr_rows)
 
 # ── output ────────────────────────────────────────────────────────────────────
 
