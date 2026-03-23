@@ -1,6 +1,35 @@
 # Garmin CSV Export Workflow
 
-Fetches the last 7 days of Garmin Connect data daily and appends new records to three persistent CSV files. Deduplication prevents duplicate rows on re-runs.
+Fetches the last 7 days of Garmin Connect data daily and appends new records to four persistent CSV files. Deduplication prevents duplicate rows on re-runs.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Set credentials
+echo "GARMIN_EMAIL=you@example.com\nGARMIN_PASSWORD=yourpassword" >> docker/n8n/.env
+
+# 2. Build and start
+cd /home/ecloaiza/devops/docker/n8n
+docker compose build && docker compose up -d
+
+# 3. One-time MFA auth
+docker exec -it n8n python3 /home/node/garmin/setup_garmin_auth.py
+
+# 4. Verify
+docker exec n8n python3 /home/node/garmin/garmin_fetch.py
+```
+
+The workflow runs automatically at 06:00 America/New_York every day. No further setup needed.
+
+---
+
+## Prerequisites
+
+- Docker + Docker Compose
+- A Garmin Connect account with MFA enabled
+- The parent `docker/n8n/docker-compose.yml` and `entrypoint.sh` (lives in the `n8n/` directory, not here)
 
 ---
 
@@ -14,21 +43,18 @@ docker/n8n/
 ├── n8n_data/                   # n8n database, logs, config (persisted volume)
 ├── shared/                     # General-purpose shared volume
 └── workflows/
-    ├── Garmin/                 # All Garmin files live here
-    │   ├── CLAUDE.md           # This file — project documentation
-    │   ├── Dockerfile          # Custom image: node:20-alpine + Python + n8n
-    │   ├── setup_garmin_auth.py   # One-time MFA auth setup
-    │   ├── garmin_server.py       # HTTP sidecar server (port 8765)
-    │   ├── garmin_fetch.py        # Daily fetch + CSV append logic
-    │   ├── garmin_csv_export.json # n8n workflow backup (import if needed)
-    │   ├── activities.csv         # Output: workout activities
-    │   ├── sleep_epochs.csv       # Output: nightly sleep summary
-    │   ├── hrv.csv                # Output: nightly HRV status
-    │   └── rhr.csv                # Output: daily resting heart rate
-    ├── Graylog/                # Graylog WiFi MCP Server workflow
-    ├── HomeAssistant/          # Home Assistant ZHA monitor workflow
-    ├── Proxmox/                # Proxmox workflows
-    └── Unifi/                  # UniFi network monitor workflow
+    └── Garmin/                 # All Garmin files live here
+        ├── README.md               # This file
+        ├── Dockerfile              # Custom image: node:20-alpine + Python + n8n
+        ├── setup_garmin_auth.py    # One-time MFA auth setup
+        ├── garmin_server.py        # HTTP sidecar server (port 8765)
+        ├── garmin_fetch.py         # Daily fetch + CSV append logic
+        ├── garmin_backfill.py      # One-off historical backfill script
+        ├── garmin_csv_export.json  # n8n workflow backup (import if needed)
+        ├── activities.csv          # Output: workout activities
+        ├── sleep_epochs.csv        # Output: nightly sleep summary
+        ├── hrv.csv                 # Output: nightly HRV status
+        └── rhr.csv                 # Output: daily resting heart rate
 ```
 
 > Note: `.garth/` (OAuth token store) is inside `Garmin/` but git-ignored — it holds sensitive auth tokens.
@@ -38,8 +64,8 @@ docker/n8n/
 ## What It Does
 
 - **Runs:** Daily at 06:00 America/New_York via cron (`0 6 * * *`)
-- **Fetches:** Workout activities + nightly sleep summary + nightly HRV status
-- **Saves to:** Three append-only CSV files in the mounted volume
+- **Fetches:** Workout activities + nightly sleep summary + nightly HRV status + resting heart rate
+- **Saves to:** Four append-only CSV files in the mounted volume
 - **Self-healing:** Always fetches today + 6 prior days, so missed days auto-catch-up on the next run
 - **Today included:** `end_date = today` so last night's sleep/HRV (keyed to wake-up date) is always captured
 - **0 added = normal** when re-running the same day — dedup skips already-saved records
@@ -138,6 +164,7 @@ The HTTP Request node calls `garmin_server.py`, which runs `garmin_fetch.py` as 
 | `setup_garmin_auth.py` | One-time interactive MFA auth — saves OAuth tokens |
 | `garmin_fetch.py` | Daily fetch script — runs inside container via garmin_server.py |
 | `garmin_server.py` | HTTP sidecar server — bridges n8n to garmin_fetch.py |
+| `garmin_backfill.py` | One-off historical backfill — fetches a configurable date range in 7-day chunks |
 
 All scripts live in `./workflows/Garmin/` (host) = `/home/node/garmin/` (container).
 
@@ -186,6 +213,30 @@ cat workflows/Garmin/hrv.csv
 docker exec n8n python3 /home/node/garmin/garmin_fetch.py
 wc -l workflows/Garmin/*.csv
 ```
+
+---
+
+## Backfill
+
+Use `garmin_backfill.py` to load historical data that predates the daily workflow. It fetches from a configured start date to today in 7-day chunks, merging into the same CSV files with the same dedup logic.
+
+### Configure the date range
+
+Edit `garmin_backfill.py` and set `START_DATE`:
+
+```python
+START_DATE = date(2026, 1, 1)   # change to your desired start date
+```
+
+### Run the backfill
+
+```bash
+docker exec -it n8n python3 /home/node/garmin/garmin_backfill.py
+```
+
+Progress is printed per chunk. The script sleeps 2 seconds between chunks to avoid Garmin API rate limits. Re-running is safe — dedup skips rows already in the CSVs.
+
+> Note: `garmin_backfill.py` does not fetch RHR. Add that manually if needed.
 
 ---
 
