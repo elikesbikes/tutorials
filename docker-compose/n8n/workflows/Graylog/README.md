@@ -1,46 +1,51 @@
-# Graylog WiFi MCP Server Workflow
+# Graylog WiFi MCP Server
 
-**Author:** Tars (Emmanuel Loaiza)
+**Author:** Emmanuel Loaiza (Tars)
 
-## Overview
-
-This n8n workflow (`graylog-wifi-mcp-v7.json`) exposes a **Model Context Protocol (MCP) server** that gives AI assistants (like Claude) direct access to WiFi error logs stored in Graylog. It acts as a bridge between an AI tool and your Graylog log management platform.
+An n8n workflow that exposes a **Model Context Protocol (MCP) server** giving AI assistants (like Claude) direct, real-time access to WiFi logs stored in Graylog. It bridges your AI tooling with Graylog's log management platform — enabling natural language queries over your network's WiFi event history.
 
 ---
 
-## How It Works
+## Features
 
-The workflow consists of two nodes:
-
-```
-[MCP Server Trigger] ──ai_tool──> [get_wifi_errors]
-```
-
-### 1. MCP Server Trigger
-- **Type:** `@n8n/n8n-nodes-langchain.mcpTrigger`
-- **Webhook ID:** `graylog-wifi-mcp`
-- Listens for incoming MCP tool calls from an AI assistant and routes them to the appropriate tool node.
-
-### 2. get_wifi_errors Tool
-- **Type:** `@n8n/n8n-nodes-langchain.toolCode`
-- Queries the Graylog REST API for WiFi-related log messages.
-- Returns formatted log entries sorted by timestamp (newest first).
+- Query WiFi error logs by severity level and time range
+- Search WiFi logs using custom Graylog query strings (e.g., `deauth`, `auth fail`, `beacon loss`)
+- Returns up to 50 log entries, sorted newest-first
+- Connects to any MCP-compatible AI client (Claude, etc.)
 
 ---
 
-## Tool: `get_wifi_errors`
+## Workflow Architecture
 
-### Description
-Fetches WiFi-related error logs from Graylog based on a time range and minimum severity level.
+```
+[MCP Server Trigger]
+        |
+        ├──ai_tool──> [get_wifi_errors]
+        └──ai_tool──> [search_wifi_logs]
+```
 
-### Parameters
+| Node | Type | Purpose |
+|------|------|---------|
+| `MCP Server Trigger` | `@n8n/n8n-nodes-langchain.mcpTrigger` | Receives MCP tool calls and routes them |
+| `get_wifi_errors` | `@n8n/n8n-nodes-langchain.toolCode` | Fetches logs filtered by severity level |
+| `search_wifi_logs` | `@n8n/n8n-nodes-langchain.toolCode` | Searches logs with a custom Graylog query |
+
+---
+
+## Tools
+
+### `get_wifi_errors`
+
+Fetches WiFi-related error logs from Graylog filtered by severity and time range.
+
+**Parameters:**
 
 | Parameter   | Type    | Default | Description |
 |-------------|---------|---------|-------------|
-| `minutes`   | integer | `60`    | How far back (in minutes) to search for logs |
-| `min_level` | integer | `3`     | Maximum syslog severity level to include (lower = more severe) |
+| `minutes`   | integer | `60`    | How far back (in minutes) to search |
+| `min_level` | integer | `3`     | Max syslog severity to include (lower = more severe) |
 
-### Syslog Severity Levels
+**Syslog severity levels:**
 
 | Level | Name      |
 |-------|-----------|
@@ -55,56 +60,81 @@ Fetches WiFi-related error logs from Graylog based on a time range and minimum s
 
 > **Example:** `min_level=4` returns WARNING, ERROR, CRITICAL, ALERT, and EMERGENCY messages.
 
-### Output
-
-Returns up to **50 log entries** in the format:
+**Output:**
 
 ```
-Found N WiFi log entries:
+Found 2 WiFi log entries:
 
 [2026-03-11T14:22:01.000Z] ERROR | ap-office-01 | Association failed for client 00:11:22:33:44:55
 [2026-03-11T14:20:15.000Z] WARNING | ap-lobby-02 | High retry rate detected on channel 6
 ```
 
-If no logs are found, returns:
+---
+
+### `search_wifi_logs`
+
+Searches WiFi logs using a custom Graylog query string. Use this for targeted searches like specific events (`deauth`, `auth fail`, `disassoc`, `beacon loss`).
+
+**Parameters:**
+
+| Parameter | Type    | Default                    | Description |
+|-----------|---------|----------------------------|-------------|
+| `query`   | string  | `wifi OR wlan OR wireless` | Graylog search terms |
+| `minutes` | integer | `60`                       | Time range in minutes |
+| `limit`   | integer | `50`                       | Max number of results |
+
+**Output:**
+
 ```
-No WiFi errors found in the specified time range.
+Found 3 log entries for query "deauth":
+
+[2026-03-11T14:25:00.000Z] WARNING | ap-office-01 | Deauth received from client 00:11:22:33:44:55
+...
+```
+
+If no logs are found:
+```
+No logs found for query "deauth" in the last 60 minutes.
 ```
 
 ---
 
-## Environment Variables
+## Prerequisites
 
-The workflow requires the following environment variables configured in n8n:
-
-| Variable             | Description |
-|----------------------|-------------|
-| `GRAYLOG_API_TOKEN`  | Your Graylog API token (used for Basic Auth as `token:token`) |
-| `GRAYLOG_STREAM_ID`  | The Graylog stream ID to search within |
-
-### Setting Environment Variables in n8n
-
-1. Go to **Settings > Environment Variables** in your n8n instance.
-2. Add `GRAYLOG_API_TOKEN` and `GRAYLOG_STREAM_ID` with their respective values.
-
-> **Note:** The Graylog instance is hardcoded to `http://192.168.5.20:9000`. Update the URL in the tool's JS code if your Graylog is hosted elsewhere.
+- A running [n8n](https://n8n.io) instance
+- A running [Graylog](https://www.graylog.org) instance with a configured stream containing WiFi logs
+- An MCP-compatible AI client (e.g., Claude with MCP support)
 
 ---
 
-## Setup & Import
+## Setup
 
-1. Copy `graylog-wifi-mcp-v7.json` into your n8n workflows directory or import it via the n8n UI.
-2. In n8n, go to **Workflows > Import from File** and select `graylog-wifi-mcp-v7.json`.
-3. Set the required environment variables (`GRAYLOG_API_TOKEN`, `GRAYLOG_STREAM_ID`).
-4. Activate the workflow.
+### 1. Import the Workflow
+
+In n8n, go to **Workflows > Import from File** and select `Graylog WiFi MCP Server.json`.
+
+### 2. Configure Environment Variables
+
+Go to **Settings > Environment Variables** in n8n and add:
+
+| Variable            | Description |
+|---------------------|-------------|
+| `GRAYLOG_API_TOKEN` | Your Graylog API token (used as `token:token` in Basic Auth) |
+| `GRAYLOG_STREAM_ID` | The Graylog stream ID to search within |
+
+> **Note:** The Graylog host is hardcoded to `http://192.168.5.20:9000`. Update the URL in both tool nodes' JS code if your Graylog is hosted elsewhere.
+
+### 3. Activate the Workflow
+
+Toggle the workflow to **Active** in n8n.
 
 ---
 
-## MCP Integration (Claude / AI Assistant)
+## MCP Client Integration
 
-To connect this workflow to Claude or another MCP-compatible client, register the MCP server endpoint using the webhook URL generated by the MCP Server Trigger node.
+Register the MCP server endpoint in your AI client using the webhook URL from the MCP Server Trigger node.
 
-Example Claude MCP config (`.claude/mcp_servers.json`):
+**Example Claude MCP config** (`.claude/mcp_servers.json`):
 
 ```json
 {
@@ -114,29 +144,31 @@ Example Claude MCP config (`.claude/mcp_servers.json`):
 }
 ```
 
-Once connected, the AI assistant can call `get_wifi_errors` directly, e.g.:
+Once connected, you can query your WiFi logs naturally:
 
-> "Check for WiFi errors in the last 30 minutes with severity ERROR or worse."
+- *"Check for WiFi errors in the last 30 minutes with severity ERROR or worse."*
+- *"Search for any deauth events in the past hour."*
+- *"Find beacon loss events from the last 15 minutes."*
 
 ---
 
-## Graylog API Reference
+## Graylog API
 
-The tool queries the Graylog **Universal Relative Search** endpoint:
+Both tools query the Graylog **Universal Relative Search** endpoint:
 
 ```
 GET /api/search/universal/relative
 ```
 
-**Query fields returned:** `timestamp`, `source`, `message`, `level`, `facility`
+Fields returned: `timestamp`, `source`, `message`, `level`, `facility`
 
 ---
 
-## File Location
+## File Structure
 
 ```
 workflows/
-├── graylog-wifi-mcp-v7.json   ← Workflow definition
+├── Graylog WiFi MCP Server.json   ← Workflow definition
 └── Graylog/
-    └── README.md               ← This file
+    └── README.md                   ← This file
 ```
