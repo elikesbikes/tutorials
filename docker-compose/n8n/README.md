@@ -2,7 +2,7 @@
 
 **Author:** Tars (Emmanuel Loaiza)
 
-Self-hosted [n8n](https://n8n.io) workflow automation running via Docker Compose on Ubuntu, integrated with Claude Code CLI running on the host machine.
+Self-hosted [n8n](https://n8n.io) workflow automation running via Docker Compose on Ubuntu, integrated with Claude Code CLI running on the host machine. The container is a custom build that bundles n8n, Python 3, and a Garmin sidecar server alongside the standard automation platform.
 
 ---
 
@@ -18,8 +18,8 @@ Self-hosted [n8n](https://n8n.io) workflow automation running via Docker Compose
    - [6.2 Install Claude Code on Ubuntu](#62-install-claude-code-on-ubuntu)
    - [6.3 Configure n8n SSH Credentials](#63-configure-n8n-ssh-credentials)
    - [6.4 Test the Connection](#64-test-the-connection)
-7. [Use Case - UniFi Network](#7-use-case---unifi-network)
-8. [Session Management](#8-session-management)
+7. [Workflows](#7-workflows)
+8. [Container Operations & Backups](#8-container-operations--backups)
 9. [Troubleshooting](#9-troubleshooting)
 
 ---
@@ -41,7 +41,7 @@ Me (plain language goal)
  Claude Code CLI (the agent)
         │
         ├──► reads/writes files on disk
-        ├──► calls MCP tools (UniFi, Gmail, Calendar, n8n)
+        ├──► calls MCP tools (UniFi, Graylog, Gmail, Calendar, n8n)
         ├──► executes shell commands on the host
         ├──► creates and validates n8n workflows via n8n-mcp
         └──► updates this documentation in real time
@@ -61,7 +61,7 @@ The same pattern applied to n8n itself: the `mcp__n8n-mcp` server let Claude cre
 
 **3. Iterative workflow construction**
 
-The UniFi MCP Server workflow (Section 7) was built in a loop:
+Each workflow was built in a loop:
 
 - I described the tool I wanted (e.g., "give Claude a way to check which APs have high TX retries")
 - Claude used `mcp__n8n-mcp__search_nodes` to find the right n8n nodes
@@ -71,7 +71,7 @@ The UniFi MCP Server workflow (Section 7) was built in a loop:
 
 **4. Documentation as a first-class output**
 
-This README was written by Claude as part of the same session — not as an afterthought. As each component was built and tested, Claude updated the documentation to reflect actual behavior. The section on expected output examples (Section 7) was written against real tool responses, not hypothetical ones.
+This README was written by Claude as part of the same session — not as an afterthought. As each component was built and tested, Claude updated the documentation to reflect actual behavior.
 
 ### Why this matters
 
@@ -83,66 +83,52 @@ The result is a system that is both the product and the tool used to build it. C
 
 ## 2. n8n Overview
 
-Okay, imagine you have a bunch of apps you use every day — like Gmail, Google Calendar, Slack, a smart home app, whatever. Normally, these apps don't talk to each other. You have to do everything yourself: copy this, paste that, check this, send that.
-
-**n8n** is like a magic robot helper that connects all those apps together and does the boring stuff for you automatically.
+**n8n** is a workflow automation platform that connects apps and services together so they act automatically on your behalf.
 
 > Think of n8n like a set of LEGO instructions. You snap pieces together — "when THIS happens, do THAT" — and n8n follows the instructions every time, all by itself.
 
-**Here's a simple example:**
-
-> "Every morning at 8am, check my email for any orders that came in overnight, add them to a spreadsheet, and send me a Slack message with a summary."
-
-You set that up **once** in n8n, and it just... does it. Forever. While you sleep.
-
 **How does it work?**
 
-n8n uses something called **workflows**. A workflow is just a chain of steps:
+n8n uses **workflows** — a chain of steps:
 
-1. **Trigger** — something that starts the workflow (like "a new email arrives" or "every hour")
-2. **Nodes** — the actions that happen (like "read the email", "add a row to Google Sheets", "send a Slack message")
-3. **Connections** — the arrows between steps that say "do this, then do that"
+1. **Trigger** — something that starts the workflow (a new email, a schedule, a webhook)
+2. **Nodes** — the actions that happen (read an email, write a row to a spreadsheet, send a Slack message)
+3. **Connections** — the arrows between steps
 
-**Why is this cool?**
+**Why self-host?**
 
-- No coding required for simple stuff (just drag and drop)
-- It runs on your own computer or server, so **your data stays private**
-- It can connect to hundreds of apps (Google, GitHub, Slack, databases, webhooks, and way more)
-- It can also run code (JavaScript or Python) when you need something custom
+- Your data stays on your infrastructure — nothing goes through a third-party cloud
+- Full access to environment variables, local files, and internal network services
+- Can run code (JavaScript or Python) for anything not covered by built-in nodes
+- Persistent data and credentials survive container restarts
 
-**In this setup:**
-
-We run n8n inside Docker (a little isolated box on your computer) so it's always on, always ready, and doesn't mess with anything else on your system. We then connect it to Claude (the AI) so that Claude can trigger automations or respond to things n8n detects on your network.
+In this setup, n8n runs inside Docker (always on, always ready) and connects to Claude Code CLI via SSH, enabling n8n workflows to trigger AI-assisted tasks directly on the host machine.
 
 ---
 
 ## 3. MCP Server Overview
 
-Okay, so imagine you have a really smart helper (that's Claude — the AI). Now imagine you want that helper to actually **do things** for you — like check your calendar, read your emails, look at your network devices, or control other apps — not just talk about them.
-
-That's where an **MCP server** comes in.
-
-**MCP** stands for **Model Context Protocol**. It's basically a special plug-in system that lets Claude reach outside of itself and connect to real tools and services.
-
-Think of it like this:
+**MCP** stands for **Model Context Protocol**. It's a plug-in system that lets Claude reach outside of itself and connect to real tools and services.
 
 > Claude is the brain. MCP servers are the hands.
 
-Without MCP, Claude can only read what you type and type back. With MCP servers connected, Claude can actually **go do stuff** — look up live data, run commands, fetch files, and more.
+Without MCP, Claude can only read what you type and type back. With MCP servers connected, Claude can **go do stuff** — look up live data, run commands, fetch files, and more.
 
-**How does it work? (super simple version)**
+**How it works:**
 
-1. You set up an MCP server for a tool you want Claude to use (like Google Calendar, Gmail, or your UniFi network).
+1. You set up an MCP server for a tool you want Claude to use (e.g., UniFi, Graylog, Google Calendar).
 2. That server sits there waiting, like a translator between Claude and the tool.
-3. When Claude needs to do something (like "check my schedule"), it talks to the MCP server, which talks to the actual app, and brings the answer back.
+3. When Claude needs to do something (e.g., "check which APs have high retries"), it calls the MCP server, which talks to the actual system and returns the answer.
 
-**In this setup, we use MCP servers for things like:**
+**MCP servers active in this setup:**
 
-- Checking who's connected to the UniFi network (`mcp__unifi`)
-- Reading and drafting Gmail messages (`mcp__claude_ai_Gmail`)
-- Creating and managing Google Calendar events (`mcp__claude_ai_Google_Calendar`)
-
-So basically: MCP servers = superpowers for Claude. They let it interact with the real world instead of just chatting.
+| Server | What Claude can do |
+|--------|--------------------|
+| `mcp__unifi` | Query connected clients, error logs, TX retries, channel conflicts |
+| `mcp__graylog-wifi` | Search WiFi logs, filter by severity, query deauth/auth events |
+| `mcp__n8n-mcp` | Create, validate, deploy, and test n8n workflows |
+| `mcp__claude_ai_Gmail` | Read and draft Gmail messages |
+| `mcp__claude_ai_Google_Calendar` | Create and manage Google Calendar events |
 
 ---
 
@@ -204,61 +190,75 @@ node --version
 ## 5. Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Ubuntu Host Machine                      │
-│                                                                 │
-│   ┌─────────────────────────────────┐                           │
-│   │        Docker Engine            │                           │
-│   │                                 │                           │
-│   │  ┌──────────────────────────┐   │                           │
-│   │  │    n8n Container         │   │   ┌─────────────────┐     │
-│   │  │                          │   │   │  Claude Code    │     │
-│   │  │  image: n8nio/n8n:latest │   │   │  CLI (host)     │     │
-│   │  │  port: 5678              │◄──┼───►                 │     │
-│   │  │                          │   │   │  $ claude       │     │
-│   │  │  volumes:                │   │   └────────┬────────┘     │
-│   │  │  ./n8n_data → .n8n/      │   │            │              │
-│   │  │  ./shared   → shared/    │   │            │ reads/writes │
-│   │  │                          │   │            ▼              │
-│   │  │  extra_hosts:            │   │   ┌─────────────────┐     │
-│   │  │  host.docker.internal    │   │   │  ./shared/      │     │
-│   │  │  → host-gateway          │   │   │  (shared vol.)  │     │
-│   │  └──────────────────────────┘   │   └─────────────────┘     │
-│   │                                 │                           │
-│   │  Docker network: frontend       │                           │
-│   └─────────────────────────────────┘                           │
-│                                                                 │
-│   ┌──────────────────────────────────────────────────────────┐  │
-│   │                    .env file                             │  │
-│   │  N8N_HOST, N8N_PORT, N8N_ENCRYPTION_KEY, WEBHOOK_URL     │  │
-│   │  N8N_BASIC_AUTH_USER / PASSWORD, GENERIC_TIMEZONE        │  │
-│   │  UNIFI_USER, UNIFI_PASS                                  │  │
-│   └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                          Ubuntu Host Machine                        │
+│                                                                     │
+│   ┌──────────────────────────────────────┐                          │
+│   │           Docker Engine              │                          │
+│   │                                      │                          │
+│   │  ┌───────────────────────────────┐   │   ┌──────────────────┐   │
+│   │  │    n8n Container (n8n-garmin) │   │   │  Claude Code     │   │
+│   │  │                               │   │   │  CLI (host)      │   │
+│   │  │  entrypoint.sh starts:        │   │   │                  │   │
+│   │  │  1. garmin_server.py :8765    │◄──┼───►  $ claude       │   │
+│   │  │  2. n8n :5678                 │   │   └──────┬───────────┘   │
+│   │  │                               │   │          │               │
+│   │  │  volumes:                     │   │          │ reads/writes  │
+│   │  │  ./n8n_data  → .n8n/          │   │          ▼               │
+│   │  │  ./shared    → shared/        │   │   ┌──────────────────┐   │
+│   │  │  ./workflows/Garmin → garmin/ │   │   │  ./shared/       │   │
+│   │  │                               │   │   │  (shared vol.)   │   │
+│   │  │  extra_hosts:                 │   │   └──────────────────┘   │
+│   │  │  host.docker.internal         │   │                          │
+│   │  │  → host-gateway               │   │                          │
+│   │  └───────────────────────────────┘   │                          │
+│   │                                      │                          │
+│   │  Docker network: frontend            │                          │
+│   └──────────────────────────────────────┘                          │
+│                                                                     │
+│   ┌────────────────────────────────────────────────────────────┐    │
+│   │                        .env file                           │    │
+│   │  N8N_HOST, N8N_PORT, N8N_ENCRYPTION_KEY, WEBHOOK_URL       │    │
+│   │  N8N_BASIC_AUTH_USER / PASSWORD, GENERIC_TIMEZONE          │    │
+│   │  UNIFI_USER, UNIFI_PASS                                    │    │
+│   │  GRAYLOG_API_TOKEN, GRAYLOG_STREAM_ID                      │    │
+│   │  HA_URL, HA_TOKEN                                          │    │
+│   │  GARMIN_EMAIL, GARMIN_PASSWORD                             │    │
+│   └────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
 
          Browser ──► http://localhost:5678 ──► n8n UI
 ```
 
 **How it works:**
-- n8n runs inside Docker and is accessible at `http://localhost:5678`
+
+- n8n runs inside a custom Docker image (`n8n-garmin`) built from `workflows/Garmin/Dockerfile` — it extends the official n8n image with Python 3, `garth`, and `garminconnect`
+- `entrypoint.sh` starts two processes: the Garmin HTTP sidecar (`garmin_server.py` on `127.0.0.1:8765`) and then n8n itself
+- n8n is accessible at `http://localhost:5678`
 - The `host.docker.internal` alias lets the container call the Ubuntu host (where Claude Code runs)
-- The `./shared` folder is mounted in both the container (`/home/node/shared`) and readable by Claude Code on the host, enabling file-based communication between n8n workflows and Claude
+- The `./shared` folder is mounted in both the container and readable by Claude Code on the host, enabling file-based communication between n8n workflows and Claude
+- The `./workflows/Garmin` folder is mounted at `/home/node/garmin/` — scripts, OAuth tokens, and CSV output all live here
 - Workflow data, credentials, and the SQLite database are persisted in `./n8n_data`
-- `UNIFI_USER` and `UNIFI_PASS` are passed into the container via the `environment:` block so n8n workflows can interact with a UniFi controller
-- `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` allows workflow nodes to read those env vars via `$env` expressions
-- The external `frontend` Docker network allows integration with reverse proxies (e.g. Nginx, Traefik)
+- `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` and `N8N_BLOCK_ENV_ACCESS_IN_EXPR=false` allow workflow nodes to read env vars via `$env` expressions
+- The external `frontend` Docker network allows integration with reverse proxies (e.g., Nginx, Traefik)
 
 **Directory structure:**
 
 ```
 n8n/
-├── docker-compose.yml       # Service definition
-├── .env                     # Environment variables (do NOT commit)
-├── n8n_data/                # Persisted n8n data (DB, credentials, logs)
+├── docker-compose.yml           # Service definition (custom build)
+├── entrypoint.sh                # Starts Garmin sidecar + n8n
+├── .env                         # Environment variables (do NOT commit)
+├── n8n_data/                    # Persisted n8n data (DB, credentials, logs)
 │   ├── database.sqlite
 │   └── nodes/
-├── shared/                  # Shared volume between host and container
-└── workflows/               # Exported workflow JSON backups
+├── shared/                      # Shared volume between host and container
+└── workflows/
+    ├── Garmin/                  # Garmin integration (Dockerfile, scripts, CSVs)
+    ├── Graylog/                 # Graylog WiFi MCP server workflow
+    ├── HomeAssistant/           # ZHA Zigbee monitor workflows
+    ├── Proxmox/                 # Proxmox monitoring workflows
+    └── Unifi/                   # UniFi MCP server + manual query workflow
 ```
 
 ---
@@ -296,9 +296,21 @@ N8N_COMMUNITY_PACKAGES_ENABLED=true
 N8N_ENCRYPTION_KEY=your-random-encryption-key-here
 N8N_API_DISABLED=false
 
-# UniFi integration (used by n8n workflows)
+# UniFi integration
 UNIFI_USER=your-unifi-username
 UNIFI_PASS=your-unifi-password
+
+# Graylog integration
+GRAYLOG_API_TOKEN=your-graylog-api-token
+GRAYLOG_STREAM_ID=your-graylog-stream-id
+
+# Home Assistant integration
+HA_URL=http://192.168.x.x:8123
+HA_TOKEN=your-ha-long-lived-access-token
+
+# Garmin integration
+GARMIN_EMAIL=your-garmin-email@example.com
+GARMIN_PASSWORD=your-garmin-password
 EOF
 ```
 
@@ -310,27 +322,38 @@ Generate a strong encryption key:
 openssl rand -hex 32
 ```
 
-**Step 4 — Create the `docker-compose.yml`:**
+**Step 4 — Review the `docker-compose.yml`:**
+
+The compose file uses a custom image built from `workflows/Garmin/Dockerfile`, which extends n8n with Python 3 and the Garmin libraries:
 
 ```yaml
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    build:
+      context: .
+      dockerfile: workflows/Garmin/Dockerfile
+    image: n8n-garmin
     container_name: n8n
     restart: unless-stopped
     env_file:
       - .env
     environment:
+      - N8N_BLOCK_ENV_ACCESS_IN_EXPR=false
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - UNIFI_USER=${UNIFI_USER}
       - UNIFI_PASS=${UNIFI_PASS}
+      - GRAYLOG_API_TOKEN=${GRAYLOG_API_TOKEN}
+      - GRAYLOG_STREAM_ID=${GRAYLOG_STREAM_ID}
+      - HA_URL=${HA_URL}
+      - HA_TOKEN=${HA_TOKEN}
+      - GARMIN_EMAIL=${GARMIN_EMAIL}
+      - GARMIN_PASSWORD=${GARMIN_PASSWORD}
     ports:
       - "5678:5678"
     volumes:
       - ./n8n_data:/home/node/.n8n
-      # Mount a local folder so Claude Code can read/write shared files
       - ./shared:/home/node/shared
-    # Allow n8n to reach Claude Code CLI running on the host machine
+      - ./workflows/Garmin:/home/node/garmin
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -339,12 +362,13 @@ networks:
     external: true
 ```
 
-> `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` allows n8n workflow nodes to access environment variables (like `UNIFI_USER`/`UNIFI_PASS`) via `$env` expressions. The `env_file` loads base config while the `environment` block explicitly forwards specific variables into the container.
+> `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` and `N8N_BLOCK_ENV_ACCESS_IN_EXPR=false` allow n8n workflow nodes to access environment variables via `$env` expressions. The `env_file` loads base config while the `environment` block explicitly forwards specific variables into the container.
 
-**Step 5 — Create data directories and start:**
+**Step 5 — Create data directories and build:**
 
 ```bash
 mkdir -p n8n_data shared
+docker compose build
 docker compose up -d
 ```
 
@@ -357,13 +381,16 @@ docker compose logs -f n8n
 
 Access n8n at: **http://localhost:5678**
 
+Look for `Garmin server started (PID ...)` in the logs — this confirms the Garmin sidecar launched successfully alongside n8n.
+
 **Common Docker Compose commands:**
 
 ```bash
 docker compose up -d          # Start in background
 docker compose down           # Stop and remove containers
 docker compose restart n8n    # Restart the n8n service
-docker compose pull n8n       # Pull the latest image
+docker compose build          # Rebuild the image (after Dockerfile changes)
+docker compose pull           # Pull latest base images
 docker compose logs -f n8n    # Follow logs
 ```
 
@@ -493,156 +520,26 @@ docker exec -it n8n cat /home/node/shared/test.txt
 
 ---
 
-## 7. Use Case - UniFi Network
+## 7. Workflows
 
-This workflow (`workflows/UniFi MCP Server.json`) turns n8n into a **live MCP server** that gives Claude direct read access to your UniFi network. Once active, Claude can answer real questions about your network without you having to log into the UniFi controller yourself.
-
-**Workflow name:** `UniFi MCP Server`
-**Trigger type:** MCP Server Trigger (webhook-based, always-on)
-**Status:** Active
+Each workflow lives in its own subdirectory under `workflows/` with a dedicated README. Below is a summary of what each integration does.
 
 ---
 
-### How it works
+### UniFi
 
-The workflow exposes 4 tools through the MCP protocol. Each tool logs into the UniFi controller at `https://router.home.elikesbikes.com` using the `UNIFI_USER` and `UNIFI_PASS` environment variables from your `.env` file, makes an API call, and returns structured data back to Claude.
+**Location:** `workflows/Unifi/` — [README](workflows/Unifi/README.md)
 
-```
-Claude (MCP client)
-       │
-       ▼
-MCP Server Trigger (n8n webhook)
-       │
-       ├──► get_connected_clients
-       ├──► get_error_logs
-       ├──► get_high_tx_retries
-       └──► get_channel_conflicts
-                    │
-                    ▼
-         UniFi Controller API
-         router.home.elikesbikes.com
-```
+Exposes UniFi network data to Claude via an MCP server. Once active, Claude can answer live questions about your network without you logging into the UniFi controller.
 
----
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `UniFi MCP Server.json` | MCP Server Trigger (always-on) | Gives Claude 4 tools: `get_connected_clients`, `get_error_logs`, `get_high_tx_retries`, `get_channel_conflicts` |
+| `UniFi.json` | Manual | Simple client query — returns connected devices as JSON |
 
-### Tools
+**Required env vars:** `UNIFI_USER`, `UNIFI_PASS`
 
-#### `get_connected_clients`
-Returns every device currently connected to the network.
-
-**What it returns per client:**
-
-| Field | Description |
-|---|---|
-| `name` | Device name or hostname |
-| `ip` | Current IP address |
-| `mac` | MAC address |
-| `type` | `Wired` or `WiFi` |
-| `network` | SSID (for WiFi) or `Wired` |
-| `signal` | Signal strength in dBm (WiFi only) |
-| `manufacturer` | OUI vendor lookup |
-
-**Example Claude prompts:**
-- *"How many devices are on my network right now?"*
-- *"Is my laptop connected to WiFi?"*
-- *"List everything on the wired network."*
-
----
-
-#### `get_error_logs`
-Returns alarms and alerts from the UniFi controller (up to 50 most recent).
-
-**What it returns per log entry:**
-
-| Field | Description |
-|---|---|
-| `time` | Human-readable timestamp |
-| `type` | Alarm key/type |
-| `message` | Alert message text |
-| `severity` | `active` or `resolved` |
-| `device` | AP, gateway, or switch that triggered it |
-
-**Example Claude prompts:**
-- *"Are there any active network alerts?"*
-- *"Did anything go wrong on the network today?"*
-- *"Show me unresolved alarms."*
-
----
-
-#### `get_high_tx_retries`
-Scans all access points and flags any with TX retry rates above **20%** — the same threshold the UniFi UI uses to indicate poor wireless performance.
-
-**What it returns per problematic AP:**
-
-| Field | Description |
-|---|---|
-| `ap_name` | Access point name |
-| `mac` | AP MAC address |
-| `radio` | Radio band (e.g. `ng`, `na`, `6e`) |
-| `channel` | Channel number |
-| `tx_packets` | Total transmitted packets |
-| `tx_retries` | Number of retried packets |
-| `retry_percent` | Retry rate as a percentage |
-
-**Example Claude prompts:**
-- *"Which access points have bad WiFi performance?"*
-- *"Are there any TX retry issues on my APs?"*
-- *"Why is the WiFi slow in the office?"*
-
----
-
-#### `get_channel_conflicts`
-Scans all access points and identifies co-channel interference — cases where multiple APs share the same channel and can hear each other, degrading WiFi performance.
-
-**What it returns per conflict:**
-
-| Field | Description |
-|---|---|
-| `channel_key` | Unique key combining band and channel (e.g. `2.4GHz_ch6`) |
-| `band` | `2.4GHz`, `5GHz`, or `6GHz` |
-| `channel` | Channel number |
-| `ap_count` | Number of APs sharing this channel |
-| `access_points` | List of APs on the channel (name, MAC, tx_power) |
-
-> For 2.4GHz, only channels 1, 6, and 11 are non-overlapping. For 5GHz, UniFi should auto-assign non-overlapping channels.
-
-**Example Claude prompts:**
-- *"Are there any channel conflicts on my WiFi network?"*
-- *"Which APs are causing co-channel interference?"*
-- *"Why is my 2.4GHz WiFi slow — are there channel collisions?"*
-- *"Do any of my access points share the same channel?"*
-
----
-
-### Importing the workflow
-
-```bash
-# From the n8n UI
-# 1. Go to Workflows → Import from file
-# 2. Select: workflows/UniFi MCP Server.json
-# 3. Save and activate
-
-# Or via CLI
-docker exec n8n n8n import:workflow --input=/home/node/shared/UniFi\ MCP\ Server.json
-```
-
-> Make sure `UNIFI_USER` and `UNIFI_PASS` are set in your `.env` file and that `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` is configured — the workflow reads these at runtime via `$env`.
-
----
-
-### Testing the Workflow
-
-Once the workflow is imported and active, you can test each tool directly from Claude Code CLI. Claude uses the MCP server to call the tools and return live network data.
-
-**Step 1 — Confirm the MCP server is configured:**
-
-Verify that the UniFi MCP server is registered in your Claude Code config:
-
-```bash
-cat ~/.claude.json | grep -A5 unifi
-```
-
-You should see an entry pointing to your n8n MCP webhook URL. If not, add it:
+**Register in Claude MCP config:**
 
 ```json
 {
@@ -655,117 +552,74 @@ You should see an entry pointing to your n8n MCP webhook URL. If not, add it:
 }
 ```
 
-> Get the `<workflow-id>` by opening the workflow in the n8n UI and clicking the **MCP Server Trigger** node — the URL is shown in the node panel.
+---
 
-**Step 2 — Verify Claude can see the UniFi tools:**
+### Graylog
 
-Open Claude Code and check that the tools are available:
+**Location:** `workflows/Graylog/` — [README](workflows/Graylog/README.md)
 
-```bash
-claude
-```
+Exposes WiFi log data stored in Graylog to Claude via an MCP server. Enables natural language queries over your network's WiFi event history.
 
-Then in the interactive session, ask:
+| Tool | Description |
+|------|-------------|
+| `get_wifi_errors` | Fetches WiFi logs filtered by syslog severity and time range |
+| `search_wifi_logs` | Searches logs with a custom Graylog query string (e.g., `deauth`, `auth fail`) |
 
-```
-What MCP tools do you have access to?
-```
+**Required env vars:** `GRAYLOG_API_TOKEN`, `GRAYLOG_STREAM_ID`
 
-You should see `get_connected_clients`, `get_error_logs`, `get_high_tx_retries`, and `get_channel_conflicts` listed under the UniFi server.
-
-**Step 3 — Test the tools interactively:**
-
-Because MCP tool calls require your approval, you must run Claude in interactive mode. Start a session:
-
-```bash
-claude
-```
-
-Then ask one of the following prompts and approve the tool call when prompted:
-
-**Test `get_connected_clients`:**
-```
-Use the get_connected_clients tool and tell me how many devices are on my network right now.
-```
-
-**Test `get_error_logs`:**
-```
-Use the get_error_logs tool and tell me if there are any active alarms on my UniFi network.
-```
-
-**Test `get_high_tx_retries`:**
-```
-Use the get_high_tx_retries tool and tell me which access points have poor WiFi performance.
-```
-
-**Test `get_channel_conflicts`:**
-```
-Use the get_channel_conflicts tool and tell me if any of my access points are sharing the same WiFi channel.
-```
-
-**Run a combined diagnostic:**
-```
-Give me a full network health summary: how many devices are connected, any active alarms, any APs with high TX retries, and any channel conflicts.
-```
-
-**For deeper follow-up analysis:**
-```
-Is my laptop connected to WiFi? What signal strength is it showing?
-Did anything go wrong on the network in the last 24 hours?
-Why might the WiFi be slow near the office?
-```
-
-Claude will prompt you to approve each tool call before executing it, then respond with live network data.
-
-**Expected output examples:**
-
-![alt text](image.png)
-
-```json
-// get_connected_clients (truncated)
-{
-  "clients": [
-    { "name": "MacBook-Pro", "ip": "192.168.1.42", "mac": "aa:bb:cc:dd:ee:ff",
-      "type": "WiFi", "network": "HomeNet", "signal": -55, "manufacturer": "Apple" },
-    { "name": "NAS", "ip": "192.168.1.10", "mac": "11:22:33:44:55:66",
-      "type": "Wired", "network": "Wired", "signal": null, "manufacturer": "Synology" }
-  ]
-}
-
-// get_high_tx_retries (clean network — no results)
-{ "high_retry_aps": [] }
-
-// get_high_tx_retries (problem detected)
-{
-  "high_retry_aps": [
-    { "ap_name": "Office AP", "mac": "aa:bb:cc:11:22:33", "radio": "ng",
-      "channel": 6, "tx_packets": 50000, "tx_retries": 12000, "retry_percent": 24 }
-  ]
-}
-
-// get_channel_conflicts (clean — no conflicts)
-{ "total_conflicts": 0, "conflicts": [] }
-
-// get_channel_conflicts (conflict detected)
-{
-  "total_conflicts": 1,
-  "conflicts": [
-    {
-      "channel_key": "2.4GHz_ch6",
-      "band": "2.4GHz",
-      "channel": 6,
-      "ap_count": 2,
-      "access_points": [
-        { "ap_name": "Living Room AP", "mac": "aa:bb:cc:11:22:33", "band": "2.4GHz", "channel": 6, "tx_power": 20 },
-        { "ap_name": "Kitchen AP",     "mac": "dd:ee:ff:44:55:66", "band": "2.4GHz", "channel": 6, "tx_power": 20 }
-      ]
-    }
-  ]
-}
+> The Graylog host URL is hardcoded in the workflow nodes. Update it if your Graylog instance is at a different address.
 
 ---
+
+### Home Assistant
+
+**Location:** `workflows/HomeAssistant/` — [README](workflows/HomeAssistant/HA_ZHA_Monitor.md)
+
+Two ZHA (Zigbee) monitoring workflows for Home Assistant:
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| Diagnostic (`HA_ZHA_Monitor.json`) | Manual | On-demand markdown health report: ZHA error log, unavailable devices, weak signal devices |
+| Alerting (live in n8n) | Manual + Daily 4PM schedule | Sends push notifications via ntfy and Signal when ZHA devices go offline or battery is low |
+
+**Required env vars:** `HA_URL`, `HA_TOKEN`
+
+---
+
+### Garmin
+
+**Location:** `workflows/Garmin/` — [README](workflows/Garmin/README.md)
+
+Daily health data export from Garmin Connect to persistent CSV files. Uses a custom Docker image with Python 3 and a lightweight HTTP sidecar server (`garmin_server.py`) that bridges n8n to the Garmin API.
+
+| File | What it tracks |
+|------|----------------|
+| `activities.csv` | Workout activities |
+| `sleep_epochs.csv` | Nightly sleep summary |
+| `hrv.csv` | Nightly HRV status |
+| `rhr.csv` | Daily resting heart rate |
+
+**Runs:** Daily at 06:00 America/New_York. Self-healing — always fetches the last 7 days so missed runs auto-catch-up.
+
+**Required env vars:** `GARMIN_EMAIL`, `GARMIN_PASSWORD`
+
+**One-time setup (MFA auth):**
+
+```bash
+docker exec -it n8n python3 /home/node/garmin/setup_garmin_auth.py
 ```
-## 8. Session Management
+
+---
+
+### Proxmox
+
+**Location:** `workflows/Proxmox/` — [README](workflows/Proxmox/README.md)
+
+Proxmox monitoring workflows. See the subdirectory README for details.
+
+---
+
+## 8. Container Operations & Backups
 
 **n8n container lifecycle:**
 
@@ -782,9 +636,11 @@ docker compose down -v
 # Restart after config changes
 docker compose down && docker compose up -d
 
-# Update to latest n8n image
-docker compose pull n8n
-docker compose up -d
+# Rebuild image (after Dockerfile changes)
+docker compose build && docker compose up -d
+
+# Update to latest base image
+docker compose pull && docker compose build && docker compose up -d
 ```
 
 **Check container status:**
@@ -837,6 +693,14 @@ docker network ls | grep frontend
 docker network create frontend
 ```
 
+**Image not found / build errors:**
+
+```bash
+# Rebuild the image from scratch
+docker compose build --no-cache
+docker compose up -d
+```
+
 **Port 5678 already in use:**
 
 ```bash
@@ -884,6 +748,23 @@ Or add to `/etc/environment` to make it available system-wide:
 ```bash
 echo 'PATH="/home/ecloaiza/.nvm/versions/node/v20.0.0/bin:$PATH"' | sudo tee -a /etc/environment
 ```
+
+**Garmin server not starting:**
+
+```bash
+# Check logs for "Garmin server started"
+docker compose logs n8n | grep -i garmin
+
+# Verify the garmin volume is mounted
+docker exec -it n8n ls /home/node/garmin/
+
+# Test the sidecar directly
+docker exec -it n8n python3 /home/node/garmin/garmin_fetch.py
+```
+
+**Garmin `ECONNREFUSED ::1:8765`:**
+
+The HTTP Request node is using `localhost` which resolves to IPv6 (`::1`). Change the URL to `http://127.0.0.1:8765/fetch`.
 
 **n8n encryption key error after restart:**
 
