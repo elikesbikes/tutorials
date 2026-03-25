@@ -8,22 +8,80 @@ Self-hosted [n8n](https://n8n.io) workflow automation running via Docker Compose
 
 ## Table of Contents
 
-1. [n8n Overview](#1-n8n-overview)
-2. [MCP Server Overview](#2-mcp-server-overview)
-3. [Prerequisites](#3-prerequisites)
-4. [Architecture Overview](#4-architecture-overview)
-5. [Setup Guide](#5-setup-guide)
-   - [5.1 Deploy n8n with Docker](#51-deploy-n8n-with-docker)
-   - [5.2 Install Claude Code on Ubuntu](#52-install-claude-code-on-ubuntu)
-   - [5.3 Configure n8n SSH Credentials](#53-configure-n8n-ssh-credentials)
-   - [5.4 Test the Connection](#54-test-the-connection)
-6. [Use Case - UniFi Network](#6-use-case---unifi-network)
-7. [Session Management](#7-session-management)
-8. [Troubleshooting](#8-troubleshooting)
+1. [Agentic Workflow Overview](#1-agentic-workflow-overview)
+2. [n8n Overview](#2-n8n-overview)
+3. [MCP Server Overview](#3-mcp-server-overview)
+4. [Prerequisites](#4-prerequisites)
+5. [Architecture Overview](#5-architecture-overview)
+6. [Setup Guide](#6-setup-guide)
+   - [6.1 Deploy n8n with Docker](#61-deploy-n8n-with-docker)
+   - [6.2 Install Claude Code on Ubuntu](#62-install-claude-code-on-ubuntu)
+   - [6.3 Configure n8n SSH Credentials](#63-configure-n8n-ssh-credentials)
+   - [6.4 Test the Connection](#64-test-the-connection)
+7. [Use Case - UniFi Network](#7-use-case---unifi-network)
+8. [Session Management](#8-session-management)
+9. [Troubleshooting](#9-troubleshooting)
 
 ---
 
-## 1. n8n Overview
+## 1. Agentic Workflow Overview
+
+This project wasn't built by writing code from scratch in an editor. It was built through **agentic workflow** — a collaborative loop where I described what I wanted in plain language and Claude Code handled the execution: writing configs, creating workflows, wiring up MCP servers, and generating this documentation.
+
+### What "agentic" means here
+
+An **agentic workflow** is one where the AI doesn't just answer questions — it takes actions. Instead of Claude responding with "here's how you might do that," it actually does it: creates files, calls APIs, reads logs, modifies configs, and iterates until the goal is met.
+
+In this setup, that looks like:
+
+```
+Me (plain language goal)
+        │
+        ▼
+ Claude Code CLI (the agent)
+        │
+        ├──► reads/writes files on disk
+        ├──► calls MCP tools (UniFi, Gmail, Calendar, n8n)
+        ├──► executes shell commands on the host
+        ├──► creates and validates n8n workflows via n8n-mcp
+        └──► updates this documentation in real time
+```
+
+### How this project was built
+
+**1. Infrastructure first — with Claude driving**
+
+The Docker setup (`docker-compose.yml`, `.env`, directory structure) was assembled through conversation. I described the goal — "n8n running in Docker, accessible to Claude Code on the host, with a shared folder between them" — and Claude generated the configuration, explained each decision, and flagged security considerations like never committing `.env`.
+
+**2. MCP servers as Claude's reach**
+
+Each MCP server extends what Claude can directly act on. To build and test the UniFi workflow, I didn't log into the UniFi controller manually — Claude used the `mcp__unifi` tools to query the live network, verify data shapes, and validate that the n8n workflow was returning the right fields.
+
+The same pattern applied to n8n itself: the `mcp__n8n-mcp` server let Claude create, validate, deploy, and test n8n workflows without me touching the n8n UI.
+
+**3. Iterative workflow construction**
+
+The UniFi MCP Server workflow (Section 7) was built in a loop:
+
+- I described the tool I wanted (e.g., "give Claude a way to check which APs have high TX retries")
+- Claude used `mcp__n8n-mcp__search_nodes` to find the right n8n nodes
+- It drafted the workflow JSON, validated it with `mcp__n8n-mcp__validate_workflow`
+- Deployed it live with `mcp__n8n-mcp__n8n_create_workflow`
+- Then called the tool through the MCP server to verify the output
+
+**4. Documentation as a first-class output**
+
+This README was written by Claude as part of the same session — not as an afterthought. As each component was built and tested, Claude updated the documentation to reflect actual behavior. The section on expected output examples (Section 7) was written against real tool responses, not hypothetical ones.
+
+### Why this matters
+
+The result is a system that is both the product and the tool used to build it. Claude Code built the n8n MCP server. The n8n MCP server is now one of Claude's tools. That kind of recursive, self-extending capability is what makes agentic workflow qualitatively different from traditional development.
+
+> The agent didn't just help write code. It helped design the system, configure the infrastructure, test the integrations, and document the result — all from a conversation.
+
+---
+
+## 2. n8n Overview
 
 Okay, imagine you have a bunch of apps you use every day — like Gmail, Google Calendar, Slack, a smart home app, whatever. Normally, these apps don't talk to each other. You have to do everything yourself: copy this, paste that, check this, send that.
 
@@ -58,7 +116,7 @@ We run n8n inside Docker (a little isolated box on your computer) so it's always
 
 ---
 
-## 2. MCP Server Overview
+## 3. MCP Server Overview
 
 Okay, so imagine you have a really smart helper (that's Claude — the AI). Now imagine you want that helper to actually **do things** for you — like check your calendar, read your emails, look at your network devices, or control other apps — not just talk about them.
 
@@ -88,7 +146,7 @@ So basically: MCP servers = superpowers for Claude. They let it interact with th
 
 ---
 
-## 3. Prerequisites
+## 4. Prerequisites
 
 Before starting, ensure the following are installed and available on your Ubuntu host:
 
@@ -143,7 +201,7 @@ node --version
 
 ---
 
-## 4. Architecture Overview
+## 5. Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -205,9 +263,9 @@ n8n/
 
 ---
 
-## 5. Setup Guide
+## 6. Setup Guide
 
-### 5.1 Deploy n8n with Docker
+### 6.1 Deploy n8n with Docker
 
 **Step 1 — Create the external Docker network:**
 
@@ -311,7 +369,7 @@ docker compose logs -f n8n    # Follow logs
 
 ---
 
-### 5.2 Install Claude Code on Ubuntu
+### 6.2 Install Claude Code on Ubuntu
 
 Claude Code is Anthropic's official CLI tool for AI-assisted development.
 
@@ -358,7 +416,7 @@ claude --print "Hello, are you working?"
 
 ---
 
-### 5.3 Configure n8n SSH Credentials
+### 6.3 Configure n8n SSH Credentials
 
 To allow n8n to execute commands on the host (e.g., run Claude Code), set up SSH access from the container to the host.
 
@@ -406,7 +464,7 @@ Copy the full output (including `-----BEGIN...` and `-----END...` lines).
 
 ---
 
-### 5.4 Test the Connection
+### 6.4 Test the Connection
 
 **Test SSH from inside the n8n container:**
 
@@ -435,7 +493,7 @@ docker exec -it n8n cat /home/node/shared/test.txt
 
 ---
 
-## 6. Use Case - UniFi Network
+## 7. Use Case - UniFi Network
 
 This workflow (`workflows/UniFi MCP Server.json`) turns n8n into a **live MCP server** that gives Claude direct read access to your UniFi network. Once active, Claude can answer real questions about your network without you having to log into the UniFi controller yourself.
 
@@ -707,7 +765,7 @@ Claude will prompt you to approve each tool call before executing it, then respo
 
 ---
 ```
-## 7. Session Management
+## 8. Session Management
 
 **n8n container lifecycle:**
 
@@ -764,7 +822,7 @@ sudo systemctl enable docker
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 **n8n container won't start:**
 
