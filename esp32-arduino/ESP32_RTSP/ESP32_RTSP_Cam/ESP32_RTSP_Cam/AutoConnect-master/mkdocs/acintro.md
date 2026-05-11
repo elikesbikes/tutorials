@@ -74,14 +74,14 @@ So, the basic procedure for handling of the custom Web pages is as follows:
 2. Create or define [AutoConnectElement(s)](acelements.md).
 3. Add [AutoConnectElement(s)](acelements.md) to AutoConnectAux.
 4. Create more AutoConnectAux containing [AutoConnectElement(s)](acelements.md), if necessary.
-5. [Register](api.md#on) the [request handlers](achandling.md#custom-web-page-handler-programming-model) for the custom Web pages.
-6. [Join](api.md#join) prepared AutoConnectAux(s) to AutoConnect.
-7. Invoke [AutoConnect::begin()](api.md#begin).
-8. Perform [AutoConnect::handleClient()](api.md#handleclient).
+5. [Register](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#on) the [request handlers](achandling.md#custom-web-page-handler-programming-model) for the custom Web pages.
+6. [Join](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#join) prepared AutoConnectAux(s) to AutoConnect.
+7. Invoke [AutoConnect::begin()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
+8. Perform [AutoConnect::handleClient()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient).
 
 ## Write the custom Web page with JSON
 
-You can write the custom Web page in JSON without using sketch codes.[^3] It is possible to describe the entire page in JSON and can be described for each element also. The JSON document can be saved in SPIFFS or SD and read using AutoConnect's [**load**](api.md#load) function. you can reduce the steps of the basic procedure with this approach, but this way consumes a lot of memory. 
+You can write the custom Web page in JSON without using sketch codes.[^3] It is possible to describe the entire page in JSON and can be described for each element also. The JSON document can be saved in SPIFFS or SD and read using AutoConnect's [**load**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function. you can reduce the steps of the basic procedure with this approach, but this way consumes a lot of memory. 
 The following JSON code and sketch will execute the custom Web page as an example in the above figure. That is, the Sketch of this code and footnote[^2] is equivalent.
 
 **custom_page.json**
@@ -167,7 +167,7 @@ void loop() {
 
 ## Passing parameters with sketches and custom Web pages
 
-A sketch can access variables of [AutoConnectElements](acelements.md) on the custom Web page. The value entered into the AutoConnectElements is stored to the [member variables](acelements.md#form-and-autoconnectelements) of the element by AutoConnect whenever GET / POST transmission occurs. Your sketches can get these values with the request handler which will be registered by [AutoConnect::on](api.md#on) function. And if you assign a value to an element before a request to the page occurs, its value will appear as the initial value when the page is displayed. The details are explained in section [*Custom field data handling*](achandling.md#custom-field-data-handling).
+A sketch can access variables of [AutoConnectElements](acelements.md) on the custom Web page. The value entered into the AutoConnectElements is stored to the [member variables](acelements.md#form-and-autoconnectelements) of the element by AutoConnect whenever GET / POST transmission occurs. Your sketches can get these values with the request handler which will be registered by [AutoConnect::on](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#on) function. And if you assign a value to an element before a request to the page occurs, its value will appear as the initial value when the page is displayed. The details are explained in section [*Custom field data handling*](achandling.md#custom-field-data-handling).
 
 <script>
   window.onload = function() {

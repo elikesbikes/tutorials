@@ -64,8 +64,8 @@ AutoConnect()
 
 AutoConnect default constructor. This entry internally allocates the ESP8266WebServer for ESP8266 or WebServer for ESP32 and is activated internally.
 
-AutoConnect will call the user added handler to respond to the HTTP request using the [**ESP8266WebServer::on**](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WebServer#client-request-handlers) (WebServer::on for ESP32) funtion. This call will be made from during the [**handleClient**](api.md#handleclient) of AutoConnect function.  
-Therefore, in the use case of assigning AutoConnect in this constructor, it is necessary to know the instance of ESP8266WebServer in order to register the request handler. Sketch can use [**host**](api.md#host) functions to obtain a reference to an ESP8266WebServer instance that is internally hosted by AutoConnect.
+AutoConnect will call the user added handler to respond to the HTTP request using the [**ESP8266WebServer::on**](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WebServer#client-request-handlers) (WebServer::on for ESP32) funtion. This call will be made from during the [**handleClient**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) of AutoConnect function.  
+Therefore, in the use case of assigning AutoConnect in this constructor, it is necessary to know the instance of ESP8266WebServer in order to register the request handler. Sketch can use [**host**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#host) functions to obtain a reference to an ESP8266WebServer instance that is internally hosted by AutoConnect.
 
 - For ESP8266
 
@@ -207,7 +207,7 @@ Detach the AutoConnectAux with the specified URI from the management of AutoConn
 If the request handler registered in the detaching AutoConnectAux is for a legacy page of the ESP8266WebServer/WebServer, the URI is still valid after detaching. AutoConnect does not delete the request handler registered to ESP8266WebServer/WebServer with the `on` function. (It cannot be removed)
 
 !!! hint "Deleting the AutoConnectAux"
-    If the AutoConnectAux to detach was added by [AutoConnect::append](api.md#append), it will be automatically removed and freed from memory.
+    If the AutoConnectAux to detach was added by [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append), it will be automatically removed and freed from memory.
 
 ### <i class="fa fa-caret-right"></i> disableMenu
 

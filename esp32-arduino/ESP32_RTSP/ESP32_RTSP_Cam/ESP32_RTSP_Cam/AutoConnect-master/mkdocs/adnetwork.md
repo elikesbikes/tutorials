@@ -15,10 +15,10 @@ The configuration settings for the network that can be set by AutoConnect is as 
 ## 404 handler
 
 AutoConnect cannot allow the Sketch registers the **"Not-found"** handler (404-handler) to the ESP8266WebServer natively. AutoConnect traps Not-found handler of the ESP8266WebServer for its own page processing. If the Sketch overrides the Not-found handler, AutoConnect will miss the opportunity to control the HTTP session and becomes unresponsive to the menu.  
-Registering the Not-found handler is a different method than for ESP8266WebServer, use [AutoConnect::onNotFound](api.md#onnotfound). This restriction applies to the WebServer for ESP32 as well.
+Registering the Not-found handler is a different method than for ESP8266WebServer, use [AutoConnect::onNotFound](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onnotfound). This restriction applies to the WebServer for ESP32 as well.
 
 ## Assign user sketch's home path
-**HOME** for returning to the user's sketch homepage will display at the bottom of the AutoConnect menu. It could be set using the [AutoConnect::home](api.md#home) function.
+**HOME** for returning to the user's sketch homepage will display at the bottom of the AutoConnect menu. It could be set using the [AutoConnect::home](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#home) function.
 
 <img src="images/menu_home.png" />
 
@@ -71,7 +71,7 @@ But this method is not recommended. The broadcast radio of SSID emitted from Sof
 
 ## Combination with mDNS
 
-With [mDNS library](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266mDNS), you can access to ESP8266 by name instead of IP address after connection. The Sketch can start the MDNS responder after [AutoConnect::begin](api.md#begin).
+With [mDNS library](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266mDNS), you can access to ESP8266 by name instead of IP address after connection. The Sketch can start the MDNS responder after [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
 ```cpp hl_lines="8 9"
 #include <ESP8266WiFi.h>

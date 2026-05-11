@@ -4,10 +4,10 @@ In this section, it presents numerous ways to customize the AutoConnect menu wit
 
 ## The basic mechanism for menu generation
 
-Sketch can equip the [AutoConnect menu](menu.md) by using three patterns according to the appropriate usage of the [AutoConnect API](api.md).
+Sketch can equip the [AutoConnect menu](menu.md) by using three patterns according to the appropriate usage of the [AutoConnect API](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md).
 
 <i class="fa fa-desktop"></i>&ensp;**Basic menu**
-:    It is the most basic menu for a WiFi connection only. Sketch can automatically display it using the typical calling sequence of the [AutoConnect API](api.md) with [AutoConnect::begin](api.md#begin) and [AutoConnect::handleClient](api.md#handleClient).
+:    It is the most basic menu for a WiFi connection only. Sketch can automatically display it using the typical calling sequence of the [AutoConnect API](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md) with [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) and [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleClient).
 
 <i class="fa fa-desktop"></i>&ensp;**Extra menu with custom Web pages which is consisted by [AutoConnectElements](acelements.md)**
 :    It is an extended menu that appears when the Sketch consists of the custom Web pages with [AutoConnectAux](acintro.md#how-it-works) and AutoConnectElements. Refer to section [*Custom Web pages section*](acintro.md#custom-web-pages-in-autoconnect-menu).
@@ -34,9 +34,9 @@ The changes I made to adapt the FSBrowser to the AutoConnect menu are slight as 
 2. Add AutoConnectConfig declaration to replace the menu title to `FSBRowser`.
 3. Set the menu title using [AutoConnectConfig::title](apiconfig.md#title).
 4. Replace the destination of the not found handler (404 handler) from ESP8266WebServer to AutoConnect. [^1]<sup><sub>**IMPORTANT**</sub></sup>
-5. Add AutoConnectAux using [AutoConnect::append](api.md#append) and combine an item for **Edit**.
-6. Add AutoConnectAux using [AutoConnect::append](api.md#append) and combine an item for **List**.
-7. Establish a WiFi connection using [AutoConnect::begin](api.md#begin) and execute [AutoConnect::handleClient](api.md#handleclient) in the **loop**, as in the case of handling the basic menu.
+5. Add AutoConnectAux using [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append) and combine an item for **Edit**.
+6. Add AutoConnectAux using [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append) and combine an item for **List**.
+7. Establish a WiFi connection using [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) and execute [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) in the **loop**, as in the case of handling the basic menu.
 
 [^1]: Missing this step, AutoConnect cannot handle the menu. Refs: [404 handler](advancedusage.md#404-handler)
 

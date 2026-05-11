@@ -58,7 +58,7 @@ Makes [AutoConnectUpdate](apiupdate.md) class available by incorporating the OTA
 void AutoConnectUpdate::handleUpdate(void)
 ```
 
-Performs the update process. This function is called by [AutoConnect::handleClient](api.md#handleClient) when AutoConnectUpdate is enabled. In many cases, sketches do not need to call this function on purpose.
+Performs the update process. This function is called by [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleClient) when AutoConnectUpdate is enabled. In many cases, sketches do not need to call this function on purpose.
 
 ### <i class="fa fa-caret-right"></i> isEnabled
 
@@ -177,7 +177,7 @@ void AutoConnectUpdate::setLedPin(int ledPin, uint8_t ledOn)
 
 Sets the port and the ON signal level of the externally connected LED that should act as a ticker during the update process.<dl class="apidl">
     <dt>**Parameter**</dt>
-    <dd><span class="apidef">ledPin</span><span class="apidesc">Specifies the PIN connected external LED for the ticker. The default assumes `AUTOCONNECT_TICKER_PORT` defined in the [`AutoConnectDefs.h`](api.md#defined-macros) header file and it is derived from the board-specific **LED_BUILTIN**. By default, the AutoConnectUpdate class does not use the ticker for boards without the LED_BUILTIN definition. If you connect the ticker LED externally, you need to specify the PIN using the [setLedPin](#setledpin) function.</span></dd>
+    <dd><span class="apidef">ledPin</span><span class="apidesc">Specifies the PIN connected external LED for the ticker. The default assumes `AUTOCONNECT_TICKER_PORT` defined in the [`AutoConnectDefs.h`](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#defined-macros) header file and it is derived from the board-specific **LED_BUILTIN**. By default, the AutoConnectUpdate class does not use the ticker for boards without the LED_BUILTIN definition. If you connect the ticker LED externally, you need to specify the PIN using the [setLedPin](#setledpin) function.</span></dd>
     <dd><span class="apidef">ledOn</span><span class="apidesc">Specifies the the ON signal level of the LED PIN port. It is **HIGH** or **LOW**.</span></dd>
 </dl>
 
@@ -216,7 +216,7 @@ Update server address. Specifies IP address or FQDN.<dl class="apidl">
 
 HTTP port for the updating process.<dl class="apidl">
     <dt>**Type**</dt>
-    <dd><span class="apidef">String</span><span class="apidesc">The default assumes `AUTOCONNECT_UPDATE_PORT` defined in the [`AutoConnectDefs.h`](api.md#defined-macros) header file.</span></dd>
+    <dd><span class="apidef">String</span><span class="apidesc">The default assumes `AUTOCONNECT_UPDATE_PORT` defined in the [`AutoConnectDefs.h`](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#defined-macros) header file.</span></dd>
 </dl>
 
 ### <i class="fa fa-caret-right"></i> uri
