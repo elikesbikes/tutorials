@@ -81,7 +81,7 @@ To give your custom web page the ability to handle events using Fetch API, rough
 
 1. Declare AutoConnectElements for user interaction. It can be declared directly using the constructor of each element or embedded in the JSON description. This procedure is no different from the definition in custom web pages.
 
-2. Identify elements that allow events after loading a custom web page. Usually, you use the [AutoConnectAux::getElement](apiaux.md#getelement) function (or override [operator `[]`](apiaux.md#operator)) accompanied by the [AutoConnect::aux](api.md#aux) or [AutoConnect::locate](api.md#locate) for this. This function takes the element name as an argument and returns a reference to an instance of AutoConnectElements.
+2. Identify elements that allow events after loading a custom web page. Usually, you use the [AutoConnectAux::getElement](apiaux.md#getelement) function (or override [operator `[]`](apiaux.md#operator)) accompanied by the [AutoConnect::aux](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#aux) or [AutoConnect::locate](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#locate) for this. This function takes the element name as an argument and returns a reference to an instance of AutoConnectElements.
 
     ```cpp
     AutoConnect portal;

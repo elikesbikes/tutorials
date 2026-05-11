@@ -11,8 +11,8 @@ For advanced usages, the configuration settings and the Sketch examples are foll
 - [Settings and controls for network and WiFi](adnetwork.md)
 - [Other operation settings and controls](adothers.md)
 
-!!! note "Don't forget [**AutoConnect::config**](api.md#config)"
-    The configuration cannot be reflected by only changing the member variables of [AutoConnectConfig](apiconfig.md) settings. It will be reflected in the actual ones by [AutoConnect::config](api.md#config) function. Don't forget to run the [AutoConnect::config](api.md#config) after changing the AutoConnectConfig member variables.
+!!! note "Don't forget [**AutoConnect::config**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#config)"
+    The configuration cannot be reflected by only changing the member variables of [AutoConnectConfig](apiconfig.md) settings. It will be reflected in the actual ones by [AutoConnect::config](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#config) function. Don't forget to run the [AutoConnect::config](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#config) after changing the AutoConnectConfig member variables.
 
     ```cpp hl_lines="6"
     AutoConnect portal;

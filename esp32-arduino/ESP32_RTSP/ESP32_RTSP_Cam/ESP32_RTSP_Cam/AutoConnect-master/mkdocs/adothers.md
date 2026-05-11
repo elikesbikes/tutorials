@@ -72,7 +72,7 @@ The built-in OTA update feature determines where to save the uploaded file accor
 
 ## Refers the hosted ESP8266WebServer/WebServer
 
-Constructing an AutoConnect object variable without parameters then creates and starts an ESP8266WebServer/WebServer inside the AutoConnect. This object variable could be referred by [AutoConnect::host](api.md#host) function to access ESP8266WebServer/WebServer instance as like below.
+Constructing an AutoConnect object variable without parameters then creates and starts an ESP8266WebServer/WebServer inside the AutoConnect. This object variable could be referred by [AutoConnect::host](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#host) function to access ESP8266WebServer/WebServer instance as like below.
 
 ```cpp hl_lines="4"
 AutoConnect Portal;
@@ -83,7 +83,7 @@ server.send(200, "text/plain", "Hello, world");
 ```
 
 !!! info "When host() is valid"
-    The host() can be referred at after [AutoConnect::begin](api.md#begin).
+    The host() can be referred at after [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
 ## Reset the ESP module after disconnecting from WLAN
 
@@ -230,7 +230,7 @@ Adafruit Feather HUZZAH32 | Active-high | 13 | A12
 
 ## Usage for automatically instantiated ESP8266WebServer/WebServer
 
-The Sketch can handle URL requests using ESP8266WebServer or WebServer that AutoConnect started internally. ESP8266WebServer/WebServer instantiated dynamically by AutoConnect can be referred to by [AutoConnect::host](api.md#host) function. The Sketch can use the '**on**' function, '**send**' function, '**client**' function and others by ESP8266WebServer/WebServer reference of its return value.
+The Sketch can handle URL requests using ESP8266WebServer or WebServer that AutoConnect started internally. ESP8266WebServer/WebServer instantiated dynamically by AutoConnect can be referred to by [AutoConnect::host](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#host) function. The Sketch can use the '**on**' function, '**send**' function, '**client**' function and others by ESP8266WebServer/WebServer reference of its return value.
 
 ```cpp hl_lines="8 9 13 14 20 21 27"
 #include <ESP8266WiFi.h>

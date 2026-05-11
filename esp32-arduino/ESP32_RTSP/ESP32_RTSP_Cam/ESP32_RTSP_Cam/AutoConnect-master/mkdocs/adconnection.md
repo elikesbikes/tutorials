@@ -1,4 +1,4 @@
-AutoConnect aims to connect the ESP module as a station to a WiFi access point and equips with various APIs to maintain a WiFi connection as possible while sketch running. The main APIs are [AutoConnect::begin](api.md#begin) and [AutoConnect::handleClient](api.md#handleclient). You can make sketches with flexible WiFi connection capability by properly using these two APIs and the settings by [AutoConnectConfig](apiconfig.md).
+AutoConnect aims to connect the ESP module as a station to a WiFi access point and equips with various APIs to maintain a WiFi connection as possible while sketch running. The main APIs are [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) and [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient). You can make sketches with flexible WiFi connection capability by properly using these two APIs and the settings by [AutoConnectConfig](apiconfig.md).
 
 - [Automatic reconnect](#automatic-reconnect)
 - [Automatic reconnect (Background)](#automatic-reconnect-background)
@@ -26,14 +26,14 @@ Portal.config(Config);
 Portal.begin();
 ```
 
-The [**autoReconnect**](apiconfig.md#autoreconnect) option is only available for [AutoConnect::begin](api.md#begin) without SSID and PASSWORD parameter. If you use [AutoConnect::begin](api.md#begin) with an SSID and PASSWORD, no reconnection attempt will be made if the 1st-WiFi.begin fails to connect to that SSID.
+The [**autoReconnect**](apiconfig.md#autoreconnect) option is only available for [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) without SSID and PASSWORD parameter. If you use [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) with an SSID and PASSWORD, no reconnection attempt will be made if the 1st-WiFi.begin fails to connect to that SSID.
 
 !!! note "The autoReconnect is not autoreconnect"
     The [*WiFiSTAClass::disconnect*](https://github.com/espressif/arduino-esp32/blob/a0f0bd930cfd2d607bf3d3288f46e2d265dd2e11/libraries/WiFi/src/WiFiSTA.h#L46) function implemented in the arduino-esp32 has extended parameters than the ESP8266's arduino-core. The second parameter of WiFi.disconnect on the arduino-esp32 core that does not exist in the [ESP8266WiFiSTAClass](https://github.com/esp8266/Arduino/blob/7e1bdb225da8ab337373517e6a86a99432921a86/libraries/ESP8266WiFi/src/ESP8266WiFiSTA.cpp#L296) has the effect of deleting the currently connected WiFi configuration and its default value is "false". On the ESP32 platform, even if WiFi.disconnect is executed, WiFi.begin without the parameters in the next turn will try to connect to that AP. That is, automatic reconnection is implemented in arduino-esp32 already. Although this behavior appears seemingly competent, it is rather a disadvantage in scenes where you want to change the access point each time. When explicitly disconnecting WiFi from the Disconnect menu, AutoConnect will erase the AP connection settings saved by the arduino-esp32 core. AutoConnect's automatic reconnection is a mechanism independent from the automatic reconnection of the arduino-esp32 core.
     
 ## Automatic reconnect (Background)
 
-Combining [**autoReconnect**](advancedusage.md#automatic-reconnect) with [*AutoConnectConfig::reconnectInterval*](apiconfig.md#reconnectinterval) allows you to periodically repeat connection attempts to known access points within [AutoConnect::handleClient](api.md#handleclient). This process is pseudo-asynchronous and does not block the Sketch process in the `loop()` function.
+Combining [**autoReconnect**](advancedusage.md#automatic-reconnect) with [*AutoConnectConfig::reconnectInterval*](apiconfig.md#reconnectinterval) allows you to periodically repeat connection attempts to known access points within [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient). This process is pseudo-asynchronous and does not block the Sketch process in the `loop()` function.
 
 The reconnectInterval specifies the interval time to seek for known access points with saved credentials during the **handleClient** loop and attempt to connect to the AP.
 
@@ -63,10 +63,10 @@ void loop() {
 Above Sketch shows a configuration example that you want to keep connecting to known access points as long as possible. When the WiFi connection is lost, it will start seeking the WiFi network every 30 seconds during the handleClient loop.
 
 !!! info "Limitation for automatic reconnection to a specific access point"
-    An access point that ESP module to reconnect automatically depends on whether the SSID and password argument existence with [AutoConnect::begin](api.md#begin). If the Sketch calls [AutoConnect::begin](api.md#begin) without specifying an SSID or password, the [autoReconnect](apiconfig.md#autoreconnect) will connect to one of the detected access points and cannot be pre-determined.  
-    The other one, the case of the Sketch specifies SSID and password with [AutoConnect::begin](api.md#begin), the [autoReconnect](apiconfig.md#autoreconnect) will try to reconnect to a specified access point periodically during the handleClient loop.
+    An access point that ESP module to reconnect automatically depends on whether the SSID and password argument existence with [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). If the Sketch calls [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) without specifying an SSID or password, the [autoReconnect](apiconfig.md#autoreconnect) will connect to one of the detected access points and cannot be pre-determined.  
+    The other one, the case of the Sketch specifies SSID and password with [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin), the [autoReconnect](apiconfig.md#autoreconnect) will try to reconnect to a specified access point periodically during the handleClient loop.
 
-Also, you can combine the background automatic reconnect performing inside the loop function by [handleClient](api.md#handleclient) with [*AutoConnectConfig::retainPortal*](apiconfig.md#retainportal) and [*AutoConnectConfig::autoReset*](apiconfig.md#autoreset), to enable pop up the captive portal automatically on the client device each time the ESP module disconnects from the access point.
+Also, you can combine the background automatic reconnect performing inside the loop function by [handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) with [*AutoConnectConfig::retainPortal*](apiconfig.md#retainportal) and [*AutoConnectConfig::autoReset*](apiconfig.md#autoreset), to enable pop up the captive portal automatically on the client device each time the ESP module disconnects from the access point.
 
 ```cpp
 AutoConnect       Portal;
@@ -158,14 +158,14 @@ Combining these two parameters allows you to filter the destination AP when mult
 
 ## Detects connection establishment to AP
 
-The Sketch can detect that the ESP module has established a WiFi connection as a station to the access point. The [AutoConnect::begin](api.md#begin) or [AutoConnect::handleClient](api.md#handleclient) will transit the control temporarily to the function in the Sketch registered by [AutoConnect::onConnect](api.md#onconnect) when the ESP module establish a WiFi connection.  
-The **ConnectExit** function registered with [AutoConnect::onConnect](api.md#onconnect) should have the following types and arguments:
+The Sketch can detect that the ESP module has established a WiFi connection as a station to the access point. The [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) or [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) will transit the control temporarily to the function in the Sketch registered by [AutoConnect::onConnect](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onconnect) when the ESP module establish a WiFi connection.  
+The **ConnectExit** function registered with [AutoConnect::onConnect](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onconnect) should have the following types and arguments:
 
 ```cpp
 void ConnectExit(IPAddress& ip)
 ```
 
-The **ConnectExit** function is of type *void*. The argument *ip* is the IP address assigned to the ESP module by the connected AP. [AutoConnect::onConnect](api.md#onconnect) allows the Sketch registers a **ConnectExit** function to AutoConnect. Also, you can make the function using a [**lambda expression**](https://en.cppreference.com/w/cpp/language/lambda).
+The **ConnectExit** function is of type *void*. The argument *ip* is the IP address assigned to the ESP module by the connected AP. [AutoConnect::onConnect](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onconnect) allows the Sketch registers a **ConnectExit** function to AutoConnect. Also, you can make the function using a [**lambda expression**](https://en.cppreference.com/w/cpp/language/lambda).
 
 ```cpp hl_lines="3 4 5 6 7 8 12"
 AutoConnect Portal;
@@ -234,9 +234,9 @@ build_flags=-DAUTOCONNECT_APKEY_SSID
 
 ## Preserve AP mode
 
-Sketch using AutoConnect can open a gateway to the Internet by connecting to a WiFi router even through use Espressif's peculiar WiFi protocol (e.g. [ESP-MESH](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/esp-wifi-mesh.html) or [ESP-NOW](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/network/esp_now.html)). These specific communication protocols require to keeps AP + STA as the WiFi mode. That is, to apply these protocols, it needs to launch SoftAP by a sketch itself and then call [AutoConnect::begin](api.md#begin). But the default behavior of [AutoConnect::begin](api.md#begin) will turn off SoftAP always then it will unable to open a connection.
+Sketch using AutoConnect can open a gateway to the Internet by connecting to a WiFi router even through use Espressif's peculiar WiFi protocol (e.g. [ESP-MESH](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/esp-wifi-mesh.html) or [ESP-NOW](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/network/esp_now.html)). These specific communication protocols require to keeps AP + STA as the WiFi mode. That is, to apply these protocols, it needs to launch SoftAP by a sketch itself and then call [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). But the default behavior of [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) will turn off SoftAP always then it will unable to open a connection.
 
-[*AutoConnectConfig::preserveAPMode*](apiconfig.md#preserveAPMode) setting maintains WIFI_AP mode without disabling SoftAP inside [AutoConnect::begin](api.md#begin). The Sketch can utilize the WiFi connection via AutoConnect with ESP-MESH and ESP-NOW protocol by enabling this option.
+[*AutoConnectConfig::preserveAPMode*](apiconfig.md#preserveAPMode) setting maintains WIFI_AP mode without disabling SoftAP inside [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). The Sketch can utilize the WiFi connection via AutoConnect with ESP-MESH and ESP-NOW protocol by enabling this option.
 
 The following diagram quoted from the [ESP-MESH documentation](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/esp-wifi-mesh.html) that illustrates the typical topology of the MESH network. The module located at the Root Node bridges between the mesh network and the router by an application that handles two protocols, TCP/IP and ESP-MESH. Its SoftAP communicates with the internal mesh network as an interface of the mesh layer. On the other hand, STA performs station communication with the WiFi router as an interface of the TCP/IP layer. AutoConnect allows assists the connection between the router and the STA of the Root Node using [*AutoConnectConfig::preserveAPMode*](apiconfig.md#preserveapmode) and starting the SoftAP via Sketch separately.
 
@@ -264,16 +264,16 @@ void loop () {
 }
 ```
 
-In addition, the limit of the waiting time for connection attempts can be specified by the [AutoConnect::begin](api.md#begin) parameter too. The *timeout* parameter specified in [AutoConnect::begin](api.md#begin) takes precedence over [*AutoConnectConfig::beginTimeout*](apiconfig.md#begintimeout).
+In addition, the limit of the waiting time for connection attempts can be specified by the [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) parameter too. The *timeout* parameter specified in [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) takes precedence over [*AutoConnectConfig::beginTimeout*](apiconfig.md#begintimeout).
 
 !!! note "The beginTimeout has an effect on handleClient"
-    The [**beginTimeout**](apiconfig.md#begintimeout) value will be applied with [**handleClient**](api.md#handleclient) when requesting a connection from the captive portal and when attempting to reconnect with [**autoReconnect**](apiconfig.md#autoreconnect).
+    The [**beginTimeout**](apiconfig.md#begintimeout) value will be applied with [**handleClient**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) when requesting a connection from the captive portal and when attempting to reconnect with [**autoReconnect**](apiconfig.md#autoreconnect).
 
 ## Verify the WiFi connection conditions
 
 AutoConnect has the following indicators regarding WiFi connection attempts. These states are indicated as bitwise values and are the logical disjunction of multiple states. For example, if the *1st-WiFi.begin* fails and the connection is restored by the [AutoConnectConfig::autoReconnect](#automatic-reconnect) setting, this status value will indicate both `AC_AUTORECONNECT` and `AC_ESTABLISHED`.
 
-A sketch can get this status value using the [AutoConnect::portalStatus](api.md#portalstatus) function. [AutoConnect::portalStatus](api.md#portalstatus) returns a value of type *uint8_t*. The return value is a bitwise value that indicates each status in the table below. In the sketch, the WiFi connection status is detected by taking the AND of the return value and the `enum` value shown in the following table:
+A sketch can get this status value using the [AutoConnect::portalStatus](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#portalstatus) function. [AutoConnect::portalStatus](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#portalstatus) returns a value of type *uint8_t*. The return value is a bitwise value that indicates each status in the table below. In the sketch, the WiFi connection status is detected by taking the AND of the return value and the `enum` value shown in the following table:
 
 | Values of the status indication | WiFi connection situations |
 |---------------------------------|----------------------------|
@@ -281,7 +281,7 @@ A sketch can get this status value using the [AutoConnect::portalStatus](api.md#
 | AutoConnect::AC_ESTABLISHED | **Connection successful**: Successfully connected to the WiFi access point. |
 | AutoConnect::AC_AUTORECONNECT | **The autoReconnect was applied**:  [AutoConnectConfig::autoReconnect](apiconfig.md#autoreconnect) setting was applied during the WiFi connection attempt process. This flag does not indicate a successful connection. It only shows that a condition that triggers autoReconnect has occurred. Whether the connection was actually successful should be determined by `WiFi.status()==WL_CONNECTED`. |
 | AutoConnect::AC_TIMEOUT | **Connection timeout**: WiFi connection attempt timed out. Or, the captive portal was shut down by the [AutoConnectConfig::portalTimeout](adcpcontrol.md#captive-portal-timeout-control) setting. |
-| AutoConnect::AC_INTERRUPT | **Connection interrupted due to an indication with the exit**: The [whileConnecting exit](api.md#whileconnecting) routine returned false. or the [whileCaptivePortal exit](adcpcontrol.md#sketch-execution-during-the-captive-portal-loop) routine returned false. AutoConnect aborted the WiFi connection attempt with those indications.|
+| AutoConnect::AC_INTERRUPT | **Connection interrupted due to an indication with the exit**: The [whileConnecting exit](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#whileconnecting) routine returned false. or the [whileCaptivePortal exit](adcpcontrol.md#sketch-execution-during-the-captive-portal-loop) routine returned false. AutoConnect aborted the WiFi connection attempt with those indications.|
 | AutoConnect::AC_CAPTIVEPORTAL | **Captive portal is available**: SoftAP mode is enabled, and the DNS server is available. AutoConnect will redirect connection requests to SoftAP from client devices to a captive portal site within AutoConnect. The state of this flag is equivalent to the return value of [AutoConnect::isPortalAvailable](adcpcontrol.md#captive-portal-state-identification) function.<br>**NOTE**: AC_CAPTIVEPORTAL is false if only SoftAP is available and no DNS server is enabled. |
 | AutoConnect::AC_INPROGRESS | **WiFi.begin in progress**: AutoConnect requests WiFi.begin and is waiting for the connection to succeed or times out; this state will reset when terminating WiFi.begin attempts. |
 
@@ -337,4 +337,4 @@ void loop() {
 ```
 
 !!! info "AutoConnect::portalStatus within the loop of AutoConnect::handleClient"
-    AutoConnect::portalStatus function is also valid during the [AutoConnect::handleClient](api.md#handleclient) loop inside the `loop` function. With the [background reconnection](adconnection.md#automatic-reconnect-background) enabled using the [AutoConnectConfig::autoReconnect](apiconfig.md#autoreconnect) and [AutoConnectConfig::reconnectInterval](apiconfig.md#reconnectinterval) settings, the [AutoConnect::portalStatus](api.md#portalstatus) function will return a value indicating the reconnection status at every time [AutoConnect::handleClient](api.md#handleclient) in the `loop()`.
+    AutoConnect::portalStatus function is also valid during the [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) loop inside the `loop` function. With the [background reconnection](adconnection.md#automatic-reconnect-background) enabled using the [AutoConnectConfig::autoReconnect](apiconfig.md#autoreconnect) and [AutoConnectConfig::reconnectInterval](apiconfig.md#reconnectinterval) settings, the [AutoConnect::portalStatus](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#portalstatus) function will return a value indicating the reconnection status at every time [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) in the `loop()`.

@@ -118,7 +118,7 @@ You can put declarations of multiple custom Web pages in one JSON document. In t
 ]
 ```
 
-The above custom Web page definitions can be loaded in a batch using the [AutoConnect::load](api.md#load) function.
+The above custom Web page definitions can be loaded in a batch using the [AutoConnect::load](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function.
 
 ### <i class="fa fa-caret-right"></i> JSON object for AutoConnectElements
 
@@ -265,7 +265,7 @@ There are two main ways to load the custom Web pages into AutoConnect.
 
     This way does not require an explicit declaration of AutoConnectAux objects with sketches and is also useful when importing the custom Web pages JSON document from an external file such as SPIFFS because the page definition and sketch coding structure can be separated.
 
-    Using the [AutoCoonnect::load](api.md#load) function, AutoConnect dynamically generates the necessary AutoConnectAux objects internally based on the custom Web page definition of the imported JSON document content. In the Sketch, the generated AutoConnectAux object can be referenced using the [AutoConnect::aux](api.md#aux) function. You can reach the AutoConnectElements you desired using the [AutoConnectAux::getElement](apiaux.md#getelement) function of its AutoConnectAux.
+    Using the [AutoCoonnect::load](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function, AutoConnect dynamically generates the necessary AutoConnectAux objects internally based on the custom Web page definition of the imported JSON document content. In the Sketch, the generated AutoConnectAux object can be referenced using the [AutoConnect::aux](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#aux) function. You can reach the AutoConnectElements you desired using the [AutoConnectAux::getElement](apiaux.md#getelement) function of its AutoConnectAux.
 
     In the following example, it loads in a batch a JSON document of custom Web pages stored in SPIFFS and accesses to the AutoConnectInput element.
 
@@ -309,7 +309,7 @@ There are two main ways to load the custom Web pages into AutoConnect.
 
     This way declares AutoConnectAux in the Sketch and loads the custom Web pages JSON document there. It has an advantage for if you want to define each page of a custom Web page individually or allocate AutoConnectAux objects dynamically on the Sketch side.
 
-    After loading a JSON document using the [AutoConnectAux::load](apiaux.md#load) function by each, integrate those into AutoConnect using the [AutoConnect::join](api.md#join) function.
+    After loading a JSON document using the [AutoConnectAux::load](apiaux.md#load) function by each, integrate those into AutoConnect using the [AutoConnect::join](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#join) function.
 
     In the following example, you can see the difference between two sketches in a sketch modified using the AutoConnectAux::load.
 
@@ -361,7 +361,7 @@ AutoConnect supports loading of JSON document from the following instances:
 - PROGMEM
 - Stream
 
-To load custom Web pages JSON document into AutoConnect, use the [load](api.md#load) function of the AutoConnect class. Its JSON document can read must be completed as a description interpretable by the ArduinoJson library. It cannot import custom Web pages if there are syntax errors for the JSON. If you can not see the custom Web page prepared by JSON, you can check the syntax with [ArduinoJson Assistant](https://arduinojson.org/v5/assistant/). It is useful for pre-checking.
+To load custom Web pages JSON document into AutoConnect, use the [load](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function of the AutoConnect class. Its JSON document can read must be completed as a description interpretable by the ArduinoJson library. It cannot import custom Web pages if there are syntax errors for the JSON. If you can not see the custom Web page prepared by JSON, you can check the syntax with [ArduinoJson Assistant](https://arduinojson.org/v5/assistant/). It is useful for pre-checking.
 
 ```cpp
 bool AutoConnect::load(const String& aux)

@@ -1,7 +1,7 @@
 ## <i class="fa fa-question-circle"></i> After connected, AutoConnect menu performs but no happens.
 
-If you can access the **AutoConnect root path** as http://ESP8266IPADDRESS/_ac from browser, probably the Sketch uses *ESP8266WebServer::handleClient()* without [*AutoConnect::handleRequest()*](api.md#handlerequest).  
-For AutoConnect menus to work properly, call [*AutoConnect::handleRequest()*](api.md#handlerequest) after *ESP8266WebServer::handleClient()* invoked, or use [*AutoConnect::handleClient()*](api.md#handleclient). [*AutoConnect::handleClient()*](api.md#handleclient) is equivalent *ESP8266WebServer::handleClient* combined [*AutoConnect::handleRequest()*](api.md#handlerequest).
+If you can access the **AutoConnect root path** as http://ESP8266IPADDRESS/_ac from browser, probably the Sketch uses *ESP8266WebServer::handleClient()* without [*AutoConnect::handleRequest()*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handlerequest).  
+For AutoConnect menus to work properly, call [*AutoConnect::handleRequest()*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handlerequest) after *ESP8266WebServer::handleClient()* invoked, or use [*AutoConnect::handleClient()*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient). [*AutoConnect::handleClient()*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) is equivalent *ESP8266WebServer::handleClient* combined [*AutoConnect::handleRequest()*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handlerequest).
 
 See also the explanation [here](basicusage.md#esp8266webserverwebserver-hosted-or-parasitic).
 
@@ -74,7 +74,7 @@ However, its DNS response disguise is very rough, redirecting all FQDNs that do 
 
 The reason AutoConnect shuts down the DNS server after establishing a connection with a WiFi access point and stops hacking HTTP requests for Internet transparency detection is because AutoConnect can only trap a broad range of DNS requests. After the ESP module connects to the access point, the sketch can access the Internet using the FQDN. To prevent it from interfering with that access, AutoConnect will stop the internally launched DNS. In other words, the only scene that allows automatic pop-ups to lead to the captive portal is when the ESP module is not transparent to the Internet.
 
-Instead, AutoConnect has options to restart the internal DNS server when the ESP module loses WiFi connectivity, allowing the device to auto-pop up a captive portal screen. If the sketch enables [AutoConnectConfig::retainPotral](apiconfig.md#retainportal) and [AutoConnectConfig::autoRise](apiconfig.md#autorise), then when the WiFi connection is lost (i.e. `WiFi.status() != WL_CONNECTED`), AutoConnect will initiate a trap by starting the **SoftAP** and the internal DNS server. At this time, the ESP module will transition to **WIFI_AP_STA** mode. The [AutoConnect::handleClient](api.md#handleclient) function performs this restart sequence each time it is called, so the sketch can resume the captive portal automatic pop-up while the `loop` function is running.
+Instead, AutoConnect has options to restart the internal DNS server when the ESP module loses WiFi connectivity, allowing the device to auto-pop up a captive portal screen. If the sketch enables [AutoConnectConfig::retainPotral](apiconfig.md#retainportal) and [AutoConnectConfig::autoRise](apiconfig.md#autorise), then when the WiFi connection is lost (i.e. `WiFi.status() != WL_CONNECTED`), AutoConnect will initiate a trap by starting the **SoftAP** and the internal DNS server. At this time, the ESP module will transition to **WIFI_AP_STA** mode. The [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) function performs this restart sequence each time it is called, so the sketch can resume the captive portal automatic pop-up while the `loop` function is running.
 
 ## <i class="fa fa-question-circle"></i> Compile error due to File system header file not found
 
@@ -131,7 +131,7 @@ You can avoid a compile error in one of two ways:
 
 1. Disable an AutoConnectUpdate feature if you don't need.
 
-    You can disable the AutoConnectUpdate feature by commenting out the [**AUTOCONNECT_USE_UPDATE**](https://github.com/Hieromon/AutoConnect/blob/master/src/AutoConnectDefs.h#L47) macro in the [`AutoConnectDefs.h`](api.md#defined-macros) header file.
+    You can disable the AutoConnectUpdate feature by commenting out the [**AUTOCONNECT_USE_UPDATE**](https://github.com/Hieromon/AutoConnect/blob/master/src/AutoConnectDefs.h#L47) macro in the [`AutoConnectDefs.h`](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#defined-macros) header file.
     ```cpp
     #define AUTOCONNECT_USE_UPDATE
     ```
@@ -232,7 +232,7 @@ The correct boot mode for starting the Sketch is **(3, x)**.
 
 ## <i class="fa fa-question-circle"></i> How can I detect the captive portal starting?
 
-You can use the [AutoConnect::onDetect](api.md#ondetect) exit routine. For more details and an implementation example of the onDetect exit routine, refer to the chapter [Captive portal start detection](adcpcontrol.md#captive-portal-start-detection).
+You can use the [AutoConnect::onDetect](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#ondetect) exit routine. For more details and an implementation example of the onDetect exit routine, refer to the chapter [Captive portal start detection](adcpcontrol.md#captive-portal-start-detection).
 
 ## <i class="fa fa-question-circle"></i> How change HTTP port?
 

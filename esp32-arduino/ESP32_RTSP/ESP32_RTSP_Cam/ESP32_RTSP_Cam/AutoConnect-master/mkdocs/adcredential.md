@@ -80,7 +80,7 @@ The [**boundaryOffset**](apiconfig.md#boundaryoffset) in [AutoConnectConfig](api
 
 The [*AutoConnectConfig::boundaryOffset*](apiconfig.md#boundaryoffset) setting allows AutoConnect to write its data to EEPROM while preserving custom configuration data. Similarly, when a Sketch writes its own data to EEPROM, it must preserve the data written by AutoConnect.  
 The EEPROM library for ESP8266 erases the entire flash sector when it writes to any part of the sector. Therefore, when writing data to EEPROM with a sketch that handles the custom data, it is necessary to call `EEPROM.begin` using a total amount of a custom data size and the saved credentials size.  
-The following code shows how to use the [AutoConnect::getEEPROMUsedSize](api.md#geteepromusedsize) function to store custom configuration settings in EEPROM without conflicting with AutoConnect's use of that storage.
+The following code shows how to use the [AutoConnect::getEEPROMUsedSize](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#geteepromusedsize) function to store custom configuration settings in EEPROM without conflicting with AutoConnect's use of that storage.
 
 ```cpp hl_lines="13 21"
 AutoConnect       portal;
@@ -112,9 +112,9 @@ EEPROM.end();
 
 ## Save and restore credentials
 
-AutoConnect can save stored credentials to various file systems. It is also possible to restore from those file systems. The file system can be SPIFFS, LittleFS, or SDFS. [AutoConnect::saveCredential](api.md#savecredential) and [AutoConnect::restoreCredential](api.md#restorecredential) functions allow the sketch to save and restore credentials to files.
+AutoConnect can save stored credentials to various file systems. It is also possible to restore from those file systems. The file system can be SPIFFS, LittleFS, or SDFS. [AutoConnect::saveCredential](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#savecredential) and [AutoConnect::restoreCredential](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#restorecredential) functions allow the sketch to save and restore credentials to files.
 
-Use the [AutoConnect::saveCredential](api.md#savecredential) function to save AutoConnect credentials. This function bulk outputs while preserving AutoConnect's internal credential data structure, so this output file would be used as an input for restoring by the `restoreCredential` function. The following code snippet is an example of saving AutoConnect credentials to a file on LittleFS with ESP8266. A subsequent snippet that restores credentials saved by `saveCredential` with `restoreCredential` is also shown as an example.
+Use the [AutoConnect::saveCredential](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#savecredential) function to save AutoConnect credentials. This function bulk outputs while preserving AutoConnect's internal credential data structure, so this output file would be used as an input for restoring by the `restoreCredential` function. The following code snippet is an example of saving AutoConnect credentials to a file on LittleFS with ESP8266. A subsequent snippet that restores credentials saved by `saveCredential` with `restoreCredential` is also shown as an example.
 
 ```cpp hl_lines="12"
 #include <FS.h>
@@ -153,7 +153,7 @@ void setup() {
 }
 ```
 
-The credentials file output by [AutoConnect::saveCredential](api.md#savecredential) is compatible with ESP8266 and ESP32. The credentials file output by `saveCredential` is compatible with ESP8266 and ESP32, so you can output the AutoConnect credentials on ESP8266 to a portable SD and input it as AutoConnect credentials running on ESP32. To use SD for saving and restoring credentials, use the `saveCredential` and `restoreCredential` functions with **template arguments** as shown in the code snippet below. In this case, the template argument must specify the class name of the SD file system that is compatible with the ESP module. It is usually `SDClass` for ESP8266 or `fs::SDFS` for ESP32.
+The credentials file output by [AutoConnect::saveCredential](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#savecredential) is compatible with ESP8266 and ESP32. The credentials file output by `saveCredential` is compatible with ESP8266 and ESP32, so you can output the AutoConnect credentials on ESP8266 to a portable SD and input it as AutoConnect credentials running on ESP32. To use SD for saving and restoring credentials, use the `saveCredential` and `restoreCredential` functions with **template arguments** as shown in the code snippet below. In this case, the template argument must specify the class name of the SD file system that is compatible with the ESP module. It is usually `SDClass` for ESP8266 or `fs::SDFS` for ESP32.
 
 ```cpp hl_lines="12"
 #include <SPI.h>

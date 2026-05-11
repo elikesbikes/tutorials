@@ -128,19 +128,19 @@ For the client sketches, the code required to connect to WiFi is the following f
 
 2. Declare AutoConnect
     
-    The declaration of the [**AutoConnect variable**](api.md#autoconnect) is not accompanied by ESP8266WebServer.
+    The declaration of the [**AutoConnect variable**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#autoconnect) is not accompanied by ESP8266WebServer.
 
     <img src="images/declare.png" width="55%"/>
 
 3. Invokes "begin()"
     
-    Call [**AutoConnect::begin**](api.md#begin). If you need to assign a static IP address, executes [AutoConnectConfig](apiconfig.md) before that. 
+    Call [**AutoConnect::begin**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). If you need to assign a static IP address, executes [AutoConnectConfig](apiconfig.md) before that. 
 
     <img src="images/begin.png" width="55%"/>
 
 4. Performs "handleClent()" in "loop()"
     
-    Invokes [**AutoConnect::handleClient()**](api.md#handleclient) at inside ```loop()``` to enable the AutoConnect menu.
+    Invokes [**AutoConnect::handleClient()**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) at inside ```loop()``` to enable the AutoConnect menu.
 
     <img src="images/handleClient.png" width="55%"/>
 

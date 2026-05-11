@@ -1,4 +1,4 @@
-The default behavior of AutoConnect is to launch the captive portal if *1st-WiFi.begin* attempting inside [AutoConnect::begin](api.md#begin) fails. You can change this default behavior through the [AutoConnectConfig](apiconfig.md) settings join together with Sketch code that implements to control the WiFi connection attempting.
+The default behavior of AutoConnect is to launch the captive portal if *1st-WiFi.begin* attempting inside [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) fails. You can change this default behavior through the [AutoConnectConfig](apiconfig.md) settings join together with Sketch code that implements to control the WiFi connection attempting.
 
 - [Captive portal start control](#captive-portal-start-control)
 - [Captive portal start detection](#captive-portal-start-detection)
@@ -12,7 +12,7 @@ The default behavior of AutoConnect is to launch the captive portal if *1st-WiFi
 
 ## Captive portal start control
 
-AutoConnect will launch the captive portal based on the [AutoConnectConfig](apiconfig.md) settings when the WiFi connection status will become to certain conditions. [*AutoConnectConfig::autoRise*](apiconfig.md#autorise) and [*AutoConnectConfig::immediateStart*](apiconfig.md#immediatestart) are concern the conditions to launch the captive portal. Also, the [*AutoConnectConfig::retainPortal*](apiconfig.md#retainportal) controls the continuity of the captive portal state and allows the Sketch to launch the captive portal dynamically even while in a [**handleClient**](api.md#handleclient) loop.
+AutoConnect will launch the captive portal based on the [AutoConnectConfig](apiconfig.md) settings when the WiFi connection status will become to certain conditions. [*AutoConnectConfig::autoRise*](apiconfig.md#autorise) and [*AutoConnectConfig::immediateStart*](apiconfig.md#immediatestart) are concern the conditions to launch the captive portal. Also, the [*AutoConnectConfig::retainPortal*](apiconfig.md#retainportal) controls the continuity of the captive portal state and allows the Sketch to launch the captive portal dynamically even while in a [**handleClient**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) loop.
 
 The [**autoRise**](apiconfig.md#autorise) allows or disallows the launch of the captive portal. AutoConnect launches the captive portal only if the autoRise is **true**. If the autoRise is **false**, the captive portal will not start even if the WiFi connection is lost.
 
@@ -39,13 +39,13 @@ Basically, the captive portal initiation is triggered by the result of *1st-WiFi
   </tr>
 </table>
 
-The [**retainPortal**](apiconfig.md#retainportal) specifies the continuity of the captive portal after [AutoConnect::begin](api.md#begin), allowing the captive portal would be launched after the Sketch execution has transitioned into the **loop** function. When AutoConnect establishes a WiFi connection while in the captive portal within [AutoConnect::begin](api.md#begin), it stops the DNS server to close the captive portal with SoftAP still running. In this situation, if the Sketch loses the established WiFi connection while executing the loop function, it can reopen the captive portal.
+The [**retainPortal**](apiconfig.md#retainportal) specifies the continuity of the captive portal after [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin), allowing the captive portal would be launched after the Sketch execution has transitioned into the **loop** function. When AutoConnect establishes a WiFi connection while in the captive portal within [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin), it stops the DNS server to close the captive portal with SoftAP still running. In this situation, if the Sketch loses the established WiFi connection while executing the loop function, it can reopen the captive portal.
 
 However, this behavior can be redundant depending on the Sketch characteristics. In such a case, you can prevent to starting the captive portal during the `loop()` by [**autoRise**](apiconfig.md#autorise) setting to **false**.
 
 ## Captive portal start detection
 
-The captive portal will only be activated if 1st-WiFi::begin fails. Sketch can detect with the [AutoConnect::onDetect](api.md#ondetect) function that the captive portal has started. For example, the Sketch can be written like as follows that turns on the LED at the start captive portal.
+The captive portal will only be activated if 1st-WiFi::begin fails. Sketch can detect with the [AutoConnect::onDetect](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#ondetect) function that the captive portal has started. For example, the Sketch can be written like as follows that turns on the LED at the start captive portal.
 
 ```cpp hl_lines="3 13"
 AutoConnect Portal;
@@ -73,22 +73,22 @@ void loop() {
 
 ## Captive portal state identification
 
-You can use the [*AutoConnect::isPortalAvailable*](api.md#isportalavailable) function to identify if AutoConnect is in a captive portal state.
+You can use the [*AutoConnect::isPortalAvailable*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#isportalavailable) function to identify if AutoConnect is in a captive portal state.
 
-[Captive-Portal](https://en.wikipedia.org/wiki/Captive_portal#Implementation) - i.e., just a spoofed response to a DNS lookup for Internet connection verification that occurs on a new connection attempt from the client device; it needs a DNS server and SoftAP to work. AutoConnect implements it with HTTP redirection. The [*AutoConnect::isPortalAvailable*](api.md#isportalavailable) function returns true if all of the following conditions are met.
+[Captive-Portal](https://en.wikipedia.org/wiki/Captive_portal#Implementation) - i.e., just a spoofed response to a DNS lookup for Internet connection verification that occurs on a new connection attempt from the client device; it needs a DNS server and SoftAP to work. AutoConnect implements it with HTTP redirection. The [*AutoConnect::isPortalAvailable*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#isportalavailable) function returns true if all of the following conditions are met.
 
 - ESP module is in WIFI_AP mode and enable SoftAP.
 - IP address assigned to SoftAP is the equivalent of [AutoConnectConfig::apip](apiconfig.md#apip).
 - AutoConnect is running a DNS server for directing to the captive portal. Through its action, DNS lookups issued by client devices for Internet transparency validation are directed to the ESP module SoftAP.
 
 !!! info "A similar utility is AutoConnect::portalStatus"
-    See [Verify the WiFi connection conditions](adconnection.md#verify-the-wifi-connection-conditions) and [*AutoConnect::portalStatus*](api.md#portalstatus) function.
+    See [Verify the WiFi connection conditions](adconnection.md#verify-the-wifi-connection-conditions) and [*AutoConnect::portalStatus*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#portalstatus) function.
 
 ## Captive portal timeout control
 
-Once AutoConnect has entered the captive portal state due to the above conditions, the default behavior is that [AutoConnect::begin](api.md#begin) will not exit until a WiFi connection is established. Captive portal timeout control prevents AutoConnect from blocking the Sketch progress. It allows Sketch to abort AutoConnect::begin and returns control to Sketch. 
+Once AutoConnect has entered the captive portal state due to the above conditions, the default behavior is that [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) will not exit until a WiFi connection is established. Captive portal timeout control prevents AutoConnect from blocking the Sketch progress. It allows Sketch to abort AutoConnect::begin and returns control to Sketch. 
 
-AutoConnect has two parameters for timeout control. The first is the timeout value used when trying to connect to the specified AP. It works like a typical timeout control for connection attempts with WiFi.begin. This setting is specified by the [*AutoConnectConfig::beginTimeout*](apiconfig.md#begintimeout) or third argument of the [AutoConnect::begin](api.md#begin) function. The default value is the macro defined by [**AUTOCONNECT_TIMEOUT**](https://github.com/Hieromon/AutoConnect/blob/master/src/AutoConnectDefs.h#L163) in the [`AutoConnectDefs.h`](https://github.com/Hieromon/AutoConnect/blob/master/src/AutoConnectDefs.h) header file.
+AutoConnect has two parameters for timeout control. The first is the timeout value used when trying to connect to the specified AP. It works like a typical timeout control for connection attempts with WiFi.begin. This setting is specified by the [*AutoConnectConfig::beginTimeout*](apiconfig.md#begintimeout) or third argument of the [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) function. The default value is the macro defined by [**AUTOCONNECT_TIMEOUT**](https://github.com/Hieromon/AutoConnect/blob/master/src/AutoConnectDefs.h#L163) in the [`AutoConnectDefs.h`](https://github.com/Hieromon/AutoConnect/blob/master/src/AutoConnectDefs.h) header file.
 
 Another timeout control is for the captive portal itself. It is useful if you want to keep the Sketch offline running even if a WiFi connection is not possible. You can also combine its setting with the [**immediateStart**](#launch-the-captive-portal-on-demand-by-external-trigger) option to create highly mobile sketches. The timeout of the captive portal is specified by the [*AutoConnectConfig::portalTimeout*](apiconfig.md#portaltimeout) as follows.
 
@@ -117,7 +117,7 @@ void loop() {
 }
 ```
 
-Also, if you want to stop AutoConnect completely when the captive portal is timed out, you need to call the [AutoConnect::end](api.md#end) function. It looks like the following code:
+Also, if you want to stop AutoConnect completely when the captive portal is timed out, you need to call the [AutoConnect::end](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#end) function. It looks like the following code:
 
 ```cpp
 bool acEnable;
@@ -144,7 +144,7 @@ void loop() {
 }
 ```
 
-AutoConnectConfig has another option related to timeouts that you can enable to take advantage of the captive portal feature after a timeout occurrence. The [*AutoConnectConfig::retainPortal*](apiconfig.md#retainportal) option will not shut down SoftAP and the internal DNS server even though [AutoConnect::begin](api.md#begin) has aborted due to a timeout occurrence. Even after the captive portal times out, you can always try to connect to the AP while keeping the Sketch running offline.
+AutoConnectConfig has another option related to timeouts that you can enable to take advantage of the captive portal feature after a timeout occurrence. The [*AutoConnectConfig::retainPortal*](apiconfig.md#retainportal) option will not shut down SoftAP and the internal DNS server even though [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) has aborted due to a timeout occurrence. Even after the captive portal times out, you can always try to connect to the AP while keeping the Sketch running offline.
 
 The following sample code is the Sketch above with the [**retainPortal**](apiconfig.md#retainportal) setting added. As you can see, the implementation for captive portal continuation does not affect the main logic of the Sketch.
 
@@ -176,7 +176,7 @@ void loop() {
 
 ## Disable the captive portal
 
-It can also prevent the captive portal from starting even if the connection at the *1st-WiFi.begin* fails. In this case, [AutoConnect::begin](api.md#begin) behaves same as *WiFi.begin*.
+It can also prevent the captive portal from starting even if the connection at the *1st-WiFi.begin* fails. In this case, [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) behaves same as *WiFi.begin*.
 
 For disabling the captive portal, [**autoRise**](apiconfig.md#autorise) sets to false with [AutoConnectConfig](apiconfig.md).
 
@@ -191,7 +191,7 @@ portal.begin();
 
 ## Launch the captive portal on demand by external trigger
 
-The [default behavior](lsbegin.md) of [AutoConnect::begin](api.md#begin) gives priority to connect to the least recently established access point. In general, We expect this behavior in most situations, but will intentionally launch the captive portal on some occasion.
+The [default behavior](lsbegin.md) of [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) gives priority to connect to the least recently established access point. In general, We expect this behavior in most situations, but will intentionally launch the captive portal on some occasion.
 
 Here section describes how to launch on demand the captive portal, and suggests two templates that you can use to implement it.
 
@@ -298,11 +298,11 @@ Here section describes how to launch on demand the captive portal, and suggests 
 
 ## Launch the captive portal on-demand at losing WiFi
 
-If the ESP module loses the established WiFi connection during the loop of [**handleClient**](api.md#handleclient), you can prevent the ESP module from going absolutely standalone by launching the captive portal on demand.
+If the ESP module loses the established WiFi connection during the loop of [**handleClient**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient), you can prevent the ESP module from going absolutely standalone by launching the captive portal on demand.
 
 When [**retainPortal**](apiconfig.md#retainportal) and [**autoRise**](apiconfig.md#autorise) settings are enabled, AutoConnect will launch SoftAP and start DNS when it detects a WiFi disconnect with the router during a handleClient loop. This behavior will occur caused by a WiFi disconnect detection even if the WiFi mode is STA.
 
-**Since AutoConnect v1.2.0**, An improved [**retainPortal**](apiconfig.md#retainportal) option allows the captive portal to be restarted during a handleClient loop even if it is closed once in [AutoConnect::begin](api.md#begin). In this case, the Sketch execution stage has already transitioned into the loop function, so the Sketch process seems running concurrently with the captive portal loop. Its captive portal launched from inside handleClient does not block the execution of the Sketch, unlike that launched from [AutoConnect::begin](api.md#begin).
+**Since AutoConnect v1.2.0**, An improved [**retainPortal**](apiconfig.md#retainportal) option allows the captive portal to be restarted during a handleClient loop even if it is closed once in [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). In this case, the Sketch execution stage has already transitioned into the loop function, so the Sketch process seems running concurrently with the captive portal loop. Its captive portal launched from inside handleClient does not block the execution of the Sketch, unlike that launched from [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
 ```cpp hl_lines="5 6"
 AutoConnect       Portal;
@@ -323,9 +323,9 @@ void loop() {
 !!! note "Need autoRise enabled"
     Need [*AutoConnectConfig::autoRise*](apiconfig.md#autorise) setting enabled to start the captive portal on demand during a handleClient loop.
 
-Although the Sketch above specifies the [**retainPortal**](apiconfig.md#retainportal), it does not instruct starts the captive portal always. AutoConnect will try WiFi.begin once in [AutoConnect::begin](api.md#begin) unless the [**immediateStart**](apiconfig.md#immediatestart) option is specified. If AutoConnect fails the *1st-WiFi.begin*, the captive portal will be launched at that point and the Sketch execution will stay within the [AutoConnect::begin](api.md#begin) function.
+Although the Sketch above specifies the [**retainPortal**](apiconfig.md#retainportal), it does not instruct starts the captive portal always. AutoConnect will try WiFi.begin once in [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) unless the [**immediateStart**](apiconfig.md#immediatestart) option is specified. If AutoConnect fails the *1st-WiFi.begin*, the captive portal will be launched at that point and the Sketch execution will stay within the [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) function.
 
-There is also a way to avoid starting the captive portal inside [AutoConnect::begin](api.md#begin) and start the captive portal according to the WiFi connection status after the Sketch execution transitions to a **handleClient loop**. Adjusting the timing of [**autoRise**](apiconfig.md#autorise) activation will allow the captive portal to start only from inside [AutoConnect::handleClient](api.md#handleclient) function.
+There is also a way to avoid starting the captive portal inside [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) and start the captive portal according to the WiFi connection status after the Sketch execution transitions to a **handleClient loop**. Adjusting the timing of [**autoRise**](apiconfig.md#autorise) activation will allow the captive portal to start only from inside [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) function.
 
 ```cpp hl_lines="5 6 9"
 AutoConnect       Portal;
@@ -424,14 +424,14 @@ void loop() {
 ```
 
 !!! note "If you stop SoftAP, the connection will be lost"
-    If you stop SoftAP immediately after the [AutoConnect::begin](api.md#begin) successful, will part with the connection and cannot see the result notifying on your client device.  
-    You can expect to receive result notifications if you run [**handleClient**](api.md#handleclient) before stopping SoftAP. (although you may not always succeed; it will not work if the WiFi radio signal is weak)
+    If you stop SoftAP immediately after the [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) successful, will part with the connection and cannot see the result notifying on your client device.  
+    You can expect to receive result notifications if you run [**handleClient**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) before stopping SoftAP. (although you may not always succeed; it will not work if the WiFi radio signal is weak)
 
 ## Sketch execution during the captive portal loop
 
-With [AutoConnect::begin](api.md#begin), once the captive portal is started without being able to connect to a known WiFi access point, control will not return to sketch until the WiFi connection is established or times out. This behavior helps to pin the ESP module's network participation as a WiFi client (that is, AutoConnect::begin is an alternative to WiFi.begin) but it can not rush into the loop function of the Sketch. Therefore, while the ESP module is in the captive portal state and waiting for a connection operation to the access point, the behavior of the Sketch will be restrained by the [escape conditions from AutoConnect::begin](lsbegin.md).
+With [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin), once the captive portal is started without being able to connect to a known WiFi access point, control will not return to sketch until the WiFi connection is established or times out. This behavior helps to pin the ESP module's network participation as a WiFi client (that is, AutoConnect::begin is an alternative to WiFi.begin) but it can not rush into the loop function of the Sketch. Therefore, while the ESP module is in the captive portal state and waiting for a connection operation to the access point, the behavior of the Sketch will be restrained by the [escape conditions from AutoConnect::begin](lsbegin.md).
 
-The **whileCaptivePortal exit** allows the Sketch to continue the process temporarily while the ESP module remains standalone and the captive portal is open. [AutConnect::whileCaptivePortal](api.md#whilecaptiveportal) function registers the user's sketch function to be called by [AutoConnect::begin](api.md#begin) or [AutoConnect::handleClient](api.md#handleclient) during the execution of the captive portal session loop.
+The **whileCaptivePortal exit** allows the Sketch to continue the process temporarily while the ESP module remains standalone and the captive portal is open. [AutConnect::whileCaptivePortal](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#whilecaptiveportal) function registers the user's sketch function to be called by [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) or [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) during the execution of the captive portal session loop.
 
 The whileCaptivePortal exit can be registered by following: 
 
@@ -454,4 +454,4 @@ void setup() {
 }
 ```
 
-AutoConnect will open the captive portal in the [AutoConnect::begin](api.md#bdgin) and [AutoConnect::handleClient](api.md#handleclient) scenes, but the whileCaptive portal exit will be called repeatedly from [AutoConnect::begin](api.md#begin) until exits from it. The whileCaptivePortal exit will be called repeatedly while the captive portal is open until WiFi connected or times out occurs. In the Sketch, returning a **FALSE** value from the whileCaptivePortal function allows the control to escape from the captive portal loop even before the session elapsed time exceeds the limits.
+AutoConnect will open the captive portal in the [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#bdgin) and [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) scenes, but the whileCaptive portal exit will be called repeatedly from [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) until exits from it. The whileCaptivePortal exit will be called repeatedly while the captive portal is open until WiFi connected or times out occurs. In the Sketch, returning a **FALSE** value from the whileCaptivePortal function allows the control to escape from the captive portal loop even before the session elapsed time exceeds the limits.

@@ -262,8 +262,8 @@ Set or reset the display as menu item for this AutoConnectAux. This function pro
     <dd><span class="apidef">false</span><span class="apidesc">Hidden on the menu.</span></dd></dl>
 
 !!! note "AutoConnectAux::menu and isMenu have no effect on AutoConnect built-in menu items"
-    Some of AutoConnect's built-in pages make use of AutoConnectAux class. You can use the [AutoConnect::aux](api.md#aux) or [AutoConnect::locate](api.md#locate) function with those URLs to retrieve the AutoConnectAux for built-in pages, but the [menu](apiaux.md#menu) function does not show/hide the [built-in items](menu.md#right-on-top) of the menu list.    
-    Also, it is not recommended to use [AutoConnect::aux](api.md#aux) or [locate](api.md#locate) functions to get AutoConnect's built-in pages. Instructions on how to show/hide AutoConnect's built-in menu items can be found in the [Applying the active menu items](menu.md#applying-the-active-menu-items) section.
+    Some of AutoConnect's built-in pages make use of AutoConnectAux class. You can use the [AutoConnect::aux](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#aux) or [AutoConnect::locate](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#locate) function with those URLs to retrieve the AutoConnectAux for built-in pages, but the [menu](apiaux.md#menu) function does not show/hide the [built-in items](menu.md#right-on-top) of the menu list.    
+    Also, it is not recommended to use [AutoConnect::aux](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#aux) or [locate](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#locate) functions to get AutoConnect's built-in pages. Instructions on how to show/hide AutoConnect's built-in menu items can be found in the [Applying the active menu items](menu.md#applying-the-active-menu-items) section.
 
 ### <i class="fa fa-caret-right"></i> on
 
@@ -363,7 +363,7 @@ Write elements of AutoConnectAux to the stream. The saveElement function outputs
     The saveElement function outputs a prettified JSON document.
 
 !!! Info "It is not complementary with loadElement"
-    The saveElement function which missing the names parameter without name list to be saved that saves an entire AutoConnectAux element, not just AutoConnectElements. Its saved JSON document is not a complementary input to the loadElement function. The JSON document describing AutoConnectAux saved without the names parameter must be loaded by the [AutoConnectAux::load](apiaux.md#load) function or [AutoConnect::load](api.md#load) function.
+    The saveElement function which missing the names parameter without name list to be saved that saves an entire AutoConnectAux element, not just AutoConnectElements. Its saved JSON document is not a complementary input to the loadElement function. The JSON document describing AutoConnectAux saved without the names parameter must be loaded by the [AutoConnectAux::load](apiaux.md#load) function or [AutoConnect::load](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function.
 
 ### <i class="fa fa-caret-right"></i> setElementValue
 

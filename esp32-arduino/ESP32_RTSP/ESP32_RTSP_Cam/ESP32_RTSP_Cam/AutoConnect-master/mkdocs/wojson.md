@@ -13,10 +13,10 @@ To handle the custom Web pages without using JSON, follow the steps below.
 3. Add [AutoConnectElement(s)](acelements.md) to AutoConnectAux.
 4. Create more AutoConnectAux containing [AutoConnectElement(s)](acelements.md), if necessary.
 5. Register the request handlers for the custom Web pages.
-6. [Join](api.md#join) prepared AutoConnectAux(s) to AutoConnect.
-7. Invoke [AutoConnect::begin()](api.md#begin).
+6. [Join](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#join) prepared AutoConnectAux(s) to AutoConnect.
+7. Invoke [AutoConnect::begin()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
-In addition to the above procedure, to completely cut off for binding with the ArduinoJson library, turn off the ArduinoJson use indicator which is declared by the [AutoConnect definitions](api.md#defined-macros). Its declaration is in **AutoConnectDefs.h** file.[^1]
+In addition to the above procedure, to completely cut off for binding with the ArduinoJson library, turn off the ArduinoJson use indicator which is declared by the [AutoConnect definitions](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#defined-macros). Its declaration is in **AutoConnectDefs.h** file.[^1]
 
 [^1]:Detaching the ArduinoJson library reduces the Sketch size by approximately 10K bytes.
 

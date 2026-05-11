@@ -160,7 +160,7 @@ Specify the location to be redirected after module reset in the AutoConnect menu
     <dt>**Type**</dt>
     <dd>AC_ONBOOTURI_t</dd>
     <dt>**Value**</dt>
-    <dd><span class="apidef">AC_ONBOOTURI_ROOT</span><span class="apidesc"></span><span class="apidef">&nbsp;</span><span class="apidesc">Resetting the module redirects it to the AutoConnect root path. The root path is assumed to be AUTOCONNECT_URI defined in [`AutoConnectDefs.h`](api.md#defined-macros).</span></dd>
+    <dd><span class="apidef">AC_ONBOOTURI_ROOT</span><span class="apidesc"></span><span class="apidef">&nbsp;</span><span class="apidesc">Resetting the module redirects it to the AutoConnect root path. The root path is assumed to be AUTOCONNECT_URI defined in [`AutoConnectDefs.h`](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#defined-macros).</span></dd>
     <dd><span class="apidef">AC_ONBOOTURI_HOME</span><span class="apidesc"></span><span class="apidef">&nbsp;</span><span class="apidesc">It is redirected to the URI specified by [**AutoConnectConfig::homeUri**](apiconfig.md#homeuri).</span></dd></dl>
 
 ### <i class="fa fa-caret-right"></i> boundaryOffset
@@ -248,7 +248,7 @@ Disable the 1st-WiFi.begin and start the captive portal. If this option is enabl
     <dt>**Type**</dt>
     <dd>bool</dd>
     <dt>**Value**</dt>
-    <dd><span class="apidef">true</span><span class="apidesc">Start the captive portal with [**AutoConnect::begin**](api.md#begin).</span></dd>
+    <dd><span class="apidef">true</span><span class="apidesc">Start the captive portal with [**AutoConnect::begin**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).</span></dd>
     <dd><span class="apidef">false</span><span class="apidesc">Enable the 1st-WiFi.begin and it will start captive portal when connection failed. This is default.</span></dd></dl>
 
 ### <i class="fa fa-caret-right"></i> menuItems
@@ -343,14 +343,14 @@ Specify the timeout value of the captive portal in [ms] units. It is valid when 
 
 <p class="badge"><img src="images/tag_ac.png"> <img src="images/tag_accore.png"></p>
 
-Specifies starting the STA while maintaining the state of the SoftAP mode in the [**AutoConnect::begin**](api.md#begin). This setting only applies when the [**AutoConnectConfig::autoRise**](apiconfig.md#autorise) is false.<dl class="apidl">
+Specifies starting the STA while maintaining the state of the SoftAP mode in the [**AutoConnect::begin**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). This setting only applies when the [**AutoConnectConfig::autoRise**](apiconfig.md#autorise) is false.<dl class="apidl">
     <dt>**Type**</dt>
     <dd>bool</dd>
     <dt>**Value**</dt>
     <dd><span class="apidef">true</span><span class="apidesc">AutoConnect::begin keeps AP mode.</span></dd>
     <dd><span class="apidef">false</span>AutoConnect::begin will stop SoftAP at the beginning of the process.<span class="apidesc"></span></dd></dl>
 
-Note that this option is not for starting the SoftAP forcibly in [**AutoConnect::begin**](api.md#begin) and only keeps AP mode, SoftAP initiation is left to the Sketch.
+Note that this option is not for starting the SoftAP forcibly in [**AutoConnect::begin**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) and only keeps AP mode, SoftAP initiation is left to the Sketch.
 
 ### <i class="fa fa-caret-right"></i> preserveIP
 
@@ -390,9 +390,9 @@ Specifies the number of units for interval time to attempt automatic reconnectio
     <dt>**Type**</dt>
     <dd>uint8_t</dd></dl>
 
-WiFi connection retry is repeated inside [**AutoConnect::handleClient**](api.md#handleClient) after the number of seconds that the reconnectInterval value is multiplied by `AUTOCONNECT_UNITTIME` from the previous attempt. Then, when the connection with one of the saved credentials is established, the automatic reconnection will stop. And while [**AutoConnectConfig::autoReconnect**](#autoreconnect) is enabled, if the WiFi connection is lost, it will start to auto-reconnect again inside [**AutoConnect::handleClient**](api.md#handleclient).
+WiFi connection retry is repeated inside [**AutoConnect::handleClient**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleClient) after the number of seconds that the reconnectInterval value is multiplied by `AUTOCONNECT_UNITTIME` from the previous attempt. Then, when the connection with one of the saved credentials is established, the automatic reconnection will stop. And while [**AutoConnectConfig::autoReconnect**](#autoreconnect) is enabled, if the WiFi connection is lost, it will start to auto-reconnect again inside [**AutoConnect::handleClient**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient).
 
-If **0** is specified for the reconnectInterval, background reconnection attempt repeatedly will not be made, and only once at the 1st-WiFi.begin failure in [**AutoConnect::begin**](api.md#begin). (Only when [**AutoConnectConfig::autoReconnect**](#autoreconnect) is enabled) The default value is 0.
+If **0** is specified for the reconnectInterval, background reconnection attempt repeatedly will not be made, and only once at the 1st-WiFi.begin failure in [**AutoConnect::begin**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). (Only when [**AutoConnectConfig::autoReconnect**](#autoreconnect) is enabled) The default value is 0.
 
 !!! Info "AUTOCONNECT_UNITTIME"
     **`AUTOCONNECT_UNITTIME`** as macro defined in `AutoConnectDefs.h` file of library source code as the below:
@@ -407,7 +407,7 @@ If **0** is specified for the reconnectInterval, background reconnection attempt
 
 <p class="badge"><img src="images/tag_ac.png"> <img src="images/tag_accore.png"></p>
 
-Specify whether to continue the portal function even if the captive portal timed out. If the true, when a timeout occurs, the [**AutoConnect::begin**](api.md#begin) function is exited with returns false, but the portal facility remains alive. So SoftAP remains alive and you can invoke AutoConnect while continuing sketch execution. The default is false.<dl class="apidl">
+Specify whether to continue the portal function even if the captive portal timed out. If the true, when a timeout occurs, the [**AutoConnect::begin**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) function is exited with returns false, but the portal facility remains alive. So SoftAP remains alive and you can invoke AutoConnect while continuing sketch execution. The default is false.<dl class="apidl">
     <dt>**Type**</dt>
     <dd>bool</dd>
     <dt>**Value**</dt>
@@ -452,14 +452,14 @@ Set flicker signal output according to WiFi connection status during AutoConnect
     <dt>**Type**</dt>
     <dd>bool</dd>
     <dt>**Value**</dt>
-    <dd><span class="apidef">true</span><span class="apidesc">Output the flicker signal while [AutoConnect::begin](api.md#begin) operation. The `AUTOCONNECT_TICKER_PORT` macro in the `AutoConnectDefs.h` header file assigns pins for signal output. The default pin is arduino valiant's `LED_BUILTIN`. For boards without the LED_BUILTIN pin, assume pin #2.</span></dd>
+    <dd><span class="apidef">true</span><span class="apidesc">Output the flicker signal while [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) operation. The `AUTOCONNECT_TICKER_PORT` macro in the `AutoConnectDefs.h` header file assigns pins for signal output. The default pin is arduino valiant's `LED_BUILTIN`. For boards without the LED_BUILTIN pin, assume pin #2.</span></dd>
     <dd><span class="apidef">false</span>No flicker signal output.<span class="apidesc"></span></dd></dl>
 
 ### <i class="fa fa-caret-right"></i> tickerPort
 
 <p class="badge"><img src="images/tag_ac.png"> <img src="images/tag_accore.png"></p>
 
-Specifies the GPIO port number to output the flicker signal of the ticker. The default assumes on the board dependent definition LED_BUILTIN macro redefined by **`AUTOCONNECT_TICKER_PORT`** in [`AutoConnectDefs.h`](api.md#defined-macros).<dl class="apidl">
+Specifies the GPIO port number to output the flicker signal of the ticker. The default assumes on the board dependent definition LED_BUILTIN macro redefined by **`AUTOCONNECT_TICKER_PORT`** in [`AutoConnectDefs.h`](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#defined-macros).<dl class="apidl">
     <dt>**Type**</dt>
     <dd>uint8_t</dd></dl>
 
