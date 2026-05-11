@@ -195,7 +195,7 @@
 #### Enhancements
 
 - Added `AUTOCONNECT_APKEY_SSID` definition to [seek access points by SSID](adconnection.md#match-with-known-access-points-by-ssid). (issue #251)
-- Added [AutoConnect::append](api.md#append) and [AutoConnect::detach](api.md#detach) function that can be dynamically AutoConnectAux attaching and detaching. (issue #230)
+- Added [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append) and [AutoConnect::detach](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#detach) function that can be dynamically AutoConnectAux attaching and detaching. (issue #230)
 - Added [AutoConnect::getEEPROMUsedSize](adcredential.md#move-the-saving-area-of-eeprom-for-the-credentials) that notifies the occupied size of the credential storage area. (issue #209)
 - Added [AutoConnectConfig::beginTimeout](adconnection.md#timeout-settings-for-a-connection-attempt) setting. (issue #247)
 - Added [AutoConnectConfig::preserveAPMode](adconnection.md#preserve-ap-mode) setting. (issue #210)
@@ -399,7 +399,7 @@
 - Added a [selected](acelements.md#selected) attribute with the AutoConnectSelect element.
 - Enhanced [AutoConnectAux::loadElement](apiaux.md#loadelement) with multiple elements loading.
 - Changed menu labels placement in source files structure.
-- Changed API interface of [AutoConnect::where](api.md#where) function.
+- Changed API interface of [AutoConnect::where](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#where) function.
 
 #### Fixes
 
@@ -438,7 +438,7 @@
 
 #### Fixes
 
-- Fixed disconnection SoftAP completely at the first connection phase of the [AutoConnect::begin](api.md#begin).
+- Fixed disconnection SoftAP completely at the first connection phase of the [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
 ---
 ### [0.9.5] Aug.27, 2018.

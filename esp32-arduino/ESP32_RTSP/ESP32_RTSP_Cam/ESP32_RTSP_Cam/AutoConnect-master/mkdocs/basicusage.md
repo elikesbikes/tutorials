@@ -48,7 +48,7 @@ Replacement the **handleClient** method is not indispensable. AutoConnect can st
 
 #### 2. Declare AutoConnect object
 
-[Two options](#esp8266webserver-hosted-or-parasitic) are available for [AutoConnect constructor](api.md#constructors).
+[Two options](#esp8266webserver-hosted-or-parasitic) are available for [AutoConnect constructor](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#constructors).
 
 ```cpp
 AutoConnect VARIABLE(&ESP8266WebServer);  // For ESP8266
@@ -62,7 +62,7 @@ AutoConnect VARIABLE;
 
 - **The parameter with an ESP8266WebServer/WebServer variable:** An ESP8266WebServer/WebServer object variable must be declared. AutoConnect uses its variable to handles the [AutoConnect menu](menu.md).
 
-- **With no parameter:** the Sketch does not declare ESP8266WebServer/WebServer object. In this case, AutoConnect allocates an instance of the ESP8266WebServer/WebServer internally. The logic sequence of the Sketch is somewhat different as the above. To register a URL handler function by *ESP8266WebServer::on* or *WebServer::on* should be performed after [*AutoConnect::begin*](api.md#begin).
+- **With no parameter:** the Sketch does not declare ESP8266WebServer/WebServer object. In this case, AutoConnect allocates an instance of the ESP8266WebServer/WebServer internally. The logic sequence of the Sketch is somewhat different as the above. To register a URL handler function by *ESP8266WebServer::on* or *WebServer::on* should be performed after [*AutoConnect::begin*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
 #### 3. No need WiFI.begin(...)
 
@@ -70,14 +70,14 @@ AutoConnect internally performs *WiFi.begin* to establish a WiFi connection. The
 
 #### 4. Alternate ESP8266WebServer::begin() and WebServer::begin()
 
-[*AutoConnect::begin*](api.md#begin) executes *ESP8266WebServer::begin*/*WebServer::begin* internally too and it starts the DNS server to behave as a Captive portal. So it is not needed to call *ESP8266WebServer::begin*/*WebServer::begin* in the Sketch.
+[*AutoConnect::begin*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) executes *ESP8266WebServer::begin*/*WebServer::begin* internally too and it starts the DNS server to behave as a Captive portal. So it is not needed to call *ESP8266WebServer::begin*/*WebServer::begin* in the Sketch.
 
 !!! info "Why DNS Server starts"
     AutoConnect traps the detection of the captive portal and achieves a connection with the WLAN interactively by the AutoConnect menu. It responds SoftAP address to all DNS queries temporarily to trap. Once a WiFi connection establishes, the DNS server contributed by AutoConnect stops.
 
 #### 5. AutoConnect::begin with SSID and Password
 
-SSID and Password can also specify by [*AutoConnect::begin*](api.md#begin). ESP8266/ESP32 uses provided SSID and Password explicitly. If the connection false with specified SSID with Password then a captive portal is activated. SSID and Password are not present, ESP8266 SDK will attempt to connect using the still effectual SSID and password. Usually, it succeeds.
+SSID and Password can also specify by [*AutoConnect::begin*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin). ESP8266/ESP32 uses provided SSID and Password explicitly. If the connection false with specified SSID with Password then a captive portal is activated. SSID and Password are not present, ESP8266 SDK will attempt to connect using the still effectual SSID and password. Usually, it succeeds.
 
 #### 6. Use ESP8266WebServer::on and WebServer::on to handle URL
 
@@ -89,33 +89,33 @@ Both classes member function name is the same: *handleClient*, but the behavior 
 
 ### <i class="fa fa-caret-right"></i> ESP8266WebServer/WebServer hosted or parasitic
 
-The interoperable process with an ESP8266WebServer/WebServer depends on the parameters of the [AutoConnect constructor](api.md#constructors).
+The interoperable process with an ESP8266WebServer/WebServer depends on the parameters of the [AutoConnect constructor](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#constructors).
 
 Declaration parameter for the constructor | Use ESP8266WebServer::handleClient or WebServer::handleClient only | Use AutoConnect::handleClient
 ----|----|---
-[None](api.md#constructors) | AutoConnect menu not available.<br>To use AutoConnect menu, need [AutoConnect::handleRequest()](api.md#handlerequest).<br>also to use ESP8266WebServer/WebServer natively, need [AutoConnect::host()](api.md#host). | AutoConnect menu available.<br>To use ESP8266WebServer/WebServer natively, need [AutoConnect::host()](api.md#host).
-[Reference to ESP8266WebServer/WebServer](api.md#withparameter) | AutoConnect menu not available.<br>To use AutoConnect menu, need [AutoConnect::handleRequest()](api.md#handlerequest). | AutoConnect menu available.
+[None](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#constructors) | AutoConnect menu not available.<br>To use AutoConnect menu, need [AutoConnect::handleRequest()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handlerequest).<br>also to use ESP8266WebServer/WebServer natively, need [AutoConnect::host()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#host). | AutoConnect menu available.<br>To use ESP8266WebServer/WebServer natively, need [AutoConnect::host()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#host).
+[Reference to ESP8266WebServer/WebServer](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#withparameter) | AutoConnect menu not available.<br>To use AutoConnect menu, need [AutoConnect::handleRequest()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handlerequest). | AutoConnect menu available.
 
-- **By declaration for the AutoConnect variable with no parameter**: The ESP8266WebServer/WebServer instance is hosted by AutoConnect automatically then the Sketches use [*AutoConnect::host*](api.md#host) as API to get it after [*AutoConnect::begin*](api.md#begin) performed.
+- **By declaration for the AutoConnect variable with no parameter**: The ESP8266WebServer/WebServer instance is hosted by AutoConnect automatically then the Sketches use [*AutoConnect::host*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#host) as API to get it after [*AutoConnect::begin*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) performed.
 
 - **By declaration for the AutoConnect variable with the reference of ESP8266WebServer/WebServer**: AutoConnect will use it. the Sketch can use it is too.
 
-- **In use ESP8266WebServer::handleClient()/WebServer::handleClient()**: AutoConnect menu can be dispatched but not works normally. It is necessary to call [*AutoConnect::handleRequest*](api.md#void-handlerequest) after *ESP8255WebServer::handleClient*/*WebServer::handleClient* invoking.
+- **In use ESP8266WebServer::handleClient()/WebServer::handleClient()**: AutoConnect menu can be dispatched but not works normally. It is necessary to call [*AutoConnect::handleRequest*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#void-handlerequest) after *ESP8255WebServer::handleClient*/*WebServer::handleClient* invoking.
 
-- **In use [AutoConnect::handleClient()](api.md#void-handleclient)**: The handleClient() process and the AutoConnect menu is available without calling *ESP8266WebServer::handleClient*.
+- **In use [AutoConnect::handleClient()](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#void-handleclient)**: The handleClient() process and the AutoConnect menu is available without calling *ESP8266WebServer::handleClient*.
 
 !!! info "Why AutoConnect::handleRequest is needed when using ESP8266WebServer::handleClient/WebServer::handleClient"
     The AutoConnect menu function may affect WiFi connection state. It follows that the menu process must execute outside *ESP8266WebServer::handleClient* and *WebServer::handleClient*.  
-    [*AutoConnect::handleClient*](api.md#void-handleclient) is equivalent *ESP8266WebServer::handleClient* and *WEbServer::handleClient* included [*AutoConnect::handleRequest*](api.md#void-handlerequest).
+    [*AutoConnect::handleClient*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#void-handleclient) is equivalent *ESP8266WebServer::handleClient* and *WEbServer::handleClient* included [*AutoConnect::handleRequest*](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#void-handlerequest).
 
 ## Reducing Binary Size
 
 Typically, AutoConnect components include [AutoConnectAux](acelements.md) for handling [Custom Web pages](acintro.md); AutoConnectAux plays a central role in responding to requests for Custom Web pages. It also incorporates several AutoConnectElements used in the sketch, which may exceed 1 MB in binary size after the build. To reduce the binary size, you can deactivate the component to handle these custom web pages, depending on the use case. If your sketch does not use Custom web pages, allows you to exclude the AutoConnectAux component to reduce the built binary size.
 
-[**`AutoConnect.h`**](api.md#autoconnecth) header file enables all AutoConnect components. In a normal sketch, including this header enables all AutoConnect functionality.  
-On the other hand, for sketches that don't use custom web pages, you can apply the [**`AutoConnectCore.h`**](api.md#autoconnectcoreh) header file.
+[**`AutoConnect.h`**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#autoconnecth) header file enables all AutoConnect components. In a normal sketch, including this header enables all AutoConnect functionality.  
+On the other hand, for sketches that don't use custom web pages, you can apply the [**`AutoConnectCore.h`**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#autoconnectcoreh) header file.
 
-[**`AutoConnectCore.h`**](api.md#autoconnectcoreh) provides an AutoConnect class that excludes AutoConnectAux and AutoConnectElements from AutoConnect. Therefore, it does not implement the APIs required for custom web page processing. Also, [AutoConnectOTA](otabrowser.md) and [AutoConnectUpdate](otaserver.md) cannot be used. (i.e., to use AutoConnect's equipped OTA Update feature, you must include the full AutoConnect component in your sketch) Instead, the binary size of the AutoConnectCore component is reduced by about 170 KB (1.3 KB for RAM) compared to the ESP32 AutoConnect full component. (60KB for ESP8266)
+[**`AutoConnectCore.h`**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#autoconnectcoreh) provides an AutoConnect class that excludes AutoConnectAux and AutoConnectElements from AutoConnect. Therefore, it does not implement the APIs required for custom web page processing. Also, [AutoConnectOTA](otabrowser.md) and [AutoConnectUpdate](otaserver.md) cannot be used. (i.e., to use AutoConnect's equipped OTA Update feature, you must include the full AutoConnect component in your sketch) Instead, the binary size of the AutoConnectCore component is reduced by about 170 KB (1.3 KB for RAM) compared to the ESP32 AutoConnect full component. (60KB for ESP8266)
 
 To switch between AutoConnect and AutoConnectCore, simply change the corresponding header file with `#include` header.
 

@@ -16,9 +16,9 @@ To embed the AutoConnectUpdate class into your sketch, basically follow these st
 1. Declare an ESP8266WebServer object. (In ESP32, as WebServer)
 2. Declare an AutoConnect object with an ESP8266WebServer object.
 3. Declare an [AutoConnectUpdate](apiupdate.md) object with the update server address and the HTTP port as parameters.
-4. Invokes [AutoConnect::begin](api.md#begin) function.
+4. Invokes [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) function.
 5. Attach the AutoConnectUpdate object to AutoConnect using [AutoConnectUpdate::attach](apiupdate.md#attach) function.
-6. Invokes [AutoConnect::handleClient](api.md#handleclient) function in the `loop()`.
+6. Invokes [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) function in the `loop()`.
 
 ```cpp
 #include <ESP8266WiFi.h>
@@ -58,7 +58,7 @@ The substance of Available firmware list is a custom Web page by AutoConnectAux,
 <img src="images/updating.png" width="240" />
 <img style="margin-left:30px;" src="images/updated.png" width="240" />
 
-The AutoConnectUpdate class performs the above series of operations in conjunction with the update server. All you need to do is attach the AutoConnectUpdate class to AutoConnect and execute the [AutoConnect::handleClient](api.md#handleclient) function in the `loop()`.
+The AutoConnectUpdate class performs the above series of operations in conjunction with the update server. All you need to do is attach the AutoConnectUpdate class to AutoConnect and execute the [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) function in the `loop()`.
 
 ### <i class="fas fa-server"></i> Update server for the AutoConnectUpdate class
 

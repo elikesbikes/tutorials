@@ -54,7 +54,7 @@ Also, this menu allows you to interactively delete the stored credentials. <i cl
 
 ## <i class="fa fa-bars"></i> Disconnect
 
-It disconnects ESP8266/ESP32 from the current connection. Also, ESP8266/ESP32 can be automatically reset after WiFi cutting by instructing with the Sketch using the [AutoConnect API](api.md#autoreset).
+It disconnects ESP8266/ESP32 from the current connection. Also, ESP8266/ESP32 can be automatically reset after WiFi cutting by instructing with the Sketch using the [AutoConnect API](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#autoreset).
 
 After tapping the **Disconnect**, you will not be able to reach the AutoConnect menu. Once disconnected, you will need to set the SSID again for connecting to the WLAN. 
 
@@ -86,11 +86,11 @@ A **HOME** item at the bottom of the menu list is a link to the home path, and t
 #define AUTOCONNECT_HOMEURI     "/"
 ```
 
-Also, you can change the HOME path using the AutoConnect API. The [**AutoConnect::home**](api.md#home) function sets the URI as a link of the HOME item in the AutoConnect menu.
+Also, you can change the HOME path using the AutoConnect API. The [**AutoConnect::home**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#home) function sets the URI as a link of the HOME item in the AutoConnect menu.
 
 ## <i class="fa fa-bars"></i> Applying the active menu items
 
-Each of the above menu items can be configured with a Sketch. [AutoConnectConfig::menuItems](apiconfig.md#menuitems) specifies the menu items that will be enabled at runtime. You can also adjust available menu items using [AutoConnect::enableMenu](api.md#enablemenu) and [AutoConnect::disableMenu](api.md#disablemenu) function. It is an alternative to [AutoConnectConfig::menuItems](apiconfig.md#menuitems) and provides a shortcut to avoid using AutoConnectConfig.  
+Each of the above menu items can be configured with a Sketch. [AutoConnectConfig::menuItems](apiconfig.md#menuitems) specifies the menu items that will be enabled at runtime. You can also adjust available menu items using [AutoConnect::enableMenu](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#enablemenu) and [AutoConnect::disableMenu](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#disablemenu) function. It is an alternative to [AutoConnectConfig::menuItems](apiconfig.md#menuitems) and provides a shortcut to avoid using AutoConnectConfig.  
 For example, by disabling the [Configure new AP](#configure-new-ap) and [Disconnect](#disconnect) item, you can prevent the configuration for unknown access points.
 
 ```cpp
@@ -120,9 +120,9 @@ Here is the result of running the above sketch:
 
 [AutoConnectConfig::menuItems](apiconfig.md#menuitems) section has more details.
 
-AutoConnect shows and hides menu items when [AutoConnect::begin](api.md#begin) is executed and when [AutoConnect::handleClient](api.md#handleclient) is executed in a `loop` function. You can dynamically change the available menu items during the *loop()* by setting the show/hide items before executing those functions with [AutoConnect::enableMenu](api.md#enablemenu) and [AutoConnect::disableMenu](api.md#disablemenu).
+AutoConnect shows and hides menu items when [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) is executed and when [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) is executed in a `loop` function. You can dynamically change the available menu items during the *loop()* by setting the show/hide items before executing those functions with [AutoConnect::enableMenu](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#enablemenu) and [AutoConnect::disableMenu](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#disablemenu).
 
-The current menu item settings held by AutoConnectConfig can be retrieved with the [AutoConnect::getConfig](api.md#getconfig) function, and the code snippet to reconfigure menu items based on the `getConfig` return value is as follows:
+The current menu item settings held by AutoConnectConfig can be retrieved with the [AutoConnect::getConfig](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#getconfig) function, and the code snippet to reconfigure menu items based on the `getConfig` return value is as follows:
 
 #### Enable OTA menu on demand using an external switch connected to a GPIO.
 
@@ -165,7 +165,7 @@ void loop() {
 !!! note "enableMenu/disableMenu has no effect for custom web page items"
     *AutoConnect::enableMenu* and *disableMenu* functions are not enabled to show/hide menu items for [custom web pages](acintro.md). They only work on AutoConnect's built-in pages[^2]. Use the [AutoConnectAux::menu](apiaux.md#menu) and [AutoConnectAux::isMenu](apiaux.md#ismenu) functions to show/hide menu items for custom web pages. For more information, see [Custom Web pages in AutoConnect menu](acintro.md#custom-web-pages-in-autoconnect-menu) section.
 
-[^2]: AutoConnect built-in pages are predefined by the [AC_MENUITEM_t](api.md#enablemenu) enum value.
+[^2]: AutoConnect built-in pages are predefined by the [AC_MENUITEM_t](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#enablemenu) enum value.
 
 ## <i class="fa fa-bars"></i> Attaching to AutoConnect menu
 

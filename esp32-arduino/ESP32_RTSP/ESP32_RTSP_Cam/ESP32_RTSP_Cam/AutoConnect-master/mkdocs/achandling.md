@@ -464,7 +464,7 @@ AutoConnect supports reading the custom Web page definitions written in JSON and
 
 ### <i class="fa fa-upload"></i> Loading AutoConnectAux &amp; AutoConnectElements with JSON
 
-To load a JSON document as AutoConnectAux use the [**AutoConnect::load**](api.md#load) function and load the JSON document of each AutoConnectElement using the [**AutoConnectAux::loadElement**](apiaux.md#loadelement) function. Although the functions of both are similar, the structure of the target JSON document is different.
+To load a JSON document as AutoConnectAux use the [**AutoConnect::load**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function and load the JSON document of each AutoConnectElement using the [**AutoConnectAux::loadElement**](apiaux.md#loadelement) function. Although the functions of both are similar, the structure of the target JSON document is different.
 
 The [AutoConnect::load](apiaux.md#load) function loads the entire AutoConnectAux and creates both the AutoConnectAux instance and each AutoConnectElement instance. A single JSON document can contain multiple custom Web pages. If you write JSON of AutoConnectAux as an array, the load function generates all the pages contained in that array. Therefore, it is necessary to supply the JSON document of AutoConnectAux as an input of the load function and must contain the elements described section [*JSON document structure for AutoConnectAux*](acjson.md#json-document-structure-for-autoconnectaux).
 
@@ -719,9 +719,9 @@ void loop() {
 }
 ```
 
-The above example handles in the handler for the values of a custom Web page. An [AutoConnect::on](api.md#on) function registers a handler for the AutoConnectAux page of the specified uri. The argument of the custom Web page handler is an AutoConnectAux of the page itself and the [PageArgument](https://github.com/Hieromon/PageBuilder#arguments-of-invoked-user-function) object.
+The above example handles in the handler for the values of a custom Web page. An [AutoConnect::on](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#on) function registers a handler for the AutoConnectAux page of the specified uri. The argument of the custom Web page handler is an AutoConnectAux of the page itself and the [PageArgument](https://github.com/Hieromon/PageBuilder#arguments-of-invoked-user-function) object.
 
-To retrieve the values entered in a custom Web page you need to access the AutoConnectElement of the page that caused the request to this page and to do this, you use the [AutoConnect::where](api.md#where) function. The `AutoConnect::where` function returns an uri string of the AutoConnectAux object of the custom Web page that caused the HTTP request.
+To retrieve the values entered in a custom Web page you need to access the AutoConnectElement of the page that caused the request to this page and to do this, you use the [AutoConnect::where](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#where) function. The `AutoConnect::where` function returns an uri string of the AutoConnectAux object of the custom Web page that caused the HTTP request.
 
 !!! note "The where() function is available for only AutoConnectAux."
     The `AutoConnect::where` function is available only for the AutoConnectAux object. It is invalid for HTTP requests from individual pages registered with the **on** handler of ESP8266WebServer/WebServer for ESP32. In other words, the `AutoConnect::where` function only returns the last AutoConnecAux page called.
@@ -730,7 +730,7 @@ To retrieve the values entered in a custom Web page you need to access the AutoC
 
 An AutoConnectAux page is dynamically created by AutoConnect when its uri is requested. The initial value of AutoConnectElements can be set before its page request. It is also possible during `loop()`. To set the initial value when the page is accessed it needs by the handler of its page.
 
-The [**AutoConnect::on**](api.md#on) and [**AutoConnectAux::on**](apiaux.md#on) functions register a handler for a custom Web page and also specify when to call that handler. The behavior of the two `on` functions is the same, only the class and arguments are different.
+The [**AutoConnect::on**](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#on) and [**AutoConnectAux::on**](apiaux.md#on) functions register a handler for a custom Web page and also specify when to call that handler. The behavior of the two `on` functions is the same, only the class and arguments are different.
 
 ```cpp
 bool AutoConnect::on(const String& uri, const AuxHandlerFunctionT handler, AutoConnectExitOrder_t order)
@@ -739,7 +739,7 @@ bool AutoConnect::on(const String& uri, const AuxHandlerFunctionT handler, AutoC
 void AutoConnectAux::on(const AuxHandlerFunctionT handler, const AutoConnectExitOrder_t order)
 ```
 
-Parameter `uri` specifies an URI of the custom Web page, but an AutoConnectAux object with its URI must be registered with AutoConnect via the [AutoConnect::join](api.md#join) function beforehand.
+Parameter `uri` specifies an URI of the custom Web page, but an AutoConnectAux object with its URI must be registered with AutoConnect via the [AutoConnect::join](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#join) function beforehand.
 
 !!! note "AutoConnect::on/AutoConnectAux::on is not ESP8266WebServer::on"
     The `on` function for AutoConnect is different from the `on` function of Arduino core ESP8266WebServer (WebServer for ESP32). You can share the same handler via wrapper, but access to AutoConnectElements is **valid only for handlers registered with `on` function for AutoConnect**.
@@ -851,7 +851,7 @@ portal.begin();
 
 Usually, the page transition called by the custom web page handler will have an HTTP request directed to the destination URL. Its HTTP request has parameters enclosed by the POST method, all of which are AutoConnectElements placed on the transition source page. On the other hand, the custom web page handler's first argument points to AutoConnectAux after the transition, so the handler cannot access the AutoConnectElement values placed at the transition source using the first argument.
 
-Custom Web paga handler has two ways to access AutoConnectElements placed on the transition source page: combining the [AutoConnect::where](api.md#where) and [AutoConnect::aux](api.md#aux) functions or using the [AutoConnectAux::referer](apiaux.md#referer) function. The following code snippet shows the difference between the two methods of identifying the `input1` AutoConnectInput with the `/echo` page handler after the transition based on the `/hello` page described above.
+Custom Web paga handler has two ways to access AutoConnectElements placed on the transition source page: combining the [AutoConnect::where](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#where) and [AutoConnect::aux](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#aux) functions or using the [AutoConnectAux::referer](apiaux.md#referer) function. The following code snippet shows the difference between the two methods of identifying the `input1` AutoConnectInput with the `/echo` page handler after the transition based on the `/hello` page described above.
 
 ```cpp hl_lines="2"
 portal.on("/echo", [](AutoConnectAux& aux, PageArgument& args) {
@@ -998,7 +998,7 @@ void loop() {
 
 Sketches can update the attributes of AutoConnectElements with two approaches. A one is to assign directly to the attributes of a member variable of its element. The other is to overwrite them with loading the element by [AutoConnectAux::loadElement](apiaux.md#loadelement). 
 
-The elements for attributes described in the JSON document for AutoConnectElements overwrites the member variables of the target AutoConnectElements. However, AutoConnectAux::loadElement keeps the member variables unchanged if there is no element in the JSON document. This overwriting behavior is the same for the [AutoConnect::load](api.md#load) function.
+The elements for attributes described in the JSON document for AutoConnectElements overwrites the member variables of the target AutoConnectElements. However, AutoConnectAux::loadElement keeps the member variables unchanged if there is no element in the JSON document. This overwriting behavior is the same for the [AutoConnect::load](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function.
 
 For example, the combination of the Sketch and JSON document as follows updates only the style while keeping Caption (ie. "Hello, world") as AutoConnectText value.
 
@@ -1513,7 +1513,7 @@ The custom Web pages handler has the following limitations.
 
 - Can not place URI of the custom Web pages to AUTOCONNECT_URI.
 
-    AutoConnect will not work if you place a custom Web page to [AUTOCONNECT_URI](api.md#defined-macros).
+    AutoConnect will not work if you place a custom Web page to [AUTOCONNECT_URI](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#defined-macros).
 
 - Can not use the element named **SUBMIT**.
 

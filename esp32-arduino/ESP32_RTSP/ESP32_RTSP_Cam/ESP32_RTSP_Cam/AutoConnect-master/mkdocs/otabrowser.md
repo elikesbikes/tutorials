@@ -26,8 +26,8 @@ To embed the AutoConnectOTA class into your sketch, basically follow these steps
     1. Set [AutoConnectConfig::ota](apiconfig.md#ota) to **AC_OTA_BUILTIN** and configure AutoConnect.
     2. Load the AutoConnectAux pages declared in step #4 for your application.
     3. Join these pages to AutoConnect.
-    4. Invokes [AutoConnect::begin](api.md#begin) function.
-7. Invokes [AutoConnect::handleClient](api.md#handleclient) function in the `loop()`.
+    4. Invokes [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) function.
+7. Invokes [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) function in the `loop()`.
 
 ```cpp
 #include <ESP8266WiFi.h>            // Step #1
@@ -90,7 +90,7 @@ build_flags =
 
 ### <i class="fa fa-wrench"></i> Timing of AutoConnectOTA instantiation
 
-It will be born during [AutoConnect::handleClient](api.md#handleclient) process. AutoConnect will evaluate the enabled state of [AutoConnectConfig::ota](apiconfig.md#ota) each time the handleClient is executed, and if OTA is enabled then it creates an AutoConnectAux internally and assigns it to the update page. At this time, AutoConnectOTA is also instantiated together. The generated AUX page containing AutoConnectOTA is bound to AutoConnect inside the AutoConnect::handleClient process.
+It will be born during [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) process. AutoConnect will evaluate the enabled state of [AutoConnectConfig::ota](apiconfig.md#ota) each time the handleClient is executed, and if OTA is enabled then it creates an AutoConnectAux internally and assigns it to the update page. At this time, AutoConnectOTA is also instantiated together. The generated AUX page containing AutoConnectOTA is bound to AutoConnect inside the AutoConnect::handleClient process.
 
 If you want to attach AutoConnectOTA dynamically with an external trigger, you can sketch like this:  
 _This sketch imports the OTA update feature with an external switch assigned to the GPIO pin. While the trigger not occurs, AutoConnectOTA will not be imported into Sketch and will not appear on the menu list._
@@ -191,8 +191,8 @@ The legacy OTA method based on ESP8266HTTPUpdateServer without AutoConnectOTA is
     1. Invokes `ESP8288HTTPUpdateServer::setup` function, specifies the **USERNAME** and the **PASSWORD** as needed.
     2. Load the AutoConnectAux pages declared in step #8 for your application. (Except the update dialog page)
     3. Join these pages to AutoConnect along with the update dialog page declared in step #5.
-    4. Invokes [AutoConnect::begin](api.md#begin) function.
-10. Invokes [AutoConnect::handleClient](api.md#handleclient) function in the `loop()`. 
+    4. Invokes [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin) function.
+10. Invokes [AutoConnect::handleClient](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#handleclient) function in the `loop()`. 
 
 [^2]: The AutoConnect library provides an implementation of the **HTTPUpdateServer** class that ported from ESP8266HTTPUpdateServer class for ESP32 intention. It is contained the **WebUpdate** under the examples folder.
 
@@ -318,10 +318,10 @@ You can capture the change in the state of the OTA by registering the exit routi
 
 The following functions register the function in your sketch with AutoConnect to notify OTA state changes.
 
-- [AutoConnect::onOTAStart](api.md#onotastart) : Register the on-start exit routine that is called only once when the OTA has been started.
-- [AutoConnect::onOTAProgress](api.md#onotaprogress) : Register the exit routine that is called during the OTA progress.
-- [AutoConnect::onOTAEnd](api.md#onotaend) : Register the on-end exit routine that is called only once when the OTA is finished.
-- [AutoConnect::onOTAError](api.md#onotaerror) : Register the exit routine that is called when some error occurred.
+- [AutoConnect::onOTAStart](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onotastart) : Register the on-start exit routine that is called only once when the OTA has been started.
+- [AutoConnect::onOTAProgress](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onotaprogress) : Register the exit routine that is called during the OTA progress.
+- [AutoConnect::onOTAEnd](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onotaend) : Register the on-end exit routine that is called only once when the OTA is finished.
+- [AutoConnect::onOTAError](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#onotaerror) : Register the exit routine that is called when some error occurred.
 
 ```cpp hl_lines="30 31 32 33"
 #include <ESP8266WiFi.h>

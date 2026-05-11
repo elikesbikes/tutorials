@@ -36,7 +36,7 @@ You can change the label text for each menu item but cannot change them at run t
 
 ## Make different menu title
 
-Although the default menu title is **AutoConnect**, you can change the title by setting [*AutoConnectConfig::title*](apiconfig.md#title). To set the menu title properly, you must set before calling [AutoConnect::begin](api.md#begin).
+Although the default menu title is **AutoConnect**, you can change the title by setting [*AutoConnectConfig::title*](apiconfig.md#title). To set the menu title properly, you must set before calling [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
 ```cpp hl_lines="6 7"
 AutoConnect       Portal;
@@ -58,9 +58,9 @@ Executing the above sketch will rewrite the menu title for the **FSBrowser** as 
 ## Capture the legacy web pages as items into the menu
 
 You can embed the ordinary page processed by the ESP8266WebServer request handler as an item into the AutoConnect menu. AutoConnect can capture the legacy web pages for ESP8266WebServer or WebServer of ESP32 and extends the menu containing these items.  
-In ordinary, the Sketch registers the request handler for the page depending on URI using the [ESP8266WebServer::on](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WebServer#client-request-handlers) function. AutoConnect allows Sketch to bundle the registered legacy page into a menu. the Sketch is able to include its URI to a menu item using [AutoConnect::append](api.md#append) function that creates internally an [**AutoConnectAux**](acintro.md) depended on its URI and integrates into the menu.
+In ordinary, the Sketch registers the request handler for the page depending on URI using the [ESP8266WebServer::on](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WebServer#client-request-handlers) function. AutoConnect allows Sketch to bundle the registered legacy page into a menu. the Sketch is able to include its URI to a menu item using [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append) function that creates internally an [**AutoConnectAux**](acintro.md) depended on its URI and integrates into the menu.
 
-The following code has a mixture of both AutoConnectAux and the legacy web page. An AutoConnectAux page is menued automatically with the [AutoConnect::join](api.md#join) or [AutoConnect::load](api.md#load) function. Similarly, a legacy page is integrated by the [AutoConnect::append](api.md#append) function.
+The following code has a mixture of both AutoConnectAux and the legacy web page. An AutoConnectAux page is menued automatically with the [AutoConnect::join](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#join) or [AutoConnect::load](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#load) function. Similarly, a legacy page is integrated by the [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append) function.
 
 ```cpp hl_lines="26 35"
 #include <ESP8266WiFi.h>
@@ -110,7 +110,7 @@ void loop() {
 
 <span style="display:block;margin-left:auto;margin-right:auto;width:284px;height:462px;border:1px solid lightgrey;"><img data-gifffer="images/addmenu.gif" data-gifffer-height="460" data-gifffer-width="282" /></span>
 
-The [AutoConnect::append](api.md#append) function also has the third parameter that directly specifies the request handler. It has similar efficacy to calling the append and `ESP8266WebSever::on` at once. [^4]
+The [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append) function also has the third parameter that directly specifies the request handler. It has similar efficacy to calling the append and `ESP8266WebSever::on` at once. [^4]
 
 [^4]: However, the pages registered this way remain legacy. Therefore, the AutoConnect menu bar is not appeared. 
 
@@ -129,7 +129,7 @@ For more details, see section [Attach the menus](menuize.md) of Examples page.
 
 !!! note "An instance of ESP8266WebServer/WebServer is needed"
     When calling the append function with request handler parameters, an instance of the WebServer as the registration destination must exist.  
-    AutoConnect can instantiate and host a WebServer internally, but in that case, the point in time to call the [AutoConnect::append](api.md#append) function with a request handler parameter must be after [AutoConnect::begin](api.md#begin).
+    AutoConnect can instantiate and host a WebServer internally, but in that case, the point in time to call the [AutoConnect::append](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#append) function with a request handler parameter must be after [AutoConnect::begin](IT/github/tutorials/esp32-arduino/ESP32_RTSP/ESP32_RTSP_Cam/ESP32_RTSP_Cam/AutoConnect-master/mkdocs/api.md#begin).
 
 <script>
   window.onload = function() {
