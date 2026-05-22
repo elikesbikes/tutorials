@@ -1,0 +1,35 @@
+services:
+  grocery-pb:
+    image: ghcr.io/muchobien/pocketbase:latest
+    restart: unless-stopped
+    volumes:
+      - ./pb_data:/pb/pb_data
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "grocery-pb"
+
+  grocery-proxy:
+    build: ./proxy
+    restart: unless-stopped
+    env_file: .env
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "grocery-proxy"
+
+  grocery-app:
+    build: ./app
+    restart: unless-stopped
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "grocery-app"
+
+networks:
+  default:
+    name: FRONTEND
+    external: true
