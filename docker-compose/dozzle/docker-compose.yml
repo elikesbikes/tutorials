@@ -1,0 +1,25 @@
+version: '3.8'
+
+networks:
+  frontend:
+    external: true
+services:
+  dozzle:
+    image: amir20/dozzle:latest
+    
+    container_name: dozzle-prod-1
+    hostname: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - frontend
+    ports:
+      - "8888:8080" # Map host port 8888 to container port 8080
+    restart: unless-stopped
+    environment:
+      # Optional: Enable container actions (start, stop, restart)
+      - DOZZLE_ENABLE_ACTIONS=true
+      # Optional: Enable shell access within containers
+      - DOZZLE_ENABLE_SHELL=true
+      # Optional: Set log level for Dozzle itself (info, debug, trace)
+      - DOZZLE_LEVEL=info

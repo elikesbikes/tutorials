@@ -1,0 +1,33 @@
+version: "3.8"
+networks:
+  frontend:
+    external: true
+services:
+  dashy:
+    container_name: Dashy
+    hostname: dashy
+    image: lissy93/dashy
+    volumes:
+      - ./conf/conf.yml:/app/public/conf.yml
+      - ./item-icons:/app/public/item-icons
+    ports:
+      - 4000:80
+    networks:
+      frontend:
+    environment:
+      - NODE_ENV=production
+      - "TZ=America/Los_Angeles"
+    user: 0:0
+    restart: unless-stopped
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        #syslog-format: "rfc3164"
+        tag: "dashy"
+    healthcheck:
+      test: ['CMD', 'node', '/app/services/healthcheck']
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
