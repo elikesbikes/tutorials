@@ -2,7 +2,7 @@
 # docker-compose.yml
 #
 # Service: syncthing-health
-# Version: 1.7.0
+# Version: 1.9.0
 #
 # Description:
 # Syncthing health, device sync lag, and device offline monitoring
@@ -21,6 +21,8 @@
 # - Single container, multiple listeners
 #
 # Changelog (running):
+# - 1.9.0: Move all scripts into scripts/; rename to consistent underscore convention
+# - 1.8.0: Move env file into project as .env; drop absolute host path references
 # - 1.7.0: Add device offline (last-seen) monitoring endpoint on port 9125
 # - 1.6.0: Move all dependencies to Dockerfile; remove runtime apk installs
 # - 1.5.0: Add second HTTP endpoint (port 9124) for device sync lag monitoring
@@ -42,10 +44,10 @@ services:
     # Build locally to guarantee bash, curl, jq, socat availability
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
 
     env_file:
-      - /home/ecloaiza/.syncthing-health.env
+      - .env
 
     ports:
       - "9123:9123"   # Overall Syncthing health
@@ -56,26 +58,24 @@ services:
       - frontend
 
     volumes:
-      - ./syncthing_health.sh:/app/syncthing_health.sh:ro
-      - ./syncthing_health_http.sh:/app/syncthing_health_http.sh:ro
-      - ./syncthing-device-sync-monitor.sh:/app/syncthing-device-sync-monitor.sh:ro
-      - ./syncthing_device_lag_http.sh:/app/syncthing_device_lag_http.sh:ro
-
-      # Device offline / last-seen monitor
-      - ./syncthing-device-offline-monitor.sh:/app/syncthing-device-offline-monitor.sh:ro
-      - ./syncthing_device_offline_http.sh:/app/syncthing_device_offline_http.sh:ro
+      - ./scripts/health.sh:/app/health.sh:ro
+      - ./scripts/health_http.sh:/app/health_http.sh:ro
+      - ./scripts/device_sync_monitor.sh:/app/device_sync_monitor.sh:ro
+      - ./scripts/device_sync_http.sh:/app/device_sync_http.sh:ro
+      - ./scripts/device_offline_monitor.sh:/app/device_offline_monitor.sh:ro
+      - ./scripts/device_offline_http.sh:/app/device_offline_http.sh:ro
 
       # Persistent state + logs
       - ./state:/state
 
-      # Explicit env mount for container root user
-      - /home/ecloaiza/.syncthing-health.env:/root/.syncthing-health.env:ro
+      # Explicit env mount for container root user (scripts source this file directly)
+      - ./.env:/root/.syncthing-health.env:ro
 
     command: >
       sh -c "
-        /usr/bin/socat TCP-LISTEN:9123,reuseaddr,fork EXEC:'/bin/bash /app/syncthing_health_http.sh' &
-        /usr/bin/socat TCP-LISTEN:9124,reuseaddr,fork EXEC:'/bin/bash /app/syncthing_device_lag_http.sh' &
-        /usr/bin/socat TCP-LISTEN:9125,reuseaddr,fork EXEC:'/bin/bash /app/syncthing_device_offline_http.sh' &
+        /usr/bin/socat TCP-LISTEN:9123,reuseaddr,fork EXEC:'/bin/bash /app/health_http.sh' &
+        /usr/bin/socat TCP-LISTEN:9124,reuseaddr,fork EXEC:'/bin/bash /app/device_sync_http.sh' &
+        /usr/bin/socat TCP-LISTEN:9125,reuseaddr,fork EXEC:'/bin/bash /app/device_offline_http.sh' &
         wait
       "
 
