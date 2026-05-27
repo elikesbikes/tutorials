@@ -1,0 +1,14 @@
+ wyl:
+    image: aceberg/watchyourlan
+    network_mode: host
+    restart: unless-stopped
+    ports:
+      - 8840:8840
+    environment:
+      - IFACES=ens18
+      - HOST=0.0.0.0
+      - PORT=8840
+      - SHOUTRRR_URL=ntfy://ntfy.home.elikesbikes.com/lan
+    volumes:
+      - /home/ecloaiza/docker/wyl:/data/WatchYourLAN
+networks: {}

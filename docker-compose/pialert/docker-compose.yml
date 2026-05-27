@@ -1,0 +1,19 @@
+    version: "3"
+    services:
+      netalertx:
+        container_name: netalertx
+        image: "jokobsk/pi.alert:latest" # Use 'jokob-sk/netalertx:latest' for newer versions
+        network_mode: "host" # Allows direct network access for scanning
+        restart: unless-stopped
+        volumes:
+          - ./config:/home/pi/pialert/config
+          - ./db:/home/pi/pialert/db
+          - ./logs:/home/pi/pialert/log
+        environment:
+          - TZ=America/Los_Angeles
+          - HOST_USER_ID=1000 # Your user ID, usually 1000
+          - HOST_USER_GID=1000 # Your group ID, usually 1000
+          - PORT=20211 # Port for the web interface
+        # Optional: Add custom DNS if experiencing resolution issues
+        # dns:
+        #   - 192.168.1.1 # Replace with your local DNS server IP

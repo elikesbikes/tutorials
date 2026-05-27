@@ -1,0 +1,100 @@
+16-Sep-2023 20:16:10.425 network unreachable resolving './NS/IN': 2001:500:2f::f#53
+16-Sep-2023 20:16:10.425 network unreachable resolving './NS/IN': 2001:500:9f::42#53
+16-Sep-2023 20:16:10.425 network unreachable resolving './NS/IN': 2001:7fe::53#53
+16-Sep-2023 20:16:10.425 network unreachable resolving './NS/IN': 2001:503:c27::2:30#53
+16-Sep-2023 20:16:10.425 network unreachable resolving './NS/IN': 2001:500:200::b#53
+16-Sep-2023 20:16:10.426 network unreachable resolving './NS/IN': 2001:500:12::d0d#53
+16-Sep-2023 20:16:10.426 network unreachable resolving './NS/IN': 2001:7fd::1#53
+16-Sep-2023 20:16:10.426 network unreachable resolving './NS/IN': 2001:503:ba3e::2:30#53
+16-Sep-2023 20:16:10.426 zone 5.168.192.in-addr.arpa/IN: loaded serial 14
+16-Sep-2023 20:16:10.426 network unreachable resolving './NS/IN': 2001:500:2d::d#53
+16-Sep-2023 20:16:10.426 network unreachable resolving './NS/IN': 2001:500:1::53#53
+16-Sep-2023 20:16:10.426 network unreachable resolving './NS/IN': 2001:500:2::c#53
+16-Sep-2023 20:16:10.427 dns_rdata_fromtext: /etc/bind/home.elikesbikes.com.zone:58: near '192.168.5': bad dotted quad
+16-Sep-2023 20:16:10.427 zone home.elikesbikes.com/IN: loading from master file /etc/bind/home.elikesbikes.com.zone failed: bad dotted quad
+16-Sep-2023 20:16:10.427 zone home.elikesbikes.com/IN: not loaded due to errors.
+16-Sep-2023 20:16:10.428 all zones loaded
+16-Sep-2023 20:16:10.428 running
+16-Sep-2023 20:16:10.501 managed-keys-zone: Key 20326 for zone . is now trusted (acceptance timer complete)
+16-Sep-2023 20:16:10.559 resolver priming query complete: success
+16-Sep-2023 20:16:12.824 insecurity proof failed resolving 'pfsense/AAAA/IN': 192.168.5.1#53
+16-Sep-2023 20:16:12.824 insecurity proof failed resolving 'pfsense/A/IN': 192.168.5.1#53
+16-Sep-2023 20:16:36.866 DNS format error from 45.90.28.192#53 resolving metrics.icloud.com/HTTPS for 192.168.5.211#50584: unrelated SOA me.apple-dns.net in metrics.icloud.com authority section
+16-Sep-2023 20:16:36.866 DNS format error from 45.90.28.192#53 resolving metrics.icloud.com/HTTPS for 192.168.5.211#50584: invalid response
+16-Sep-2023 20:16:36.866 FORMERR resolving 'metrics.icloud.com/HTTPS/IN': 45.90.28.192#53
+16-Sep-2023 20:16:36.880 DNS format error from 45.90.30.192#53 resolving metrics.icloud.com/HTTPS for 192.168.5.211#50584: unrelated SOA me.apple-dns.net in metrics.icloud.com authority section
+16-Sep-2023 20:16:36.880 DNS format error from 45.90.30.192#53 resolving metrics.icloud.com/HTTPS for 192.168.5.211#50584: invalid response
+16-Sep-2023 20:16:36.880 FORMERR resolving 'metrics.icloud.com/HTTPS/IN': 45.90.30.192#53
+16-Sep-2023 20:16:36.898 DNS format error from 192.168.5.1#53 resolving metrics.icloud.com/HTTPS for 192.168.5.211#50584: unrelated SOA me.apple-dns.net in metrics.icloud.com authority section
+16-Sep-2023 20:16:36.898 DNS format error from 192.168.5.1#53 resolving metrics.icloud.com/HTTPS for 192.168.5.211#50584: invalid response
+16-Sep-2023 20:16:36.898 FORMERR resolving 'metrics.icloud.com/HTTPS/IN': 192.168.5.1#53
+16-Sep-2023 20:16:36.899 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:7fe::53#53
+16-Sep-2023 20:16:36.899 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:500:a8::e#53
+16-Sep-2023 20:16:36.899 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:500:200::b#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:500:856e::30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:503:39c1::30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:502:7094::30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:503:d2d::30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:501:b1f9::30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:502:1ca1::30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:503:231d::2:30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:503:83eb::30#53
+16-Sep-2023 20:16:36.981 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:502:8cc::30#53
+16-Sep-2023 20:16:36.982 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:500:d937::30#53
+16-Sep-2023 20:16:36.982 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:503:d414::30#53
+16-Sep-2023 20:16:36.982 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:503:eea3::30#53
+16-Sep-2023 20:16:36.982 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2001:503:a83e::2:30#53
+16-Sep-2023 20:16:37.058 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2620:149:ae0::53#53
+16-Sep-2023 20:16:37.058 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2620:149:ae7::53#53
+16-Sep-2023 20:16:37.058 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2620:171:800:714::1#53
+16-Sep-2023 20:16:37.058 network unreachable resolving 'metrics.icloud.com/HTTPS/IN': 2620:171:801:714::1#53
+16-Sep-2023 20:16:37.268 timed out resolving 'register.deepstack.cc/AAAA/IN': 45.90.28.192#53
+16-Sep-2023 20:16:37.268 network unreachable resolving 'register.deepstack.cc/AAAA/IN': 2001:7fe::53#53
+16-Sep-2023 20:16:37.269 network unreachable resolving 'register.deepstack.cc/AAAA/IN': 2001:500:a8::e#53
+16-Sep-2023 20:16:37.269 network unreachable resolving 'register.deepstack.cc/AAAA/IN': 2001:500:200::b#53
+16-Sep-2023 20:16:37.312 timed out resolving 'register.deepstack.cc/A/IN': 45.90.28.192#53
+16-Sep-2023 20:16:37.312 network unreachable resolving 'register.deepstack.cc/A/IN': 2001:7fe::53#53
+16-Sep-2023 20:16:37.312 network unreachable resolving 'register.deepstack.cc/A/IN': 2001:500:a8::e#53
+16-Sep-2023 20:16:37.312 network unreachable resolving 'register.deepstack.cc/A/IN': 2001:500:200::b#53
+16-Sep-2023 20:16:38.469 network unreachable resolving '_.deepstack.cc/A/IN': 2001:500:121::30#53
+16-Sep-2023 20:16:38.469 network unreachable resolving '_.deepstack.cc/A/IN': 2001:500:123::30#53
+16-Sep-2023 20:16:38.469 network unreachable resolving '_.deepstack.cc/A/IN': 2001:500:122::30#53
+16-Sep-2023 20:16:38.469 network unreachable resolving '_.deepstack.cc/A/IN': 2001:500:120::30#53
+16-Sep-2023 20:16:38.509 network unreachable resolving 'register.deepstack.cc/AAAA/IN': 2603:1061:0:10::21#53
+16-Sep-2023 20:16:38.509 network unreachable resolving 'register.deepstack.cc/A/IN': 2603:1061:0:10::21#53
+16-Sep-2023 20:16:38.535 REFUSED unexpected RCODE resolving 'register.deepstack.cc/AAAA/IN': 13.107.222.33#53
+16-Sep-2023 20:16:38.536 REFUSED unexpected RCODE resolving 'register.deepstack.cc/A/IN': 13.107.222.33#53
+16-Sep-2023 20:16:38.561 REFUSED unexpected RCODE resolving 'register.deepstack.cc/AAAA/IN': 150.171.10.33#53
+16-Sep-2023 20:16:38.561 network unreachable resolving 'register.deepstack.cc/AAAA/IN': 2a01:111:4000:10::21#53
+16-Sep-2023 20:16:38.561 network unreachable resolving 'register.deepstack.cc/AAAA/IN': 2620:1ec:8ec:10::21#53
+16-Sep-2023 20:16:38.561 network unreachable resolving 'register.deepstack.cc/AAAA/IN': 2620:1ec:bda:10::21#53
+16-Sep-2023 20:16:38.567 REFUSED unexpected RCODE resolving 'register.deepstack.cc/A/IN': 150.171.10.33#53
+16-Sep-2023 20:16:38.567 network unreachable resolving 'register.deepstack.cc/A/IN': 2a01:111:4000:10::21#53
+16-Sep-2023 20:16:38.585 REFUSED unexpected RCODE resolving 'register.deepstack.cc/AAAA/IN': 150.171.16.33#53
+16-Sep-2023 20:16:38.589 REFUSED unexpected RCODE resolving 'register.deepstack.cc/A/IN': 150.171.16.33#53
+16-Sep-2023 20:16:38.608 REFUSED unexpected RCODE resolving 'register.deepstack.cc/AAAA/IN': 13.107.206.33#53
+16-Sep-2023 20:16:38.614 REFUSED unexpected RCODE resolving 'register.deepstack.cc/A/IN': 13.107.206.33#53
+16-Sep-2023 20:16:38.614 network unreachable resolving 'register.deepstack.cc/A/IN': 2620:1ec:8ec:10::21#53
+16-Sep-2023 20:16:38.615 network unreachable resolving 'register.deepstack.cc/A/IN': 2620:1ec:bda:10::21#53
+16-Sep-2023 20:16:46.030 no valid RRSIG resolving 'blockpage.nextdns.io/DS/IN': 45.90.30.192#53
+16-Sep-2023 20:16:46.049 no valid RRSIG resolving 'blockpage.nextdns.io/DS/IN': 192.168.5.1#53
+16-Sep-2023 20:16:46.115 no valid RRSIG resolving 'blockpage.nextdns.io/DS/IN': 45.90.28.192#53
+16-Sep-2023 20:16:46.115 network unreachable resolving 'blockpage.nextdns.io/DS/IN': 2001:500:200::b#53
+16-Sep-2023 20:16:46.115 network unreachable resolving 'blockpage.nextdns.io/DS/IN': 2001:500:a8::e#53
+16-Sep-2023 20:16:46.139 network unreachable resolving 'blockpage.nextdns.io/DS/IN': 2a01:8840:9e::17#53
+16-Sep-2023 20:16:46.139 network unreachable resolving 'blockpage.nextdns.io/DS/IN': 2a01:8840:a1::17#53
+16-Sep-2023 20:16:46.139 network unreachable resolving 'blockpage.nextdns.io/DS/IN': 2a01:8840:9f::17#53
+16-Sep-2023 20:16:46.139 network unreachable resolving 'blockpage.nextdns.io/DS/IN': 2a01:8840:a0::17#53
+16-Sep-2023 20:16:46.384 insecurity proof failed resolving 'blockpage.nextdns.io/A/IN': 45.90.30.192#53
+16-Sep-2023 20:16:46.405 validating blockpage.nextdns.io/A: got insecure response; parent indicates it should be secure
+16-Sep-2023 20:16:46.405 insecurity proof failed resolving 'blockpage.nextdns.io/A/IN': 192.168.5.1#53
+16-Sep-2023 20:16:46.474 validating blockpage.nextdns.io/A: got insecure response; parent indicates it should be secure
+16-Sep-2023 20:16:46.474 insecurity proof failed resolving 'blockpage.nextdns.io/A/IN': 45.90.28.192#53
+16-Sep-2023 20:16:46.474 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2001:500:200::b#53
+16-Sep-2023 20:16:46.475 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2001:500:a8::e#53
+16-Sep-2023 20:16:46.513 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2803:f800:50::6ca2:c06a#53
+16-Sep-2023 20:16:46.513 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2606:4700:58::adf5:3b81#53
+16-Sep-2023 20:16:46.513 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2a06:98c1:50::ac40:206a#53
+16-Sep-2023 20:16:46.513 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2803:f800:50::6ca2:c181#53
+16-Sep-2023 20:16:46.513 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2606:4700:50::adf5:3a6a#53
+16-Sep-2023 20:16:46.513 network unreachable resolving 'blockpage.nextdns.io/A/IN': 2a06:98c1:50::ac40:2181#53
