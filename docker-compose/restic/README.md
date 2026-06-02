@@ -63,20 +63,22 @@ restic-backup.sh          ← main entry point
 ```
 restic/
 ├── docker-compose.yml      # Container definition, volume mounts
-├── .env                    # Active Restic config (repo path + password) — git-ignored
-├── restic-backup.env       # NFS config for the backup script
+├── .env                    # Active Restic config (container paths + password) — git-ignored
+├── .env.example            # Template for .env
+├── restic.env.example      # Template for ~/restic.env (host-side config + secrets)
 ├── restic-backup.sh        # Main automated backup script
 ├── restic-prepost.sh       # Pre/post NFS hook wrapper for arbitrary commands
 ├── nfs-auto-mount.sh       # NFS health-check and mount/unmount manager (v1.1.2)
 ├── nfs-unmount.sh          # Explicit NFS unmount + nfs-client reset
-└── backup/                 # Symlink or directory pointing to NFS mount (git-ignored)
+└── backup/                 # Symlink → NFS mount (git-ignored)
 ```
 
 | File | Purpose |
 |------|---------|
 | `docker-compose.yml` | Defines the restic container, mounts, and entrypoint |
-| `.env` | `RESTIC_REPOSITORY` and `RESTIC_PASSWORD` for the active repo |
-| `restic-backup.env` | NFS server/export/mountpoint for the backup script |
+| `.env` | Container-side `RESTIC_REPOSITORY` and `RESTIC_PASSWORD` — loaded by docker-compose |
+| `.env.example` | Template for `.env` |
+| `restic.env.example` | Template for `~/restic.env` (host-side paths, NFS config, secrets) |
 | `restic-backup.sh` | Full automation: NFS pre-hook → backup → ntfy notification |
 | `restic-prepost.sh` | Wraps any command with NFS mount pre/post hooks |
 | `nfs-auto-mount.sh` | Mounts NFS if reachable; force-unmounts stale mounts if not |
@@ -96,47 +98,30 @@ restic/
 
 ## 5. Configuration
 
-All sensitive env files live **outside the repo** in `~/` (home directory). The repo only contains `restic-backup.env`, which holds non-secret NFS topology. Secrets (repo password, mount paths) stay in `~/restic.env`.
+Two env files are in active use. Both contain secrets and are never committed.
 
 ### Overview of all env files
 
-| File | Location | Loaded by | Contains secrets |
-|------|----------|-----------|-----------------|
-| `.env` | repo root (git-ignored) | `docker-compose.yml` | Yes — repo password |
-| `restic-backup.env` | repo root | `nfs-auto-mount.sh` (via symlink) | No |
-| `~/restic.env` | `~/.restic.env` | `restic-backup.sh`, `restic-prepost.sh` | Yes — repo password |
-| `~/nfs-mount.env` | `~/nfs-mount.env` (active) or `~/.nfs-mount.env` (hidden, if present) | `nfs-auto-mount.sh`, `nfs-unmount.sh` | No |
+| File | Location | Loaded by | Purpose |
+|------|----------|-----------|---------|
+| `.env` | repo root (git-ignored) | `docker-compose.yml` | Container-side repo path and password |
+| `~/restic.env` | home dir (outside repo) | `restic-backup.sh`, `restic-prepost.sh` | Host-side NFS paths, repo password, behaviour flags |
+| `~/nfs-mount.env` | home dir (outside repo) | `nfs-auto-mount.sh`, `nfs-unmount.sh` | All NFS mounts on this host |
+
+Template files in the repo (`restic.env.example`, `.env.example`) document the expected format for each.
 
 ---
 
 ### `.env` — repo root, git-ignored
 
-Passed directly into the container by `docker-compose.yml`. Must point `RESTIC_REPOSITORY` to the path **inside the container** (`/backup`).
+Loaded by `docker-compose.yml` into the container. `RESTIC_REPOSITORY` uses `./backup/` — a relative path that resolves to the `backup` symlink in the repo directory, which points to the NFS mount. This is intentionally different from the host-side path in `~/restic.env`.
 
 ```env
-RESTIC_REPOSITORY=/backup
+RESTIC_REPOSITORY=./backup/
 RESTIC_PASSWORD=<your-password>
 ```
 
----
-
-### `restic-backup.env` — repo root
-
-NFS topology for the backup script. No secrets.
-
-```env
-# NFS server hosting the restic repository
-NFS_SERVER=192.168.5.51
-
-# Export path on the NFS server
-NFS_EXPORT=/mnt/PROD1/nfs_restic/nfs_ranger0
-
-# Local mount point on this host
-MOUNT_POINT=/mnt/homenas/nfs_restic/nfs_ranger0
-
-# Name of the symlink created next to the script
-SYMLINK_NAME=backup
-```
+Copy from the template: `cp .env.example .env`
 
 ---
 
@@ -172,6 +157,8 @@ RESTIC_POST_CHECK=true
 # Unmount NFS after backup completes
 RESTIC_UNMOUNT_AFTER=true
 ```
+
+Copy from the template: `cp restic.env.example ~/restic.env`
 
 Permissions: `chmod 600 ~/restic.env`
 
