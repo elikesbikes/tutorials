@@ -197,13 +197,59 @@ Permissions: `chmod 600 ~/nfs-mount.env`
 
 ## 6. What Gets Backed Up
 
+Backup path selection works in **two layers**. Both must agree for a path to actually be backed up.
+
+### Layer 1 — `docker-compose.yml`: what the container can see
+
+These volume mounts define the maximum possible scope. Restic cannot reach anything not listed here.
+
 | Host Path | Container Path | Notes |
 |-----------|---------------|-------|
 | `/var/lib/docker/volumes` | `/data/docker-volumes` | All Docker named volumes, read-only |
-| `/home/ecloaiza` | `/data/bind-volumes` | User home directory, read-only |
+| `/home/ecloaiza` | `/data/bind-volumes` | Entire home directory, read-only |
 | *(commented out)* `/srv` | `/data/srv` | Placeholder for additional bind mounts |
 
-The Restic repository is mounted at `/backup` inside the container, mapped from the NFS mount on the host.
+The repository itself is mounted at `/backup` (the `backup` symlink → NFS mount).
+
+### Layer 2 — `restic-backup.sh`: what actually gets passed to restic
+
+The script builds the final list of paths passed to `restic backup` at runtime:
+
+**Always included (hardcoded):**
+```
+/data/docker-volumes   ← all Docker named volumes
+```
+
+**Conditionally included (auto-detected):**
+
+The script probes these four candidate paths inside the container and includes whichever ones exist:
+```
+/data/bind-volumes/docker
+/data/bind-volumes/devops/docker
+/data/bind-volumes/Devops/docker
+/data/bind-volumes/DevOps/docker
+```
+
+These map back to subdirectories of `/home/ecloaiza` on the host. The script handles path casing variations (`devops` vs `Devops` vs `DevOps`) so it works regardless of how the directory was created.
+
+### Effective backup scope
+
+| What gets backed up | Host path | How selected |
+|---------------------|-----------|-------------|
+| All Docker named volumes | `/var/lib/docker/volumes` | Hardcoded in script |
+| `~/devops/docker/` (or case variant) | `/home/ecloaiza/devops/docker` | Auto-detected at runtime |
+
+> **Note:** `/home/ecloaiza` is fully mounted into the container, but only the `docker/` and `devops/docker/` subdirectories are probed by the script. The rest of the home directory is visible to the container but never passed to `restic backup`. To back up additional paths, add them to `CANDIDATE_BIND_PATHS` in `restic-backup.sh` — see [Section 14](#14-extending-the-project).
+
+### To see what was actually backed up on any given run
+
+```bash
+# Check the runtime log for that day
+grep -E "Including|Skipping" /var/log/restic/backup-YYYY-MM-DD.log
+
+# Or list the latest snapshot contents
+docker compose run --rm restic ls latest
+```
 
 ---
 
