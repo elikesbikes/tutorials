@@ -1,0 +1,29 @@
+name: checkmk
+
+services:
+  checkmk:
+    image: checkmk/check-mk-raw:2.5.0p4
+    container_name: checkmk-prod-1
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TZ: America/Los_Angeles
+    ports:
+      - "8080:5000"   # Web UI
+      - "8000:8000"   # Agent receiver (TLS registration)
+    volumes:
+      - ./data/omd:/omd/sites
+    tmpfs:
+      - /opt/omd/sites/${CMK_SITE_ID}/tmp:uid=1000,gid=1000
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.20:1514"
+        tag: "checkmk"
+    networks:
+      default:
+
+networks:
+  default:
+    name: FRONTEND
+    external: true
