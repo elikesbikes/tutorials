@@ -1,27 +1,43 @@
 services:
   restic:
-    image: restic/restic:latest
+    build: .
     container_name: restic
     hostname: restic
+    restart: unless-stopped
     env_file:
       - .env
     volumes:
-      # Docker volumes (read-only)
+      # App code — bind-mounted individually so changes take effect without a rebuild
+      - ./app/entrypoint.sh:/app/entrypoint.sh:ro
+      - ./app/scripts:/app/scripts:ro
+      - ./app/status-api:/app/status-api:ro
+
+      # Logs and status.json — writable, shared with host restic-status.sh
+      - ./logs:/app/logs
+
+      # Data sources (read-only)
       - /var/lib/docker/volumes:/data/docker-volumes:ro
-
-      # Bind mounts you want to back up later
-      # - /srv:/data/srv:ro
-
-      # Restic repository (local for now)
-      - ./backup:/backup
-
-      # Optional: timezone consistency
-      - /etc/localtime:/etc/localtime:ro
-
-      # Docker volumes (read-only)
       - /home/ecloaiza:/data/bind-volumes:ro
 
+      # Restic repository — symlink → NFS mount managed by host nfs-auto-mount.sh
+      - ./backup:/backup
 
+      # Timezone consistency
+      - /etc/localtime:/etc/localtime:ro
 
-    entrypoint: ["restic"]
+    ports:
+      - "8484:8484"
 
+    networks:
+      - default
+
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "restic"
+
+networks:
+  default:
+    name: frontend
+    external: true
