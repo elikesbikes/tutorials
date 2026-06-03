@@ -3,9 +3,9 @@ set -euo pipefail
 
 #####################################
 # nfs-auto-mount.sh
-# Version: 1.1.2
+# Version: 1.2.0
 #
-# Status: FROZEN / PRODUCTION
+# Status: PRODUCTION
 #
 # Description:
 # Safely manages NFS mounts by mounting when the NFS transport
@@ -22,6 +22,13 @@ set -euo pipefail
 # - 1.1.2:
 #   * Canonicalize logging to /var/log/nfs-auto-mount.log
 #   * Ensure consistent logging across cron, root, and manual runs
+# - 1.2.0:
+#   * Fix: mount failures no longer silently abort the script (set -e)
+#   * Fix: umount timeout raised from 5s to 30s for hard-mount D-state
+#   * Fix: umount stderr now logged instead of suppressed
+#   * Fix: verify /proc/self/mounts after unmount attempt
+#   * Fix: lock file prevents concurrent cron instances conflicting
+#   * Fix: escape dots in IP address in is_mounted_proc regex
 #####################################
 
 #####################################
@@ -29,12 +36,24 @@ set -euo pipefail
 #####################################
 HOSTNAME="$(hostname -s)"
 
-# Canonical log file (override allowed via LOG_FILE env)
 DEFAULT_LOG_FILE="/var/log/nfs-auto-mount.log"
 LOG_FILE="${LOG_FILE:-$DEFAULT_LOG_FILE}"
 
+LOCK_FILE="/var/run/nfs-auto-mount.lock"
+
 DEFAULT_ENV_FILE_1="/home/ecloaiza/.nfs-mount.env"   # preferred (hidden)
 DEFAULT_ENV_FILE_2="/home/ecloaiza/nfs-mount.env"    # legacy
+
+#####################################
+# LOCK — prevent concurrent runs
+#####################################
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  # Log without failing — another instance is legitimately running
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$HOSTNAME] Another instance is running, exiting" \
+    >> "$LOG_FILE" 2>/dev/null || true
+  exit 0
+fi
 
 #####################################
 # LOGGING
@@ -42,8 +61,6 @@ DEFAULT_ENV_FILE_2="/home/ecloaiza/nfs-mount.env"    # legacy
 log() {
   local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [$HOSTNAME] $*"
   echo "$msg"
-
-  # Best-effort append; never fail the script
   {
     touch "$LOG_FILE"
     echo "$msg" >> "$LOG_FILE"
@@ -78,7 +95,8 @@ source "$ENV_FILE"
 
 NFS_PORT="${NFS_PORT:-2049}"
 NFS_CONNECT_TIMEOUT_SECONDS="${NFS_CONNECT_TIMEOUT_SECONDS:-2}"
-UMOUNT_TIMEOUT_SECONDS="${UMOUNT_TIMEOUT_SECONDS:-5}"
+# Raised from 5s: hard-mount D-state processes need time for kernel to abort
+UMOUNT_TIMEOUT_SECONDS="${UMOUNT_TIMEOUT_SECONDS:-30}"
 
 #####################################
 # HELPERS
@@ -94,7 +112,10 @@ is_mounted_proc() {
   local export_path="$2"
   local mount_point="$3"
 
-  grep -qsE "^${nas_ip}:${export_path}[[:space:]]+${mount_point}[[:space:]]+nfs" \
+  # Escape dots in IP so they match literally, not as regex wildcards
+  local escaped_ip="${nas_ip//./\\.}"
+
+  grep -qsE "^${escaped_ip}:${export_path}[[:space:]]+${mount_point}[[:space:]]+nfs" \
     /proc/self/mounts
 }
 
@@ -110,9 +131,12 @@ nfs_transport_ok() {
 safe_umount_lazy_force() {
   local mount_point="$1"
 
+  # Pipe stderr into the log so failures are visible, not swallowed
   timeout "$UMOUNT_TIMEOUT_SECONDS" \
-    umount -fl "$mount_point" \
-    >/dev/null 2>&1
+    umount -fl "$mount_point" 2>&1 | while IFS= read -r line; do log "  umount: $line"; done
+
+  # Return the exit code of umount, not the pipe
+  return "${PIPESTATUS[0]}"
 }
 
 #####################################
@@ -120,7 +144,7 @@ safe_umount_lazy_force() {
 #####################################
 log "========================================"
 log "NFS auto-mount run starting"
-log "Version: 1.1.2 (FROZEN)"
+log "Version: 1.2.0"
 log "Log file: $LOG_FILE"
 log "Using env: $ENV_FILE"
 log "========================================"
@@ -133,7 +157,6 @@ while IFS= read -r line; do
 
   IFS='|' read -r NAS_IP NFS_EXPORT MOUNT_POINT MOUNT_OPTS <<< "$line"
 
-  # Canonicalize paths
   NFS_EXPORT="$(normalize_path "$NFS_EXPORT")"
   MOUNT_POINT="$(normalize_path "$MOUNT_POINT")"
 
@@ -155,19 +178,31 @@ while IFS= read -r line; do
       log "Already mounted → no action"
     else
       log "Mounting NFS"
-      mount -t nfs -o "$MOUNT_OPTS" \
-        "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT"
-      log "Mount complete"
+      # Wrap in if-block so a mount failure logs cleanly instead of aborting
+      # the whole script via set -e, leaving other mounts unprocessed
+      if mount -t nfs -o "$MOUNT_OPTS" "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT" 2>&1 \
+           | while IFS= read -r line; do log "  mount: $line"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+        log "Mount complete"
+      else
+        log "WARNING: mount failed for $NAS_IP:$NFS_EXPORT → $MOUNT_POINT"
+      fi
     fi
   else
     log "NFS transport NOT reachable on TCP/$NFS_PORT"
 
     if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
-      log "Stale/blocked NFS mount detected → forcing lazy unmount"
+      log "Stale/blocked NFS mount detected → forcing lazy unmount (timeout: ${UMOUNT_TIMEOUT_SECONDS}s)"
       if safe_umount_lazy_force "$MOUNT_POINT"; then
-        log "Unmount complete"
+        # Lazy unmount returns 0 immediately but mount may linger in /proc
+        # until all open file handles are released — check and report honestly
+        if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
+          log "Unmount queued (lazy detach) — still visible in /proc (open handles held)"
+        else
+          log "Unmount complete"
+        fi
       else
-        log "WARNING: umount timed out or failed"
+        log "WARNING: umount failed or timed out after ${UMOUNT_TIMEOUT_SECONDS}s"
+        log "  Mount state: $(grep "$MOUNT_POINT" /proc/self/mounts 2>/dev/null || echo 'not in /proc')"
       fi
     else
       log "No NFS mount present → no action"

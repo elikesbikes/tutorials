@@ -11,8 +11,7 @@
 7. [NFS Mount Management](#7-nfs-mount-management)
 8. [Running Backups](#8-running-backups)
 9. [Automated Backup Script](#9-automated-backup-script)
-10. [Pre/Post Hook Wrapper](#10-prepost-hook-wrapper)
-11. [Cron Schedule](#11-cron-schedule)
+10. [Cron Schedule](#11-cron-schedule)
 12. [Notifications](#12-notifications)
 13. [Logs and Status](#13-logs-and-status)
 14. [Uptime Kuma](#14-uptime-kuma)
@@ -79,10 +78,6 @@ restic/
 │   ├── restic-status.sh    # Host-side daily pass/fail summary (reads ./logs/)
 │   ├── nfs-auto-mount.sh   # NFS health-check and mount/unmount manager (v1.1.2)
 │   └── nfs-unmount.sh      # Explicit NFS unmount + nfs-client reset
-├── legacy/
-│   ├── restic-backup.sh    # Superseded by app/scripts/backup.sh (kept for reference)
-│   ├── restic-prepost.sh   # NFS pre/post wrapper, no longer needed
-│   └── restic.env.example  # Template for ~/restic.env (legacy host scripts)
 ├── logs/                   # Daily logs + status.json — git-ignored, bind-mounted
 └── backup/                 # Symlink → NFS mount (git-ignored)
 ```
@@ -98,8 +93,6 @@ restic/
 | `host/restic-status.sh` | CLI summary table of all backup runs (reads `./logs/`) |
 | `host/nfs-auto-mount.sh` | Mounts NFS if reachable; force-unmounts stale mounts if not |
 | `host/nfs-unmount.sh` | Unconditionally unmounts all NFS_MOUNTS entries |
-| `legacy/restic-backup.sh` | Legacy — host-side script, superseded by `app/scripts/backup.sh` |
-| `legacy/restic-prepost.sh` | Legacy — NFS pre/post wrapper, no longer needed |
 
 ---
 
@@ -122,10 +115,9 @@ Two env files are in active use. Both contain secrets and are never committed.
 | File | Location | Loaded by | Purpose |
 |------|----------|-----------|---------|
 | `.env` | repo root (git-ignored) | `docker-compose.yml` | Container-side repo path and password |
-| `~/restic.env` | home dir (outside repo) | `restic-backup.sh`, `restic-prepost.sh` | Host-side NFS paths, repo password, behaviour flags |
 | `~/nfs-mount.env` | home dir (outside repo) | `nfs-auto-mount.sh`, `nfs-unmount.sh` | All NFS mounts on this host |
 
-Template files in the repo (`.env.example` for the container, `legacy/restic.env.example` for legacy host scripts) document the expected format for each.
+Copy `.env` from the template: `cp .env.example .env`
 
 ---
 
@@ -148,48 +140,7 @@ NTFY_TOPIC=backups
 STATUS_PORT=8484
 ```
 
-Copy from the template: `cp .env.example .env`
-
 **Changing the schedule:** Edit `BACKUP_CRON` then `docker compose up -d` to restart the container. The new schedule takes effect immediately.
-
----
-
-### `~/restic.env` — outside repo, secrets file
-
-Single source of truth for `restic-backup.sh` and `restic-prepost.sh`. Combines Restic credentials with NFS topology and behaviour flags.
-
-```env
-# ==================================================
-# RESTIC CONFIGURATION
-# ==================================================
-RESTIC_REPOSITORY=/mnt/homenas/nfs_restic/nfs_ranger0/ranger0
-RESTIC_PASSWORD=<your-password>
-
-# ==================================================
-# NFS CONFIGURATION (host-side)
-# ==================================================
-NFS_SERVER=192.168.5.51
-NFS_EXPORT=/mnt/PROD1/nfs_restic/nfs_ranger0
-MOUNT_POINT=/mnt/homenas/nfs_restic/nfs_ranger0
-
-# ==================================================
-# NFS REACHABILITY (used by scripts)
-# ==================================================
-PING_COUNT=2
-PING_TIMEOUT=2
-
-# ==================================================
-# BEHAVIOUR FLAGS
-# ==================================================
-# Re-run NFS mount check after backup
-RESTIC_POST_CHECK=true
-# Unmount NFS after backup completes
-RESTIC_UNMOUNT_AFTER=true
-```
-
-Copy from the template: `cp legacy/restic.env.example ~/restic.env`
-
-Permissions: `chmod 600 ~/restic.env`
 
 ---
 
@@ -240,7 +191,7 @@ These volume mounts define the maximum possible scope. Restic cannot reach anyth
 
 The repository itself is mounted at `/backup` (the `backup` symlink → NFS mount).
 
-### Layer 2 — `restic-backup.sh`: what actually gets passed to restic
+### Layer 2 — `app/scripts/backup.sh`: what actually gets passed to restic
 
 The script builds the final list of paths passed to `restic backup` at runtime:
 
@@ -268,13 +219,13 @@ These map back to subdirectories of `/home/ecloaiza` on the host. The script han
 | All Docker named volumes | `/var/lib/docker/volumes` | Hardcoded in script |
 | `~/devops/docker/` (or case variant) | `/home/ecloaiza/devops/docker` | Auto-detected at runtime |
 
-> **Note:** `/home/ecloaiza` is fully mounted into the container, but only the `docker/` and `devops/docker/` subdirectories are probed by the script. The rest of the home directory is visible to the container but never passed to `restic backup`. To back up additional paths, add them to `CANDIDATE_BIND_PATHS` in `app/scripts/backup.sh` — see [Section 14](#14-extending-the-project).
+> **Note:** `/home/ecloaiza` is fully mounted into the container, but only the `docker/` and `devops/docker/` subdirectories are probed by the script. The rest of the home directory is visible to the container but never passed to `restic backup`. To back up additional paths, add them to `CANDIDATE_BIND_PATHS` in `app/scripts/backup.sh` — see [Section 15](#15-extending-the-project).
 
 ### To see what was actually backed up on any given run
 
 ```bash
 # Check the runtime log for that day
-grep -E "Including|Skipping" /var/log/restic/backup-YYYY-MM-DD.log
+grep -E "Including|Skipping" ./logs/backup-YYYY-MM-DD.log
 
 # Or list the latest snapshot contents
 docker compose run --rm restic ls latest
@@ -366,7 +317,7 @@ docker compose run --rm restic forget --prune \
 
 ## 9. Automated Backup Script
 
-`app/scripts/backup.sh` runs **inside the container** on the schedule set by `BACKUP_CRON`. It is the replacement for the legacy host-side `restic-backup.sh`.
+`app/scripts/backup.sh` runs **inside the container** on the schedule set by `BACKUP_CRON`.
 
 **What it does:**
 
@@ -382,8 +333,6 @@ docker compose run --rm restic forget --prune \
 ```bash
 docker compose exec restic /app/scripts/backup.sh
 ```
-
-**Legacy host-side scripts** (`restic-backup.sh`, `restic-prepost.sh`) are kept in `legacy/` for reference but are no longer used.
 
 ---
 
@@ -551,6 +500,6 @@ Update the `backup` symlink to point to the new NFS mount point. Update `~/nfs-m
 > **The `.env` file contains the Restic repository password in plaintext.**
 
 - `.env` and `backup/` are in `.gitignore` — never commit them.
-- `~/restic.env` and `~/nfs-mount.env` live outside the repo and should be readable only by root: `chmod 600 ~/restic.env ~/nfs-mount.env`.
+- `~/nfs-mount.env` lives outside the repo and should be readable only by root: `chmod 600 ~/nfs-mount.env`.
 - Rotate the Restic password with `restic key passwd` if the file is ever exposed.
 - Consider Docker secrets or a secrets manager (Vault, Bitwarden CLI) for production hardening.
