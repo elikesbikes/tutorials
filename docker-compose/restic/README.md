@@ -66,37 +66,40 @@ Uptime Kuma → polls http://<host>:8484/health every 5 min
 ```
 restic/
 ├── Dockerfile              # Custom image: Alpine + restic + python3 + crond
-├── entrypoint.sh           # Container startup: installs cron, starts status API, runs crond
 ├── docker-compose.yml      # Single always-running service on FRONTEND network
 ├── .env                    # Active config (secrets + schedule) — git-ignored
 ├── .env.example            # Template for .env
-├── restic.env.example      # Template for ~/restic.env (legacy host scripts)
-├── scripts/
-│   └── backup.sh           # Backup script that runs inside the container
-├── status-api/
-│   └── app.py              # HTTP status server (stdlib only, port 8484)
+├── app/
+│   ├── entrypoint.sh       # Container startup: installs cron, starts status API, runs crond
+│   ├── scripts/
+│   │   └── backup.sh       # Backup script that runs inside the container
+│   └── status-api/
+│       └── app.py          # HTTP status server (stdlib only, port 8484)
+├── host/
+│   ├── restic-status.sh    # Host-side daily pass/fail summary (reads ./logs/)
+│   ├── nfs-auto-mount.sh   # NFS health-check and mount/unmount manager (v1.1.2)
+│   └── nfs-unmount.sh      # Explicit NFS unmount + nfs-client reset
+├── legacy/
+│   ├── restic-backup.sh    # Superseded by app/scripts/backup.sh (kept for reference)
+│   ├── restic-prepost.sh   # NFS pre/post wrapper, no longer needed
+│   └── restic.env.example  # Template for ~/restic.env (legacy host scripts)
 ├── logs/                   # Daily logs + status.json — git-ignored, bind-mounted
-├── restic-status.sh        # Host-side daily pass/fail summary (reads ./logs/)
-├── nfs-auto-mount.sh       # NFS health-check and mount/unmount manager (v1.1.2)
-├── nfs-unmount.sh          # Explicit NFS unmount + nfs-client reset
-├── restic-backup.sh        # Legacy: host-side backup script (superseded by scripts/backup.sh)
-├── restic-prepost.sh       # Legacy: NFS pre/post hook wrapper
 └── backup/                 # Symlink → NFS mount (git-ignored)
 ```
 
 | File | Purpose |
 |------|---------|
 | `Dockerfile` | Builds the container image |
-| `entrypoint.sh` | Sets cron schedule from `BACKUP_CRON`, starts status API, runs crond |
+| `app/entrypoint.sh` | Sets cron schedule from `BACKUP_CRON`, starts status API, runs crond |
 | `docker-compose.yml` | Single persistent service, FRONTEND network, Graylog syslog |
 | `.env` | `RESTIC_REPOSITORY`, `RESTIC_PASSWORD`, `BACKUP_CRON`, `NTFY_*`, `STATUS_PORT` |
-| `scripts/backup.sh` | Backup script running inside container — calls restic directly |
-| `status-api/app.py` | HTTP server: 200 if last success < 24h, 503 otherwise |
-| `restic-status.sh` | CLI summary table of all backup runs (reads `./logs/`) |
-| `nfs-auto-mount.sh` | Mounts NFS if reachable; force-unmounts stale mounts if not |
-| `nfs-unmount.sh` | Unconditionally unmounts all NFS_MOUNTS entries |
-| `restic-backup.sh` | Legacy — host-side script, superseded by `scripts/backup.sh` |
-| `restic-prepost.sh` | Legacy — NFS pre/post wrapper, no longer needed |
+| `app/scripts/backup.sh` | Backup script running inside container — calls restic directly |
+| `app/status-api/app.py` | HTTP server: 200 if last success < 24h, 503 otherwise |
+| `host/restic-status.sh` | CLI summary table of all backup runs (reads `./logs/`) |
+| `host/nfs-auto-mount.sh` | Mounts NFS if reachable; force-unmounts stale mounts if not |
+| `host/nfs-unmount.sh` | Unconditionally unmounts all NFS_MOUNTS entries |
+| `legacy/restic-backup.sh` | Legacy — host-side script, superseded by `app/scripts/backup.sh` |
+| `legacy/restic-prepost.sh` | Legacy — NFS pre/post wrapper, no longer needed |
 
 ---
 
@@ -122,7 +125,7 @@ Two env files are in active use. Both contain secrets and are never committed.
 | `~/restic.env` | home dir (outside repo) | `restic-backup.sh`, `restic-prepost.sh` | Host-side NFS paths, repo password, behaviour flags |
 | `~/nfs-mount.env` | home dir (outside repo) | `nfs-auto-mount.sh`, `nfs-unmount.sh` | All NFS mounts on this host |
 
-Template files in the repo (`restic.env.example`, `.env.example`) document the expected format for each.
+Template files in the repo (`.env.example` for the container, `legacy/restic.env.example` for legacy host scripts) document the expected format for each.
 
 ---
 
@@ -184,7 +187,7 @@ RESTIC_POST_CHECK=true
 RESTIC_UNMOUNT_AFTER=true
 ```
 
-Copy from the template: `cp restic.env.example ~/restic.env`
+Copy from the template: `cp legacy/restic.env.example ~/restic.env`
 
 Permissions: `chmod 600 ~/restic.env`
 
@@ -265,7 +268,7 @@ These map back to subdirectories of `/home/ecloaiza` on the host. The script han
 | All Docker named volumes | `/var/lib/docker/volumes` | Hardcoded in script |
 | `~/devops/docker/` (or case variant) | `/home/ecloaiza/devops/docker` | Auto-detected at runtime |
 
-> **Note:** `/home/ecloaiza` is fully mounted into the container, but only the `docker/` and `devops/docker/` subdirectories are probed by the script. The rest of the home directory is visible to the container but never passed to `restic backup`. To back up additional paths, add them to `CANDIDATE_BIND_PATHS` in `restic-backup.sh` — see [Section 14](#14-extending-the-project).
+> **Note:** `/home/ecloaiza` is fully mounted into the container, but only the `docker/` and `devops/docker/` subdirectories are probed by the script. The rest of the home directory is visible to the container but never passed to `restic backup`. To back up additional paths, add them to `CANDIDATE_BIND_PATHS` in `app/scripts/backup.sh` — see [Section 14](#14-extending-the-project).
 
 ### To see what was actually backed up on any given run
 
@@ -292,7 +295,7 @@ Cron-safe and idempotent. Logs to `/var/log/nfs-auto-mount.log`.
 
 ```bash
 # Manual run (must be root)
-sudo /home/ecloaiza/devops/docker/restic/nfs-auto-mount.sh
+sudo /home/ecloaiza/devops/docker/restic/host/nfs-auto-mount.sh
 ```
 
 ### `nfs-unmount.sh`
@@ -300,7 +303,7 @@ sudo /home/ecloaiza/devops/docker/restic/nfs-auto-mount.sh
 Unconditionally unmounts all NFS_MOUNTS entries and restarts `nfs-client.target` to clear stale handles.
 
 ```bash
-sudo /home/ecloaiza/devops/docker/restic/nfs-unmount.sh
+sudo /home/ecloaiza/devops/docker/restic/host/nfs-unmount.sh
 ```
 
 ---
@@ -363,51 +366,24 @@ docker compose run --rm restic forget --prune \
 
 ## 9. Automated Backup Script
 
-`restic-backup.sh` is the main entry point for cron/systemd-scheduled backups.
+`app/scripts/backup.sh` runs **inside the container** on the schedule set by `BACKUP_CRON`. It is the replacement for the legacy host-side `restic-backup.sh`.
 
 **What it does:**
 
-1. Validates dependencies (`nfs-auto-mount.sh`, `~/restic.env`)
-2. Runs `nfs-auto-mount.sh` to ensure the NFS repository is mounted
-3. Auto-detects the compose directory (handles case variations in path)
-4. Probes candidate bind-mount paths inside the container to build the backup path list dynamically
-5. Initialises the Restic repository if it doesn't exist yet
-6. Runs `restic backup` with all detected paths
-7. Sends an ntfy push notification on success or failure
+1. Validates the repository path is accessible (`/backup` → NFS symlink)
+2. Probes candidate bind-mount paths to build the backup path list dynamically
+3. Initialises the Restic repository if it doesn't exist yet
+4. Runs `restic backup` with all detected paths
+5. Writes `./logs/status.json` with snapshot ID, file count, data added, and timestamp
+6. Sends an ntfy push notification on success or failure
 
-**Usage:**
-
-```bash
-# Run manually (must be root for NFS mounts)
-sudo /home/ecloaiza/devops/docker/restic/restic-backup.sh
-```
-
-**Cron example** (daily at 02:00):
-
-```cron
-0 2 * * * root /home/ecloaiza/devops/docker/restic/restic-backup.sh
-```
-
----
-
-## 10. Pre/Post Hook Wrapper
-
-`restic-prepost.sh` wraps any command with NFS pre/post hooks. Use it for one-off or ad-hoc runs where you want NFS mount/unmount managed automatically.
+**Trigger manually:**
 
 ```bash
-# Syntax
-sudo restic-prepost.sh <command> [args...]
-
-# Examples
-sudo /home/ecloaiza/devops/docker/restic/restic-prepost.sh \
-  docker compose -f /home/ecloaiza/devops/docker/restic/docker-compose.yml \
-  run --rm restic snapshots
-
-sudo /home/ecloaiza/devops/docker/restic/restic-prepost.sh \
-  restic -r /mnt/homenas/nfs_restic/nfs_ranger0 check
+docker compose exec restic /app/scripts/backup.sh
 ```
 
-Set `RESTIC_UNMOUNT_AFTER=true` in `~/restic.env` to unmount after the command completes.
+**Legacy host-side scripts** (`restic-backup.sh`, `restic-prepost.sh`) are kept in `legacy/` for reference but are no longer used.
 
 ---
 
@@ -431,7 +407,7 @@ The only host cron entry needed is for NFS mount management:
 
 ```cron
 # NFS: health check every 5 minutes (run as root)
-*/5 * * * * /home/ecloaiza/devops/docker/restic/nfs-auto-mount.sh >> /var/log/nfs-auto-mount.log 2>&1
+*/5 * * * * /home/ecloaiza/devops/docker/restic/host/nfs-auto-mount.sh >> /var/log/nfs-auto-mount.log 2>&1
 ```
 
 ### Prune snapshots (manual or add to container cron)
@@ -486,12 +462,12 @@ Written after every run. The HTTP status API reads this file.
 
 On failure, `status` is `"fail"` and `last_success_time` is preserved from the previous run.
 
-### `restic-status.sh` — CLI history summary
+### `host/restic-status.sh` — CLI history summary
 
 Prints a one-line-per-day pass/fail table across all log files.
 
 ```bash
-./restic-status.sh           # all runs
+./host/restic-status.sh           # all runs
 ./restic-status.sh -n 30     # last 30 days
 ./restic-status.sh -f        # failures only
 ./restic-status.sh -n 30 -f  # last 30 days, failures only
