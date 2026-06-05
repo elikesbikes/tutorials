@@ -1,10 +1,10 @@
 {
   "status": "ok",
-  "last_success_time": "2026-06-03T21:18:15",
-  "snapshot_id": "4c9cec2d",
-  "files_processed": 9245,
-  "data_added": "1.091 GiB",
-  "duration": "0:30",
-  "hostname": "restic",
-  "updated_at": "2026-06-03T21:18:15"
+  "last_success_time": "2026-06-05T18:39:19",
+  "snapshot_id": "c05ba003",
+  "files_processed": 32768,
+  "data_added": "311.888 MiB",
+  "duration": "0:07",
+  "hostname": "tars",
+  "updated_at": "2026-06-05T18:39:19"
 }

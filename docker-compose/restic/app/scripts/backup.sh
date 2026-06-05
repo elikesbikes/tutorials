@@ -139,7 +139,7 @@ done
 #####################################
 # ENSURE REPOSITORY EXISTS
 #####################################
-if restic snapshots >/dev/null 2>&1; then
+if restic --no-lock snapshots >/dev/null 2>&1; then
   echo "Restic repository exists" | tee -a "$LOG_FILE"
 else
   restic init >>"$LOG_FILE" 2>&1 \
@@ -154,7 +154,7 @@ for p in "${BACKUP_PATHS[@]}"; do
   echo "  - $p" | tee -a "$LOG_FILE"
 done
 
-restic backup "${BACKUP_PATHS[@]}" >>"$LOG_FILE" 2>&1 \
+restic --no-lock -v backup "${BACKUP_PATHS[@]}" >>"$LOG_FILE" 2>&1 \
   || fail "Restic backup command failed"
 
 #####################################
@@ -178,8 +178,14 @@ print('duration=' + (dur.group(1)   if dur   else 'unknown'))
 " "$LOG_FILE")"
 
 #####################################
-# SUCCESS
+# SUCCESS — TRIGGER CLEANUP
 #####################################
 write_status "ok" "${snapshot:-unknown}" "${files:-0}" "${added:-unknown}" "${duration:-unknown}"
 notify "✅ [$HOSTNAME] Backup completed — snapshot ${snapshot:-?} | ${files:-?} files | ${added:-?}"
 echo "==================================================" | tee -a "$LOG_FILE"
+
+# Run cleanup if the script exists (removes old snapshots based on retention policy)
+if [[ -x /app/scripts/cleanup.sh ]]; then
+  echo "Triggering cleanup..." | tee -a "$LOG_FILE"
+  /app/scripts/cleanup.sh >>"$LOG_FILE" 2>&1
+fi
