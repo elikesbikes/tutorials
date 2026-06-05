@@ -107,6 +107,16 @@ STATUS_PORT=8484
 
 Change `BACKUP_CRON` and run `docker compose up -d` to apply.
 
+**Retention Policy** (cleanup.sh):
+
+```env
+KEEP_DAILY=7      # Keep last 7 daily snapshots (one per day)
+KEEP_WEEKLY=4     # Keep last 4 weekly snapshots (one per week)
+KEEP_MONTHLY=6    # Keep last 6 monthly snapshots (one per month)
+```
+
+Modify these values in `.env` to change how long backups are retained.
+
 ### `~/nfs-mount.env` (outside repo, chmod 600)
 
 ```env
@@ -145,6 +155,12 @@ docker compose exec restic restic forget --prune \
 
 # NFS logs
 tail -f /var/log/nfs-auto-mount.log
+
+# Manual cleanup (apply retention policy and prune old snapshots)
+docker compose exec restic /app/scripts/cleanup.sh
+
+# Cleanup dry-run (preview what would be deleted)
+docker compose exec restic sh -c 'cd / && restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --dry-run'
 ```
 
 ---

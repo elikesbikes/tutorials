@@ -2,7 +2,7 @@ services:
   restic:
     build: .
     container_name: restic
-    hostname: restic
+    hostname: ${CONTAINER_HOSTNAME:-ranger0}
     restart: unless-stopped
     env_file:
       - .env
