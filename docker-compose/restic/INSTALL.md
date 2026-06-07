@@ -120,6 +120,8 @@ This keeps the NFS mount alive independently of the container.
 docker compose up -d --build
 ```
 
+The container is configured to **automatically restart at boot** (restart policy: `unless-stopped`). Once running, it will persist across reboots and service restarts.
+
 Verify it started and the cron schedule is correct:
 
 ```bash
