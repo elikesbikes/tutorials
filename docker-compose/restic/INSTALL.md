@@ -114,19 +114,30 @@ This keeps the NFS mount alive independently of the container.
 
 ---
 
-## 7. Build and Start the Container
+## 7. Start the Container and Enable Auto-boot
+
+Build the image and start the container with auto-restart enabled:
 
 ```bash
-docker compose up -d --build
+./scripts/start.sh
 ```
 
-The container is configured with `restart: unless-stopped`, so it will automatically restart when Docker starts at boot.
+This script:
+- Builds the Docker image
+- Starts the restic container using `docker run` with `--restart=unless-stopped`
+- Container will automatically restart if it crashes or if the system reboots
+
+Enable the systemd service so it starts at boot:
+
+```bash
+sudo systemctl enable restic-docker.service
+```
 
 Verify it started and the cron schedule is correct:
 
 ```bash
-docker compose ps
-docker compose exec restic cat /etc/crontabs/root
+docker ps | grep restic
+docker exec restic cat /etc/crontabs/root
 # Expected: 0 13 * * * /app/scripts/backup.sh >> /app/logs/cron.log 2>&1
 ```
 
