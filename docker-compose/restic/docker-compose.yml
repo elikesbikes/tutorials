@@ -32,10 +32,11 @@ services:
       - default
 
     logging:
-      driver: syslog
+      driver: json-file
       options:
-        syslog-address: "udp://192.168.5.16:514"
-        tag: "restic"
+        max-size: "10m"
+        max-file: "3"
+        labels: "restic"
 
 networks:
   default:
