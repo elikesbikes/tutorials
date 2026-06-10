@@ -1,0 +1,42 @@
+# Job configuration template
+#
+# To add a backup job:
+#   1. Copy this file to jobs/<job-name>.conf (the filename stem MUST equal JOB_NAME)
+#   2. Mount the host directory you want backed up in docker-compose.override.yml,
+#      read-only, under the /data/<name> convention:
+#        - /host/path/to/photos:/data/photos:ro
+#   3. Restart: docker compose up -d  (entrypoint installs one crontab line per job)
+#
+# Each job's snapshots are tagged with JOB_NAME inside the shared restic
+# repository, and retention (forget --prune) is applied per tag — jobs never
+# touch each other's snapshots. Jobs that fire at the same time serialize via
+# a repository lock (queue with 2h timeout).
+
+# REQUIRED — must equal filename stem; allowed chars: A-Z a-z 0-9 _ -
+JOB_NAME="example"
+
+# REQUIRED — 5-field cron expression (minute hour day month weekday).
+# BusyBox crond: shortcuts like @daily are NOT supported.
+JOB_CRON="0 2 * * *"
+
+# REQUIRED — space-separated CONTAINER paths to back up.
+# Paths must not contain spaces. Backup FAILS if any path is missing
+# (a missing path usually means a broken mount — fail loudly, don't skip).
+JOB_SOURCES="/data/example"
+
+# OPTIONAL — retention overrides; default to KEEP_* values from .env
+# JOB_KEEP_DAILY=7
+# JOB_KEEP_WEEKLY=4
+# JOB_KEEP_MONTHLY=6
+
+# OPTIONAL — notification overrides; default to NTFY_* values from .env
+# JOB_NTFY_SERVER=https://ntfy.example.com
+# JOB_NTFY_TOPIC=backups
+
+# OPTIONAL — staleness threshold for the /health endpoint, in hours.
+# Default 25 (suits daily jobs). A weekly job should set ~170.
+# JOB_MAX_AGE_HOURS=25
+
+# OPTIONAL — restic verbosity for this job; defaults to RESTIC_VERBOSITY in .env.
+# 1 = summary + progress, 2 = log every file (very chatty).
+# JOB_VERBOSITY=2
