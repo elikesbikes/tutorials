@@ -12,12 +12,15 @@ services:
       - ./app/scripts:/app/scripts:ro
       - ./app/status-api:/app/status-api:ro
 
-      # Logs and status.json — writable, shared with host restic-status.sh
+      # Job definitions — one .conf per backup job (see jobs/example.conf.example)
+      - ./jobs:/app/jobs:ro
+
+      # Logs and per-job status files — writable, shared with host restic-status.sh
       - ./logs:/app/logs
 
-      # Data sources (read-only)
-      - /var/lib/docker/volumes:/data/docker-volumes:ro
-      - /home/ecloaiza:/data/bind-volumes:ro
+      # Data sources are HOST-SPECIFIC and live in docker-compose.override.yml
+      # (merged automatically by docker compose). This base file stays identical
+      # across hosts. See docker-compose.override.yml.example.
 
       # Restic repository — symlink → NFS mount managed by host nfs-auto-mount.sh
       - ./backup:/backup
@@ -31,12 +34,21 @@ services:
     networks:
       - default
 
+    # Ship container stdout to the homelab Graylog syslog server. Backup/cleanup
+    # job output reaches stdout via the /proc/1/fd/1 routing in entrypoint.sh,
+    # so scheduled runs land in Graylog too (not just entrypoint/status-api).
+    # `docker compose logs` still works locally thanks to Docker's dual-logging
+    # cache (Engine 20.10+), so logs are available in both places.
     logging:
-      driver: json-file
+      driver: syslog
       options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "restic"
+        # Graylog runs on endurance (192.168.5.30). 192.168.5.16 is a reverse
+        # proxy that does NOT forward syslog — sending there silently drops logs.
+        syslog-address: "udp://192.168.5.30:514"
+        # Match the RFC3164 format the hosts/router already send (Graylog's
+        # Syslog input parses it); Docker's default rfc5424 was not ingested.
+        syslog-format: "rfc3164"
+        tag: "restic"
 
 networks:
   default:

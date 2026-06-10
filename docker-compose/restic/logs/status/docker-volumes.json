@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "job": "docker-volumes",
+  "last_success_time": "2026-06-10T20:53:37",
+  "snapshot_id": "9de3ed6f",
+  "files_processed": 32784,
+  "data_added": "26.706 MiB",
+  "duration": "0:02",
+  "hostname": "tars",
+  "max_age_hours": 25,
+  "updated_at": "2026-06-10T20:53:37"
+}
