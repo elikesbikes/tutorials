@@ -5,23 +5,18 @@ stages:
 detect_project:
   stage: detect
   image: alpine:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - docker-compose/**/*
   script:
     - apk add --no-cache git
     - PROJECT=$(git diff --name-only HEAD~1 HEAD | grep "^docker-compose/" | cut -d/ -f2 | sort -u | head -1)
-    - echo "Detected project: $PROJECT"
-    - |
-      if [ -z "$PROJECT" ]; then
-        echo "No docker-compose project changed — skipping deploy"
-        echo "PROJECT_NAME=none" >> deploy.env
-      else
-        echo "PROJECT_NAME=$PROJECT" >> deploy.env
-      fi
+    - echo "Detected project: ${PROJECT:-none}"
+    - echo "PROJECT_NAME=${PROJECT:-none}" >> deploy.env
   artifacts:
     reports:
       dotenv: deploy.env
-  only:
-    changes:
-      - docker-compose/**/*
 
 deploy:ranger0:
   stage: deploy
@@ -29,6 +24,11 @@ deploy:ranger0:
   needs:
     - job: detect_project
       artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - docker-compose/**/*
+      when: manual
   image: alpine:latest
   before_script:
     - apk add --no-cache openssh-client rsync
@@ -39,24 +39,22 @@ deploy:ranger0:
         echo "No project detected — nothing to deploy"
         exit 0
       fi
-    - echo "Deploying $PROJECT_NAME to ranger0..."
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16
-        "cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main &&
-         mkdir -p ~/devops/docker/${PROJECT_NAME} &&
-         rsync -am
-           --include='*/'
-           --include='*.yml'
-           --include='*.py'
-           --include='*.sh'
-           --include='*.md'
-           --include='*.json'
-           --exclude='*'
-           ~/devops/github/tutorials/docker-compose/${PROJECT_NAME}/
-           ~/devops/docker/${PROJECT_NAME}/ &&
-         cd ~/devops/docker/${PROJECT_NAME} && docker compose up -d"
-  only:
-    changes:
-      - docker-compose/**/*
+      echo "Deploying $PROJECT_NAME to ranger0 (192.168.5.16)..."
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 "
+        cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main
+        mkdir -p ~/devops/docker/${PROJECT_NAME}
+        rsync -am \
+          --include='*/' \
+          --include='*.yml' \
+          --include='*.py' \
+          --include='*.sh' \
+          --include='*.md' \
+          --include='*.json' \
+          --exclude='*' \
+          ~/devops/github/tutorials/docker-compose/${PROJECT_NAME}/ \
+          ~/devops/docker/${PROJECT_NAME}/
+        cd ~/devops/docker/${PROJECT_NAME} && docker compose up -d
+      "
 
 deploy:endurance:
   stage: deploy
@@ -64,6 +62,11 @@ deploy:endurance:
   needs:
     - job: detect_project
       artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - docker-compose/**/*
+      when: manual
   image: alpine:latest
   before_script:
     - apk add --no-cache openssh-client rsync
@@ -74,21 +77,19 @@ deploy:endurance:
         echo "No project detected — nothing to deploy"
         exit 0
       fi
-    - echo "Deploying $PROJECT_NAME to endurance..."
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.30
-        "cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main &&
-         mkdir -p ~/devops/docker/${PROJECT_NAME} &&
-         rsync -am
-           --include='*/'
-           --include='*.yml'
-           --include='*.py'
-           --include='*.sh'
-           --include='*.md'
-           --include='*.json'
-           --exclude='*'
-           ~/devops/github/tutorials/docker-compose/${PROJECT_NAME}/
-           ~/devops/docker/${PROJECT_NAME}/ &&
-         cd ~/devops/docker/${PROJECT_NAME} && docker compose up -d"
-  only:
-    changes:
-      - docker-compose/**/*
+      echo "Deploying $PROJECT_NAME to endurance (192.168.5.30)..."
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.30 "
+        cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main
+        mkdir -p ~/devops/docker/${PROJECT_NAME}
+        rsync -am \
+          --include='*/' \
+          --include='*.yml' \
+          --include='*.py' \
+          --include='*.sh' \
+          --include='*.md' \
+          --include='*.json' \
+          --exclude='*' \
+          ~/devops/github/tutorials/docker-compose/${PROJECT_NAME}/ \
+          ~/devops/docker/${PROJECT_NAME}/
+        cd ~/devops/docker/${PROJECT_NAME} && docker compose up -d
+      "
