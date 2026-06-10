@@ -92,7 +92,7 @@ done <<< "$PORTS"
 
 # 4. Volume accessibility
 echo "Checking volume mounts..."
-VOLUMES=$(docker compose config | grep -oP "^\s+- \./\K[^:]*(?=:)" | sort -u)
+VOLUMES=$(docker compose config | sed -n 's/.*- \.\///p' | sed 's/:.*//' | sort -u)
 while IFS= read -r VOLUME; do
   [ -z "$VOLUME" ] && continue
   echo -n "  $VOLUME: "
@@ -109,7 +109,7 @@ done <<< "$VOLUMES"
 
 # 5. Network connectivity
 echo "Checking network configuration..."
-NETWORK=$(docker compose config | grep -oP '^\s+name:\s+\K.*' | head -1)
+NETWORK=$(docker compose config | sed -n 's/.*name:\s*//p' | head -1)
 if [ -n "$NETWORK" ]; then
   echo -n "  Network '$NETWORK': "
   if docker network inspect "$NETWORK" > /dev/null 2>&1; then
