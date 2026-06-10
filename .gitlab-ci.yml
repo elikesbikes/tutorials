@@ -27,13 +27,40 @@ deploy:ranger0:
         echo "No docker-compose project changed — nothing to deploy"
         exit 0
       fi
-      echo "Deploying $PROJECT to ranger0..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 "
-        cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main
+      echo "==> Deploying $PROJECT to ranger0..."
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 bash -s << EOF
+        set -e
+        echo "--- sync repo"
+        cd ~/devops/github/tutorials
+        git fetch origin
+        git reset --hard origin/main
+
+        echo "--- rsync files"
         mkdir -p ~/devops/docker/$PROJECT
-        rsync -am --include='*/' --include='*.yml' --include='*.py' --include='*.sh' --include='*.md' --include='*.json' --exclude='*' ~/devops/github/tutorials/docker-compose/$PROJECT/ ~/devops/docker/$PROJECT/
-        cd ~/devops/docker/$PROJECT && docker compose up -d
-      "
+        rsync -am \
+          --include='*/' --include='*.yml' --include='*.py' \
+          --include='*.sh' --include='*.md' --include='*.json' \
+          --exclude='*' \
+          ~/devops/github/tutorials/docker-compose/$PROJECT/ \
+          ~/devops/docker/$PROJECT/
+
+        echo "--- docker compose up"
+        cd ~/devops/docker/$PROJECT
+        docker compose up -d
+
+        echo "--- health check"
+        sleep 5
+        RUNNING=\$(docker compose ps --filter status=running --services 2>/dev/null | wc -l)
+        TOTAL=\$(docker compose ps --services 2>/dev/null | wc -l)
+        echo "Running: \$RUNNING / \$TOTAL services"
+        if [ "\$RUNNING" -lt "\$TOTAL" ]; then
+          echo "ERROR: Not all services started"
+          docker compose ps
+          docker compose logs --tail=30
+          exit 1
+        fi
+        echo "==> $PROJECT deployed successfully on ranger0"
+      EOF
 
 deploy:endurance:
   <<: *deploy_template
@@ -43,10 +70,37 @@ deploy:endurance:
         echo "No docker-compose project changed — nothing to deploy"
         exit 0
       fi
-      echo "Deploying $PROJECT to endurance..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.30 "
-        cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main
+      echo "==> Deploying $PROJECT to endurance..."
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.30 bash -s << EOF
+        set -e
+        echo "--- sync repo"
+        cd ~/devops/github/tutorials
+        git fetch origin
+        git reset --hard origin/main
+
+        echo "--- rsync files"
         mkdir -p ~/devops/docker/$PROJECT
-        rsync -am --include='*/' --include='*.yml' --include='*.py' --include='*.sh' --include='*.md' --include='*.json' --exclude='*' ~/devops/github/tutorials/docker-compose/$PROJECT/ ~/devops/docker/$PROJECT/
-        cd ~/devops/docker/$PROJECT && docker compose up -d
-      "
+        rsync -am \
+          --include='*/' --include='*.yml' --include='*.py' \
+          --include='*.sh' --include='*.md' --include='*.json' \
+          --exclude='*' \
+          ~/devops/github/tutorials/docker-compose/$PROJECT/ \
+          ~/devops/docker/$PROJECT/
+
+        echo "--- docker compose up"
+        cd ~/devops/docker/$PROJECT
+        docker compose up -d
+
+        echo "--- health check"
+        sleep 5
+        RUNNING=\$(docker compose ps --filter status=running --services 2>/dev/null | wc -l)
+        TOTAL=\$(docker compose ps --services 2>/dev/null | wc -l)
+        echo "Running: \$RUNNING / \$TOTAL services"
+        if [ "\$RUNNING" -lt "\$TOTAL" ]; then
+          echo "ERROR: Not all services started"
+          docker compose ps
+          docker compose logs --tail=30
+          exit 1
+        fi
+        echo "==> $PROJECT deployed successfully on endurance"
+      EOF
