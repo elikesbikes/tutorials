@@ -8,7 +8,7 @@ stages:
   before_script:
     - apk add --no-cache openssh-client rsync git
     - chmod 600 "$SSH_PRIVATE_KEY"
-    - PROJECT=$(git diff --name-only HEAD~1 HEAD | grep "^docker-compose/" | cut -d/ -f2 | sort -u | head -1)
+    - PROJECT=$(git diff --name-only HEAD~1 HEAD | { grep "^docker-compose/" || true; } | cut -d/ -f2 | sort -u | head -1)
     - echo "Detected project = ${PROJECT:-none}"
 
 deploy:ranger0:
