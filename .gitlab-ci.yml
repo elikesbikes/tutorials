@@ -37,7 +37,7 @@ deploy:ranger0:
 
         echo "--- rsync files"
         mkdir -p ~/devops/docker/$PROJECT
-        rsync -am \
+        rsync -am --ignore-errors \
           --include='*/' --include='*.yml' --include='*.py' \
           --include='*.sh' --include='*.md' --include='*.json' \
           --exclude='*' \
@@ -80,7 +80,7 @@ deploy:endurance:
 
         echo "--- rsync files"
         mkdir -p ~/devops/docker/$PROJECT
-        rsync -am \
+        rsync -am --ignore-errors \
           --include='*/' --include='*.yml' --include='*.py' \
           --include='*.sh' --include='*.md' --include='*.json' \
           --exclude='*' \
