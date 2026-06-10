@@ -7,18 +7,30 @@
 ### For Docker Container Projects
 
 **Docker Network:**
-- **Network**: `FRONTEND` (already exists on homelab)
+- **Network**: `frontend` (already exists on homelab)
 - Always attach containers to this network
 - Example docker-compose.yml:
   ```yaml
   networks:
     default:
-      name: FRONTEND
+      name: frontend
       external: true
   ```
 
+**Timezone:**
+- **TZ**: Always set to Pacific time
+- Example docker-compose.yml:
+  ```yaml
+  services:
+    myapp:
+      environment:
+        - TZ=America/Los_Angeles
+  ```
+
 **Logging:**
-- **Syslog Server**: `192.168.5.16` (Graylog)
+- **Syslog Server**: `192.168.5.30` (Graylog, runs on endurance) — port `514/udp`
+- ⚠️ **NOT `192.168.5.16`** — that is a reverse proxy. It serves the Graylog web UI (`:9000`/`:443`) but does **not** forward syslog (`514`), so logs sent there are silently dropped. Always send syslog to `192.168.5.30`.
+- Use `syslog-format: "rfc3164"` — Graylog's Syslog UDP input parses RFC3164 (matching the hosts/router); Docker's default rfc5424 is not ingested.
 - All Docker containers must send logs here
 - Example docker-compose.yml:
   ```yaml
@@ -27,23 +39,39 @@
       logging:
         driver: syslog
         options:
-          syslog-address: "udp://192.168.5.16:514"
+          syslog-address: "udp://192.168.5.30:514"
+          syslog-format: "rfc3164"
           tag: "myapp"
   ```
+- **`docker compose logs` still works with the syslog driver.** Docker Engine 20.10+ keeps a local dual-logging cache, so logs land in Graylog *and* remain viewable locally — no need to choose. (The local cache is a per-container ring buffer, cleared on recreate; Graylog is the durable history.)
+- **Cron / background jobs inside a container don't reach the logging driver by default.** The driver only captures PID 1's stdout/stderr. A cron job's output goes wherever its crontab line redirects it (usually a file), so it never hits Graylog. Route job output to the container's stdout so the driver picks it up:
+  ```sh
+  # in the crontab line — tee to a file AND to PID 1's stdout (the container log stream)
+  * * * * * /app/job.sh 2>&1 | tee -a /app/logs/job.log > /proc/1/fd/1
+  ```
+  This requires the foreground process to be PID 1 (e.g. `exec crond -f`).
 
 **Storage / Volumes:**
-- **NEVER use Docker volumes** - Always use bind mounts
-- **All bind mounts must be in the project directory**
+- **NEVER use Docker volumes** - Always use bind mounts for persistent data only
+- **Move app code/files INTO the container** via Dockerfile
+- **Only bind mount data that persists across restarts** (databases, uploads, logs, config)
+- Example Dockerfile:
+  ```dockerfile
+  FROM python:3.11-slim
+  WORKDIR /app
+  COPY src/ /app/src/        # App code goes in container
+  COPY requirements.txt /app/
+  RUN pip install -r requirements.txt
+  ```
 - Example docker-compose.yml:
   ```yaml
   services:
     myapp:
       volumes:
-        - ./data:/app/data           # Bind mount in project folder
-        - ./config:/app/config       # NOT /var/lib/docker/volumes
-        - ./logs:/app/logs           # Everything relative to compose file
+        - ./data:/app/data       # Only persistent data
+        - ./config:/app/config   # Only config that changes
   ```
-- Create necessary directories before starting:
+- Create bind mount directories before starting:
   ```bash
   mkdir -p data config logs
   ```
@@ -91,10 +119,14 @@ project-root/
 ├── docker-compose.yml        # If Docker
 ├── Dockerfile                # If Docker
 ├── scripts/                  # Deployment, automation, utilities
-├── src/ or app/              # Source code
-├── data/                     # Bind mount (Docker)
-└── config/                   # Bind mount (Docker)
+├── app/                      # App code (COPY into container)
+├── data/                     # Bind mount for persistent data
+└── config/                   # Bind mount for config files
 ```
+
+**Note:** 
+- `app/` = application source code, copied into container during build (not mounted as volume)
+- `data/`, `config/` = bind-mounted directories that persist on host
 
 ---
 

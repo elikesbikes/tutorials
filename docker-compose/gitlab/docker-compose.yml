@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      TZ: ${TZ}
+      TZ: America/Los_Angeles
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'https://gitlab.home.elikesbikes.com'
         nginx['listen_port'] = 80
@@ -33,7 +33,8 @@ services:
     logging:
       driver: syslog
       options:
-        syslog-address: "udp://192.168.5.16:514"
+        syslog-address: "udp://192.168.5.30:514"
+        syslog-format: "rfc3164"
         tag: "gitlab"
 
   gitlab-runner:
@@ -48,5 +49,6 @@ services:
     logging:
       driver: syslog
       options:
-        syslog-address: "udp://192.168.5.16:514"
+        syslog-address: "udp://192.168.5.30:514"
+        syslog-format: "rfc3164"
         tag: "gitlab-runner"
