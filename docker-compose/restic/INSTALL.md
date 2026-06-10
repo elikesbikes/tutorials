@@ -32,55 +32,16 @@ cd restic
 
 ---
 
-## 3. NFS Mount
-
-The `backup/` symlink must point at the NFS mount point that `nfs-auto-mount.sh` manages.
-
-```bash
-# Verify the symlink exists and points to the right place
-ls -la backup
-# Expected: backup -> /mnt/homenas/nfs_restic/nfs_ranger0
-
-# If missing, recreate it:
-ln -s /mnt/homenas/nfs_restic/nfs_ranger0 backup
-```
-
-Ensure `~/nfs-mount.env` exists and includes the restic NFS entry:
-
-```env
-NAS_HOST=192.168.5.51
-NFS_PORT=2049
-NFS_CONNECT_TIMEOUT_SECONDS=2
-UMOUNT_TIMEOUT_SECONDS=5
-
-NFS_MOUNTS="
-192.168.5.51|/mnt/PROD1/nfs_restic/nfs_ranger0|/mnt/homenas/nfs_restic/nfs_ranger0|rw,hard,timeo=600,retrans=5,noatime
-"
-```
-
-```bash
-chmod 600 ~/nfs-mount.env
-```
-
-Mount it now so the container can reach the repository at startup:
-
-```bash
-sudo /home/ecloaiza/devops/docker/restic/host/nfs-auto-mount.sh
-# Verify:
-ls backup/    # should show: config  data  index  keys  locks  snapshots
-```
-
----
-
-## 4. Configure `.env`
+## 3. Configure `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set your values:
+Edit `.env` with your host-specific values:
 
 ```env
+CONTAINER_HOSTNAME=<your-hostname>    # e.g., tars, ranger0, gargantua
 RESTIC_REPOSITORY=./backup/          # do not change — resolves to /backup in container
 RESTIC_PASSWORD=<your-strong-password>
 
@@ -94,10 +55,53 @@ STATUS_PORT=8484
 
 ---
 
-## 5. Create the Logs Directory
+## 4. NFS Configuration
+
+Ensure `~/nfs-mount.env` exists with the restic NFS entry (using your hostname):
+
+```env
+NAS_HOST=192.168.5.51
+NFS_PORT=2049
+NFS_CONNECT_TIMEOUT_SECONDS=2
+UMOUNT_TIMEOUT_SECONDS=30
+
+NFS_MOUNTS="
+192.168.5.51|/mnt/PROD1/nfs_restic/nfs_<hostname>|/mnt/homenas/nfs_restic/nfs_<hostname>|rw,hard,timeo=600,retrans=5,noatime
+"
+```
+
+Example for `tars`:
+```env
+NFS_MOUNTS="
+192.168.5.51|/mnt/PROD1/nfs_restic/nfs_tars|/mnt/homenas/nfs_restic/nfs_tars|rw,hard,timeo=600,retrans=5,noatime
+"
+```
 
 ```bash
-mkdir -p logs
+chmod 600 ~/nfs-mount.env
+```
+
+---
+
+## 5. Initialize Project
+
+The init script creates the correct hostname-specific symlink automatically:
+
+```bash
+./scripts/init.sh
+```
+
+This will:
+- Create `backup/` symlink → `/mnt/homenas/nfs_restic/nfs_<hostname>`
+- Validate the symlink points to the correct location
+- Create the `logs/` directory
+
+Then mount the NFS share:
+
+```bash
+sudo /home/ecloaiza/devops/docker/restic/host/nfs-auto-mount.sh
+# Verify:
+ls backup/    # should show: config  data  index  keys  locks  snapshots
 ```
 
 ---
