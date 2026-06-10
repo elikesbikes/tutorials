@@ -1,6 +1,9 @@
 stages:
   - deploy
 
+variables:
+  GIT_DEPTH: "2"
+
 .deploy_template: &deploy_template
   stage: deploy
   when: manual
