@@ -48,16 +48,22 @@ if [[ "$LIMIT" -gt 0 ]]; then
 fi
 
 # Header
-printf "%-12s  %-6s  %-10s  %9s  %12s  %-7s  %s\n" \
-  "DATE" "STATUS" "SNAPSHOT" "FILES" "ADDED" "TIME" "NOTE"
-printf '%s\n' "$(printf '%.0s-' {1..80})"
+printf "%-12s  %-16s  %-6s  %-10s  %9s  %12s  %-7s  %s\n" \
+  "DATE" "JOB" "STATUS" "SNAPSHOT" "FILES" "ADDED" "TIME" "NOTE"
+printf '%s\n' "$(printf '%.0s-' {1..98})"
 
 OK=0
 FAIL=0
 
 for log in "${LOG_FILES[@]}"; do
-  date="${log##*backup-}"
-  date="${date%.log}"
+  # Filename is backup-<job>-<YYYY-MM-DD>.log, or legacy backup-<YYYY-MM-DD>.log
+  # (pre-multi-job). The date is always the last 10 chars of the stem.
+  stem="${log##*backup-}"
+  stem="${stem%.log}"
+  date="${stem: -10}"
+  job="${stem%"$date"}"
+  job="${job%-}"
+  job="${job:--}"
 
   snapshot=$(grep -oP "snapshot \K[0-9a-f]+" "$log" 2>/dev/null | head -1 || true)
   files=$(grep -oP "processed \K[0-9]+" "$log" 2>/dev/null | head -1 || true)
@@ -69,17 +75,17 @@ for log in "${LOG_FILES[@]}"; do
     status="✅ OK"
     (( OK++ )) || true
     $FAILURES_ONLY && continue
-    printf "%-12s  %-8s  %-10s  %9s  %12s  %-7s  %s\n" \
-      "$date" "$status" "$snapshot" "${files:--}" "${added:--}" "${duration:--}" "${note:-}"
+    printf "%-12s  %-16s  %-8s  %-10s  %9s  %12s  %-7s  %s\n" \
+      "$date" "$job" "$status" "$snapshot" "${files:--}" "${added:--}" "${duration:--}" "${note:-}"
   else
     status="❌ FAIL"
     (( FAIL++ )) || true
     note="${note:-unknown}"
-    printf "%-12s  %-8s  %-10s  %9s  %12s  %-7s  %s\n" \
-      "$date" "$status" "-" "-" "-" "-" "$note"
+    printf "%-12s  %-16s  %-8s  %-10s  %9s  %12s  %-7s  %s\n" \
+      "$date" "$job" "$status" "-" "-" "-" "-" "$note"
   fi
 done
 
-printf '%s\n' "$(printf '%.0s-' {1..80})"
+printf '%s\n' "$(printf '%.0s-' {1..98})"
 printf "Total: %d runs  |  ✅ %d succeeded  |  ❌ %d failed\n" \
   $(( OK + FAIL )) "$OK" "$FAIL"

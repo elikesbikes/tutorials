@@ -1,0 +1,12 @@
+# HOST-SPECIFIC data-source mounts for THIS host (tars).
+# docker compose merges this file with docker-compose.yml automatically.
+#
+# Not synced to other hosts — each host keeps its own override (like .env).
+# Convention: mount each host directory read-only at /data/<name>; job confs
+# in jobs/*.conf reference the /data/<name> container paths.
+services:
+  restic:
+    volumes:
+      - /var/lib/docker/volumes:/data/docker-volumes:ro
+      - /home/ecloaiza:/data/bind-volumes:ro
+      - /home/ecloaiza/Documents/Obsidian:/data/obsidian:ro
