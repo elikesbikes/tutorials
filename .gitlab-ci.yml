@@ -1,82 +1,44 @@
 stages:
-  - detect
   - deploy
 
-detect_project:
-  stage: detect
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache git
-  script:
-    - PROJECT=$(git diff --name-only HEAD~1 HEAD | grep "^docker-compose/" | cut -d/ -f2 | sort -u | head -1)
-    - echo "Detected project: ${PROJECT:-none}"
-    - echo "PROJECT_NAME=${PROJECT:-none}" >> deploy.env
-  artifacts:
-    reports:
-      dotenv: deploy.env
-
-deploy:ranger0:
+.deploy_template: &deploy_template
   stage: deploy
   when: manual
-  needs:
-    - job: detect_project
-      artifacts: true
   image: alpine:latest
   before_script:
-    - apk add --no-cache openssh-client rsync
+    - apk add --no-cache openssh-client rsync git
     - chmod 600 "$SSH_PRIVATE_KEY"
+    - PROJECT=$(git diff --name-only HEAD~1 HEAD | grep "^docker-compose/" | cut -d/ -f2 | sort -u | head -1)
+    - echo "Detected project = ${PROJECT:-none}"
+
+deploy:ranger0:
+  <<: *deploy_template
   script:
     - |
-      if [ "$PROJECT_NAME" = "none" ] || [ -z "$PROJECT_NAME" ]; then
+      if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
         echo "No docker-compose project changed — nothing to deploy"
         exit 0
       fi
-      echo "Deploying $PROJECT_NAME to ranger0 (192.168.5.16)..."
+      echo "Deploying $PROJECT to ranger0..."
       ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 "
         cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main
-        mkdir -p ~/devops/docker/${PROJECT_NAME}
-        rsync -am \
-          --include='*/' \
-          --include='*.yml' \
-          --include='*.py' \
-          --include='*.sh' \
-          --include='*.md' \
-          --include='*.json' \
-          --exclude='*' \
-          ~/devops/github/tutorials/docker-compose/${PROJECT_NAME}/ \
-          ~/devops/docker/${PROJECT_NAME}/
-        cd ~/devops/docker/${PROJECT_NAME} && docker compose up -d
+        mkdir -p ~/devops/docker/$PROJECT
+        rsync -am --include='*/' --include='*.yml' --include='*.py' --include='*.sh' --include='*.md' --include='*.json' --exclude='*' ~/devops/github/tutorials/docker-compose/$PROJECT/ ~/devops/docker/$PROJECT/
+        cd ~/devops/docker/$PROJECT && docker compose up -d
       "
 
 deploy:endurance:
-  stage: deploy
-  when: manual
-  needs:
-    - job: detect_project
-      artifacts: true
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client rsync
-    - chmod 600 "$SSH_PRIVATE_KEY"
+  <<: *deploy_template
   script:
     - |
-      if [ "$PROJECT_NAME" = "none" ] || [ -z "$PROJECT_NAME" ]; then
+      if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
         echo "No docker-compose project changed — nothing to deploy"
         exit 0
       fi
-      echo "Deploying $PROJECT_NAME to endurance (192.168.5.30)..."
+      echo "Deploying $PROJECT to endurance..."
       ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.30 "
         cd ~/devops/github/tutorials && git fetch origin && git reset --hard origin/main
-        mkdir -p ~/devops/docker/${PROJECT_NAME}
-        rsync -am \
-          --include='*/' \
-          --include='*.yml' \
-          --include='*.py' \
-          --include='*.sh' \
-          --include='*.md' \
-          --include='*.json' \
-          --exclude='*' \
-          ~/devops/github/tutorials/docker-compose/${PROJECT_NAME}/ \
-          ~/devops/docker/${PROJECT_NAME}/
-        cd ~/devops/docker/${PROJECT_NAME} && docker compose up -d
+        mkdir -p ~/devops/docker/$PROJECT
+        rsync -am --include='*/' --include='*.yml' --include='*.py' --include='*.sh' --include='*.md' --include='*.json' --exclude='*' ~/devops/github/tutorials/docker-compose/$PROJECT/ ~/devops/docker/$PROJECT/
+        cd ~/devops/docker/$PROJECT && docker compose up -d
       "
