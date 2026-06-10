@@ -2,7 +2,7 @@ stages:
   - deploy
 
 variables:
-  GIT_DEPTH: "2"
+  GIT_DEPTH: "0"
 
 .deploy_template: &deploy_template
   stage: deploy
@@ -11,9 +11,12 @@ variables:
   before_script:
     - apk add --no-cache openssh-client rsync git
     - chmod 600 "$SSH_PRIVATE_KEY"
-    - git log --oneline -3 || true
-    - git diff --name-only HEAD~1 HEAD || true
-    - PROJECT=$(git diff --name-only HEAD~1 HEAD | { grep "^docker-compose/" || true; } | cut -d/ -f2 | sort -u | head -1)
+    - |
+      if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+        PROJECT=""
+      else
+        PROJECT=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA" "$CI_COMMIT_SHA" | { grep "^docker-compose/" || true; } | cut -d/ -f2 | sort -u | head -1)
+      fi
     - echo "Detected project = ${PROJECT:-none}"
 
 deploy:ranger0:
