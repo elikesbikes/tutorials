@@ -13,6 +13,12 @@ services:
       - TZ=${TZ}
     volumes:
       - ./mongo_data:/data/db
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.30:514"
+        syslog-format: "rfc3164"
+        tag: "syslog_mongo"
 
   syslog_opensearch:
     image: opensearchproject/opensearch:2.19.0
@@ -28,6 +34,12 @@ services:
       - "DISABLE_SECURITY_PLUGIN=${OPENSEARCH_DISABLE_SECURITY_PLUGIN}"
     volumes:
       - ./opensearch_data:/usr/share/opensearch/data
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.30:514"
+        syslog-format: "rfc3164"
+        tag: "syslog_opensearch"
     ports:
       - 9200:9200/tcp
 
@@ -44,6 +56,12 @@ services:
       - TZ=${TZ}
     volumes:
       - ./graylog_data:/usr/share/graylog/data
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.30:514"
+        syslog-format: "rfc3164"
+        tag: "syslog_graylog"
     restart: always
     ports:
       - "9000:9000/tcp"   # Graylog Web Interface & REST API

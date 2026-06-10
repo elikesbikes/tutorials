@@ -1,8 +1,92 @@
 stages:
+  - validate
+  - preflight
   - deploy
 
 variables:
   GIT_DEPTH: "0"
+
+.detect_project: &detect_project
+  - |
+    if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+      PROJECT=""
+    else
+      PROJECT=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA" "$CI_COMMIT_SHA" | { grep "^docker-compose/" || true; } | cut -d/ -f2 | sort -u | head -1)
+    fi
+    echo "Detected project = ${PROJECT:-none}"
+
+validate:compose:
+  stage: validate
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache bash docker-cli
+  script:
+    - *detect_project
+    - |
+      if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
+        echo "No docker-compose project changed — skipping validation"
+        exit 0
+      fi
+      echo "==> Validating $PROJECT..."
+      bash scripts/validate-compose.sh "docker-compose/$PROJECT"
+  only:
+    changes:
+      - docker-compose/**/*
+      - scripts/validate-compose.sh
+
+preflight:ranger0:
+  stage: preflight
+  image: alpine:latest
+  when: manual
+  before_script:
+    - apk add --no-cache openssh-client rsync git
+    - chmod 600 "$SSH_PRIVATE_KEY"
+  script:
+    - *detect_project
+    - |
+      if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
+        echo "No docker-compose project detected"
+        exit 0
+      fi
+      echo "==> Pre-flight checks for $PROJECT on ranger0..."
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 bash -s "$PROJECT" << 'PRECHECK'
+        set -e
+        PROJECT="$1"
+        echo "--- Checking Docker daemon"
+        docker ps > /dev/null || exit 1
+
+        echo "--- Checking frontend network exists"
+        docker network inspect frontend > /dev/null || {
+          echo "ERROR: frontend network not found"
+          exit 1
+        }
+
+        echo "--- Checking disk space"
+        DISK_USAGE=$(df -h /var/lib/docker | awk 'NR==2 {print $5}' | sed 's/%//')
+        if [ "$DISK_USAGE" -gt 85 ]; then
+          echo "WARNING: Docker disk usage at ${DISK_USAGE}%"
+        fi
+
+        echo "--- Checking if project directory exists and is writable"
+        PROJ_DIR="~/devops/docker/$PROJECT"
+        if [ ! -d "$PROJ_DIR" ]; then
+          echo "Creating project directory: $PROJ_DIR"
+          mkdir -p "$PROJ_DIR"
+        fi
+        touch "$PROJ_DIR/.test" && rm "$PROJ_DIR/.test" || {
+          echo "ERROR: Cannot write to $PROJ_DIR"
+          exit 1
+        }
+
+        echo "--- Checking image availability (dry run)"
+        cd "$PROJ_DIR"
+        docker compose pull --dry-run > /dev/null 2>&1 || true
+
+        echo "✓ All pre-flight checks passed"
+      PRECHECK
+  only:
+    changes:
+      - docker-compose/**/*
 
 .deploy_template: &deploy_template
   stage: deploy
@@ -11,13 +95,7 @@ variables:
   before_script:
     - apk add --no-cache openssh-client rsync git
     - chmod 600 "$SSH_PRIVATE_KEY"
-    - |
-      if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
-        PROJECT=""
-      else
-        PROJECT=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA" "$CI_COMMIT_SHA" | { grep "^docker-compose/" || true; } | cut -d/ -f2 | sort -u | head -1)
-      fi
-    - echo "Detected project = ${PROJECT:-none}"
+    - *detect_project
 
 deploy:ranger0:
   <<: *deploy_template
@@ -28,14 +106,16 @@ deploy:ranger0:
         exit 0
       fi
       echo "==> Deploying $PROJECT to ranger0..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 bash -s << EOF
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 bash -s "$PROJECT" << 'DEPLOY_SCRIPT'
         set -e
-        echo "--- sync repo"
+        PROJECT="$1"
+
+        echo "--- Sync tutorials repo"
         cd ~/devops/github/tutorials
         git fetch origin
         git reset --hard origin/main
 
-        echo "--- rsync files"
+        echo "--- Rsync docker-compose files"
         mkdir -p ~/devops/docker/$PROJECT
         rsync -am --ignore-errors \
           --include='*/' --include='*.yml' --include='*.py' \
@@ -44,23 +124,41 @@ deploy:ranger0:
           ~/devops/github/tutorials/docker-compose/$PROJECT/ \
           ~/devops/docker/$PROJECT/
 
-        echo "--- docker compose up"
+        echo "--- Validate compose configuration on target"
         cd ~/devops/docker/$PROJECT
+        docker compose config > /dev/null || {
+          echo "ERROR: docker-compose.yml validation failed"
+          exit 1
+        }
+
+        echo "--- Check required bind mount directories"
+        MOUNTS=$(docker compose config | grep -oP "^\s+- \./\K[^:]*(?=:)" | sort -u)
+        while IFS= read -r MOUNT; do
+          [ -z "$MOUNT" ] && continue
+          if [ ! -e "$MOUNT" ]; then
+            echo "Creating bind mount: $MOUNT"
+            mkdir -p "$MOUNT"
+          fi
+        done <<< "$MOUNTS"
+
+        echo "--- Start services"
         docker compose up -d
 
-        echo "--- health check"
-        sleep 5
-        RUNNING=\$(docker compose ps --filter status=running --services 2>/dev/null | wc -l)
-        TOTAL=\$(docker compose ps --services 2>/dev/null | wc -l)
-        echo "Running: \$RUNNING / \$TOTAL services"
-        if [ "\$RUNNING" -lt "\$TOTAL" ]; then
-          echo "ERROR: Not all services started"
-          docker compose ps
-          docker compose logs --tail=30
-          exit 1
+        echo "--- Run health checks"
+        if [ -f health-check.sh ]; then
+          bash health-check.sh 120 "$(pwd)"
+        else
+          # Fallback: simple health check if script not found
+          sleep 5
+          RUNNING=$(docker compose ps --filter status=running --services 2>/dev/null | wc -l)
+          TOTAL=$(docker compose ps --services 2>/dev/null | wc -l)
+          echo "Running: $RUNNING / $TOTAL services"
+          [ "$RUNNING" -eq "$TOTAL" ] || exit 1
         fi
+
         echo "==> $PROJECT deployed successfully on ranger0"
-      EOF
+      DEPLOY_SCRIPT
+      test $? -eq 0
 
 deploy:endurance:
   <<: *deploy_template
@@ -71,14 +169,16 @@ deploy:endurance:
         exit 0
       fi
       echo "==> Deploying $PROJECT to endurance..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.30 bash -s << EOF
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.30 bash -s "$PROJECT" << 'DEPLOY_SCRIPT'
         set -e
-        echo "--- sync repo"
+        PROJECT="$1"
+
+        echo "--- Sync tutorials repo"
         cd ~/devops/github/tutorials
         git fetch origin
         git reset --hard origin/main
 
-        echo "--- rsync files"
+        echo "--- Rsync docker-compose files"
         mkdir -p ~/devops/docker/$PROJECT
         rsync -am --ignore-errors \
           --include='*/' --include='*.yml' --include='*.py' \
@@ -87,20 +187,38 @@ deploy:endurance:
           ~/devops/github/tutorials/docker-compose/$PROJECT/ \
           ~/devops/docker/$PROJECT/
 
-        echo "--- docker compose up"
+        echo "--- Validate compose configuration on target"
         cd ~/devops/docker/$PROJECT
+        docker compose config > /dev/null || {
+          echo "ERROR: docker-compose.yml validation failed"
+          exit 1
+        }
+
+        echo "--- Check required bind mount directories"
+        MOUNTS=$(docker compose config | grep -oP "^\s+- \./\K[^:]*(?=:)" | sort -u)
+        while IFS= read -r MOUNT; do
+          [ -z "$MOUNT" ] && continue
+          if [ ! -e "$MOUNT" ]; then
+            echo "Creating bind mount: $MOUNT"
+            mkdir -p "$MOUNT"
+          fi
+        done <<< "$MOUNTS"
+
+        echo "--- Start services"
         docker compose up -d
 
-        echo "--- health check"
-        sleep 5
-        RUNNING=\$(docker compose ps --filter status=running --services 2>/dev/null | wc -l)
-        TOTAL=\$(docker compose ps --services 2>/dev/null | wc -l)
-        echo "Running: \$RUNNING / \$TOTAL services"
-        if [ "\$RUNNING" -lt "\$TOTAL" ]; then
-          echo "ERROR: Not all services started"
-          docker compose ps
-          docker compose logs --tail=30
-          exit 1
+        echo "--- Run health checks"
+        if [ -f health-check.sh ]; then
+          bash health-check.sh 120 "$(pwd)"
+        else
+          # Fallback: simple health check if script not found
+          sleep 5
+          RUNNING=$(docker compose ps --filter status=running --services 2>/dev/null | wc -l)
+          TOTAL=$(docker compose ps --services 2>/dev/null | wc -l)
+          echo "Running: $RUNNING / $TOTAL services"
+          [ "$RUNNING" -eq "$TOTAL" ] || exit 1
         fi
+
         echo "==> $PROJECT deployed successfully on endurance"
-      EOF
+      DEPLOY_SCRIPT
+      test $? -eq 0
