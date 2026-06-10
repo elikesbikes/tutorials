@@ -1,5 +1,6 @@
 networks:
-  frontend:
+  default:
+    name: frontend
     external: true
 
 services:
@@ -12,27 +13,26 @@ services:
       - TZ=${TZ}
     volumes:
       - ./mongo_data:/data/db
-    networks:
-      - frontend
 
   syslog_opensearch:
     image: opensearchproject/opensearch:2.19.0
     container_name: syslog_opensearch
     hostname: opensearch
     env_file: .env
+    restart: unless-stopped
     environment:
       - TZ=${TZ}
       - "bootstrap.memory_lock=${OPENSEARCH_BOOTSTRAP_MEMORY_LOCK}"
       - "discovery.type=${OPENSEARCH_DISCOVERY_TYPE}"
       - "action.auto_create_index=${OPENSEARCH_ACTION_AUTO_CREATE_INDEX}"
       - "DISABLE_SECURITY_PLUGIN=${OPENSEARCH_DISABLE_SECURITY_PLUGIN}"
+    volumes:
+      - ./opensearch_data:/usr/share/opensearch/data
     ports:
-      - 9200:9200/tcp  
-    networks:
-      - frontend      
+      - 9200:9200/tcp
 
   syslog_graylog:
-    image: graylog/graylog:7.0
+    image: graylog/graylog:7.1.3
     container_name: syslog_graylog
     hostname: graylog
     user: "1100:1100"
@@ -44,8 +44,6 @@ services:
       - TZ=${TZ}
     volumes:
       - ./graylog_data:/usr/share/graylog/data
-    networks:
-      - frontend
     restart: always
     ports:
       - "9000:9000/tcp"   # Graylog Web Interface & REST API
