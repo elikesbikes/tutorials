@@ -1,0 +1,15 @@
+# Template for the HOST-SPECIFIC compose override.
+#
+# Copy to docker-compose.override.yml on each host and list that host's
+# data-source mounts. docker compose merges it with docker-compose.yml
+# automatically — the base file never changes per host.
+#
+# Convention: mount each host directory read-only at /data/<name>, then
+# reference the /data/<name> container path in JOB_SOURCES of a jobs/*.conf.
+services:
+  restic:
+    volumes:
+      - /var/lib/docker/volumes:/data/docker-volumes:ro
+      - /home/youruser:/data/bind-volumes:ro
+      # Additional jobs need their sources mounted here too, e.g.:
+      # - /mnt/photos:/data/photos:ro
