@@ -29,8 +29,7 @@
 
 **Logging:**
 - **Syslog Server**: `192.168.5.30` (Graylog, runs on endurance) — port `514/udp`
-- ⚠️ **NOT `192.168.5.16`** — that is a reverse proxy. It serves the Graylog web UI (`:9000`/`:443`) but does **not** forward syslog (`514`), so logs sent there are silently dropped. Always send syslog to `192.168.5.30`.
-- Use `syslog-format: "rfc3164"` — Graylog's Syslog UDP input parses RFC3164 (matching the hosts/router); Docker's default rfc5424 is not ingested.
+- Use `syslog-format: "rfc3164"` — Graylog's Syslog UDP input parses RFC3164 (matching the hosts/router).
 - All Docker containers must send logs here
 - Example docker-compose.yml:
   ```yaml
@@ -43,37 +42,34 @@
           syslog-format: "rfc3164"
           tag: "myapp"
   ```
-- **`docker compose logs` still works with the syslog driver.** Docker Engine 20.10+ keeps a local dual-logging cache, so logs land in Graylog *and* remain viewable locally — no need to choose. (The local cache is a per-container ring buffer, cleared on recreate; Graylog is the durable history.)
-- **Cron / background jobs inside a container don't reach the logging driver by default.** The driver only captures PID 1's stdout/stderr. A cron job's output goes wherever its crontab line redirects it (usually a file), so it never hits Graylog. Route job output to the container's stdout so the driver picks it up:
-  ```sh
-  # in the crontab line — tee to a file AND to PID 1's stdout (the container log stream)
-  * * * * * /app/job.sh 2>&1 | tee -a /app/logs/job.log > /proc/1/fd/1
-  ```
-  This requires the foreground process to be PID 1 (e.g. `exec crond -f`).
 
 **Storage / Volumes:**
 - **NEVER use Docker volumes** - Always use bind mounts for persistent data only
 - **Move app code/files INTO the container** via Dockerfile
 - **Only bind mount data that persists across restarts** (databases, uploads, logs, config)
+- **When multiple services exist in docker-compose.yml, enforce bind mounts for ALL volumes** — no exceptions
 - Example Dockerfile:
   ```dockerfile
   FROM python:3.11-slim
   WORKDIR /app
-  COPY src/ /app/src/        # App code goes in container
+  COPY app/ /app/src/        # App code goes in container
   COPY requirements.txt /app/
   RUN pip install -r requirements.txt
   ```
-- Example docker-compose.yml:
+- Example docker-compose.yml with multiple services:
   ```yaml
   services:
-    myapp:
+    app:
       volumes:
-        - ./data:/app/data       # Only persistent data
-        - ./config:/app/config   # Only config that changes
+        - ./data:/app/data       # Bind mount only
+        - ./config:/app/config
+    db:
+      volumes:
+        - ./db-data:/var/lib/mysql  # Bind mount, NOT Docker volume
   ```
 - Create bind mount directories before starting:
   ```bash
-  mkdir -p data config logs
+  mkdir -p data config db-data logs
   ```
 
 ### For Non-Docker Projects
