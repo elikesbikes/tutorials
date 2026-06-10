@@ -4,29 +4,63 @@ set -euo pipefail
 #####################################
 # backup.sh — runs INSIDE the container
 #
-# Calls restic directly (no docker compose wrapper).
-# NFS mounting is handled on the host; this script
-# assumes /backup is already accessible.
+# Usage: backup.sh /app/jobs/<name>.conf
+#
+# One invocation = one job. The conf file declares JOB_NAME, JOB_CRON,
+# JOB_SOURCES and optional per-job overrides (see jobs/example.conf.example).
+# Calls restic directly (no docker compose wrapper). NFS mounting is handled
+# on the host; this script assumes /backup is already accessible.
+#
+# All jobs share one restic repository: snapshots are tagged with JOB_NAME,
+# and jobs serialize via an exclusive lock on /app/logs/.repo.lock.
 #####################################
 
 # RESTIC_REPOSITORY is relative (./backup/). crond runs jobs from $HOME
 # (/root), so anchor cwd at / where the /backup mount lives.
 cd /
 
-NTFY_SERVER="${NTFY_SERVER:-}"
-NTFY_TOPIC="${NTFY_TOPIC:-backups}"
-HOSTNAME="$(hostname -s)"
-STATUS_FILE="/app/logs/status.json"
-LOG_DIR="/app/logs"
-LOG_FILE="$LOG_DIR/backup-$(date +%F).log"
+#####################################
+# LOAD AND VALIDATE JOB CONFIG
+#####################################
+CONF="${1:?Usage: backup.sh /app/jobs/<name>.conf}"
+[[ -r "$CONF" ]] || { echo "ERROR: job conf not readable: $CONF" >&2; exit 1; }
 
-mkdir -p "$LOG_DIR"
+# shellcheck disable=SC1090  # conf path is dynamic by design
+source "$CONF"
+
+# Re-validate even though entrypoint.sh checked at startup — this script is
+# also run manually, and the conf may have changed since the container started.
+[[ "${JOB_NAME:-}" =~ ^[A-Za-z0-9_-]+$ ]] \
+  || { echo "ERROR: $CONF: JOB_NAME='${JOB_NAME:-}' invalid (need [A-Za-z0-9_-]+)" >&2; exit 1; }
+[[ -n "${JOB_SOURCES:-}" ]] \
+  || { echo "ERROR: $CONF: JOB_SOURCES is empty" >&2; exit 1; }
+
+# Per-job overrides fall back to .env defaults. Exported so cleanup.sh
+# (invoked below) sees the resolved values.
+export KEEP_DAILY="${JOB_KEEP_DAILY:-${KEEP_DAILY:-7}}"
+export KEEP_WEEKLY="${JOB_KEEP_WEEKLY:-${KEEP_WEEKLY:-4}}"
+export KEEP_MONTHLY="${JOB_KEEP_MONTHLY:-${KEEP_MONTHLY:-6}}"
+NTFY_SERVER="${JOB_NTFY_SERVER:-${NTFY_SERVER:-}}"
+NTFY_TOPIC="${JOB_NTFY_TOPIC:-${NTFY_TOPIC:-backups}}"
+MAX_AGE_HOURS="${JOB_MAX_AGE_HOURS:-25}"
+
+# restic --verbose level: 1 = summary + progress, 2 = log every file.
+# Per-job JOB_VERBOSITY overrides the RESTIC_VERBOSITY default in .env.
+VERBOSITY="${JOB_VERBOSITY:-${RESTIC_VERBOSITY:-1}}"
+
+HOSTNAME="$(hostname -s)"
+LOG_DIR="/app/logs"
+LOG_FILE="$LOG_DIR/backup-${JOB_NAME}-$(date +%F).log"
+STATUS_FILE="$LOG_DIR/status/${JOB_NAME}.json"
+LOCK_FILE="$LOG_DIR/.repo.lock"
+
+mkdir -p "$LOG_DIR/status"
 
 notify() {
   local msg="$1"
   [[ -z "$NTFY_SERVER" ]] && return 0
   curl -fsS -X POST "$NTFY_SERVER/$NTFY_TOPIC" \
-    -H "Title: Restic Backup ($HOSTNAME)" \
+    -H "Title: Restic Backup ($HOSTNAME/$JOB_NAME)" \
     -H "Priority: 3" \
     -d "$msg" >/dev/null || true
 }
@@ -57,12 +91,14 @@ write_status() {
 import json
 d = {
   'status': 'ok',
+  'job': '$JOB_NAME',
   'last_success_time': '$now',
   'snapshot_id': '$snapshot',
   'files_processed': $files,
   'data_added': '$added',
   'duration': '$duration',
   'hostname': '$HOSTNAME',
+  'max_age_hours': $MAX_AGE_HOURS,
   'updated_at': '$now'
 }
 print(json.dumps(d, indent=2))
@@ -75,9 +111,11 @@ print(json.dumps(d, indent=2))
 import json
 d = {
   'status': 'fail',
+  'job': '$JOB_NAME',
   'last_success_time': '$last_success' if '$last_success' else None,
   'error': '$error',
   'hostname': '$HOSTNAME',
+  'max_age_hours': $MAX_AGE_HOURS,
   'updated_at': '$now'
 }
 print(json.dumps(d, indent=2))
@@ -88,7 +126,7 @@ print(json.dumps(d, indent=2))
 fail() {
   local msg="$1"
   echo "ERROR: $msg" | tee -a "$LOG_FILE"
-  notify "❌ [$HOSTNAME] $msg"
+  notify "❌ [$HOSTNAME/$JOB_NAME] $msg"
   write_status "fail" "$msg"
   exit 1
 }
@@ -105,36 +143,42 @@ fail() {
 echo "==================================================" | tee -a "$LOG_FILE"
 echo "Restic backup started at $(date)"                   | tee -a "$LOG_FILE"
 echo "Host: $HOSTNAME"                                    | tee -a "$LOG_FILE"
+echo "Job: $JOB_NAME"                                     | tee -a "$LOG_FILE"
 echo "Repository: $RESTIC_REPOSITORY"                     | tee -a "$LOG_FILE"
 echo "==================================================" | tee -a "$LOG_FILE"
+
+#####################################
+# BUILD BACKUP PATH LIST
+#####################################
+read -ra BACKUP_PATHS <<< "$JOB_SOURCES"
+
+# A missing source means a broken mount, not "nothing to back up" —
+# fail loudly instead of silently backing up less than configured.
+for path in "${BACKUP_PATHS[@]}"; do
+  [[ -d "$path" ]] || fail "Source path missing: $path (broken mount in docker-compose.override.yml?)"
+  echo "✔ Source: $path" | tee -a "$LOG_FILE"
+done
+
+#####################################
+# ACQUIRE REPOSITORY LOCK
+#
+# Jobs queue (rather than skip) when another job holds the repo: a late
+# backup is harmless, a skipped one is a protection gap. The timeout stops
+# a wedged NFS mount from queueing jobs forever — on timeout the job fails
+# loudly, which is what monitoring should see.
+#####################################
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo "Waiting for repo lock (another job or cleanup running)..." | tee -a "$LOG_FILE"
+  flock -w "${LOCK_TIMEOUT_SECONDS:-7200}" 9 \
+    || fail "Could not acquire repo lock within ${LOCK_TIMEOUT_SECONDS:-7200}s"
+fi
 
 #####################################
 # VERIFY REPOSITORY IS ACCESSIBLE
 #####################################
 [[ -d "$RESTIC_REPOSITORY" ]] || \
   fail "Repository path not accessible: $RESTIC_REPOSITORY (is NFS mounted on host?)"
-
-#####################################
-# BUILD BACKUP PATH LIST
-#####################################
-BACKUP_PATHS=("/data/docker-volumes")
-
-CANDIDATE_BIND_PATHS=(
-  "/data/bind-volumes/docker"
-  "/data/bind-volumes/devops/docker"
-  "/data/bind-volumes/Devops/docker"
-  "/data/bind-volumes/DevOps/docker"
-)
-
-echo "Detecting bind-mount paths..." | tee -a "$LOG_FILE"
-for path in "${CANDIDATE_BIND_PATHS[@]}"; do
-  if [[ -d "$path" ]]; then
-    BACKUP_PATHS+=("$path")
-    echo "✔ Including $path" | tee -a "$LOG_FILE"
-  else
-    echo "✘ Skipping $path (not present)" | tee -a "$LOG_FILE"
-  fi
-done
 
 #####################################
 # ENSURE REPOSITORY EXISTS
@@ -149,12 +193,16 @@ fi
 #####################################
 # RUN BACKUP
 #####################################
-echo "Running restic backup for:" | tee -a "$LOG_FILE"
+echo "Running restic backup (tag: $JOB_NAME) for:" | tee -a "$LOG_FILE"
 for p in "${BACKUP_PATHS[@]}"; do
   echo "  - $p" | tee -a "$LOG_FILE"
 done
 
-restic --no-lock -v backup "${BACKUP_PATHS[@]}" >>"$LOG_FILE" 2>&1 \
+# Pipe through tee so verbose output is visible live (on the terminal for a
+# manual run, in cron-<job>.log for a scheduled run) AND saved to the log file
+# the result parser reads below. pipefail makes the pipeline fail if restic does.
+restic --no-lock "--verbose=$VERBOSITY" backup --tag "$JOB_NAME" "${BACKUP_PATHS[@]}" 2>&1 \
+  | tee -a "$LOG_FILE" \
   || fail "Restic backup command failed"
 
 #####################################
@@ -181,11 +229,13 @@ print('duration=' + (dur.group(1)   if dur   else 'unknown'))
 # SUCCESS — TRIGGER CLEANUP
 #####################################
 write_status "ok" "${snapshot:-unknown}" "${files:-0}" "${added:-unknown}" "${duration:-unknown}"
-notify "✅ [$HOSTNAME] Backup completed — snapshot ${snapshot:-?} | ${files:-?} files | ${added:-?}"
+notify "✅ [$HOSTNAME/$JOB_NAME] Backup completed — snapshot ${snapshot:-?} | ${files:-?} files | ${added:-?}"
 echo "==================================================" | tee -a "$LOG_FILE"
 
-# Run cleanup if the script exists (removes old snapshots based on retention policy)
+# Run cleanup for THIS job's snapshots. We still hold the repo lock (fd 9 is
+# inherited); RESTIC_LOCK_HELD tells cleanup.sh not to lock again.
+# tee (not >>) so cleanup output also reaches our stdout → docker syslog driver.
 if [[ -x /app/scripts/cleanup.sh ]]; then
-  echo "Triggering cleanup..." | tee -a "$LOG_FILE"
-  /app/scripts/cleanup.sh >>"$LOG_FILE" 2>&1
+  echo "Triggering cleanup for job $JOB_NAME..." | tee -a "$LOG_FILE"
+  RESTIC_LOCK_HELD=1 /app/scripts/cleanup.sh "$CONF" 2>&1 | tee -a "$LOG_FILE"
 fi

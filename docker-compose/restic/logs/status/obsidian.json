@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "job": "obsidian",
+  "last_success_time": "2026-06-10T19:30:02",
+  "snapshot_id": "8c110815",
+  "files_processed": 1654,
+  "data_added": "65.401 MiB",
+  "duration": "0:01",
+  "hostname": "tars",
+  "max_age_hours": 25,
+  "updated_at": "2026-06-10T19:30:02"
+}
