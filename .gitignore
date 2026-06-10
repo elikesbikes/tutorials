@@ -6,3 +6,5 @@
 .*
 # But keep the .gitignore file itself!
 !.gitignore
+# Keep GitLab CI config
+!.gitlab-ci.yml
