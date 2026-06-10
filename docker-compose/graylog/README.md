@@ -1,6 +1,6 @@
 # Graylog Docker Setup
 
-As complete Docker-based Graylog deployment with MongoDB and OpenSearch for centralized log aggregation and analysis.
+A complete Docker-based Graylog deployment with MongoDB and OpenSearch for centralized log aggregation and analysis.
 
 ## Overview
 
