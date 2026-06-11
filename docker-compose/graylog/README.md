@@ -2,7 +2,7 @@
 
 A production-ready Docker deployment of Graylog with MongoDB and OpenSearch for centralized log aggregation and analysis across your homelab.
 
-## Table of Contentss
+## Table of Contents
 
 1. [Overview](#1-overview)
 2. [Prerequisites](#2-prerequisites)
