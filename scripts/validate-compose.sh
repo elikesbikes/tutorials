@@ -34,7 +34,17 @@ echo -n "Checking compose file syntax... "
 if [ ! -f docker-compose.yml ]; then
   fail "docker-compose.yml not found"
 fi
-docker compose config > /dev/null 2>&1 || fail "Invalid docker-compose.yml syntax"
+# Suppress .env missing warnings — .env is gitignored and set on target host
+docker compose config > /dev/null 2>&1 || {
+  # Try with empty .env if missing
+  if [ ! -f .env ]; then
+    touch .env
+    docker compose config > /dev/null 2>&1 || fail "Invalid docker-compose.yml syntax"
+    rm .env
+  else
+    fail "Invalid docker-compose.yml syntax"
+  fi
+}
 pass "docker-compose.yml valid"
 
 # 2. Check required environment variables
