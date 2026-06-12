@@ -34,13 +34,23 @@ echo -n "Checking compose file syntax... "
 if [ ! -f docker-compose.yml ]; then
   fail "docker-compose.yml not found"
 fi
-# Suppress .env missing warnings — .env is gitignored and set on target host
+# Suppress .env missing warnings — .env is gitignored and set on target host.
+# In CI there is no real .env, so generate a temporary one with placeholder
+# values for every referenced variable. Empty values break interpolation when a
+# var is used inside a volume/port spec (e.g. "${PATH}:/data" -> ":/data"), which
+# Docker rejects with "empty section between colons". Placeholders keep the spec
+# structurally valid so we validate the YAML, not the (host-only) env values.
 docker compose config > /dev/null 2>&1 || {
-  # Try with empty .env if missing
   if [ ! -f .env ]; then
-    touch .env
-    docker compose config > /dev/null 2>&1 || fail "Invalid docker-compose.yml syntax"
-    rm .env
+    # Pick a placeholder value per variable so interpolation stays valid in every
+    # position: PORT vars need a number, PATH vars need a slashed path (a bare word
+    # is read as a named volume), and names need a non-empty alphanumeric string.
+    # Use the variable's own name as the value so each placeholder is unique —
+    # reusing one value would collide on container_name and fail validation.
+    sed -n 's/.*\${\([A-Z_][A-Z0-9_]*\)}.*/\1/p' docker-compose.yml | sort -u \
+      | awk '/PORT/{print $0"=8080";next} /PATH/{print $0"=/tmp/"$0;next} {print $0"="$0}' > .env
+    docker compose config > /dev/null 2>&1 || { rm -f .env; fail "Invalid docker-compose.yml syntax"; }
+    rm -f .env
   else
     fail "Invalid docker-compose.yml syntax"
   fi
