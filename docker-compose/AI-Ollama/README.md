@@ -114,3 +114,5 @@ docker logs ai-openwebui-prod-1 --tail=50
 ```
 
 Structured logs are also available in Graylog under tags `ai-ollama` and `ai-openwebui`.
+
+TARS
