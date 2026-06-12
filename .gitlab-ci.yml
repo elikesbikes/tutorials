@@ -129,7 +129,12 @@ deploy:ranger0:
 
         echo "--- Rsync docker-compose files"
         mkdir -p ~/devops/docker/$PROJECT
-        rsync -am --ignore-errors \
+        # --no-owner/--no-group: runner can't chgrp container-written data (root-owned).
+        # Exclude runtime data/cache dirs *before* '*/' so rsync never descends into
+        # them (first matching rule wins); we only sync code/config, not app state.
+        rsync -am --ignore-errors --no-owner --no-group \
+          --exclude='openwebui_data/' --exclude='*_data/' \
+          --exclude='data/' --exclude='.env' \
           --include='*/' --include='*.yml' --include='*.py' \
           --include='*.sh' --include='*.md' --include='*.json' \
           --exclude='*' \
@@ -192,7 +197,12 @@ deploy:endurance:
 
         echo "--- Rsync docker-compose files"
         mkdir -p ~/devops/docker/$PROJECT
-        rsync -am --ignore-errors \
+        # --no-owner/--no-group: runner can't chgrp container-written data (root-owned).
+        # Exclude runtime data/cache dirs *before* '*/' so rsync never descends into
+        # them (first matching rule wins); we only sync code/config, not app state.
+        rsync -am --ignore-errors --no-owner --no-group \
+          --exclude='openwebui_data/' --exclude='*_data/' \
+          --exclude='data/' --exclude='.env' \
           --include='*/' --include='*.yml' --include='*.py' \
           --include='*.sh' --include='*.md' --include='*.json' \
           --exclude='*' \
