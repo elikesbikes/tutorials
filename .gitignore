@@ -8,3 +8,6 @@
 !.gitignore
 # Keep GitLab CI config
 !.gitlab-ci.yml
+# Runtime app data / model caches (bind-mounted, container-written)
+openwebui_data/
+*_data/
