@@ -34,12 +34,12 @@ validate:compose:
       - docker-compose/**/*
       - scripts/validate-compose.sh
 
-preflight:ranger0:
+.preflight_template: &preflight_template
   stage: preflight
   image: alpine:latest
   when: manual
   before_script:
-    - apk add --no-cache openssh-client rsync git
+    - apk add --no-cache openssh-client git
     - chmod 600 "$SSH_PRIVATE_KEY"
   script:
     - *detect_project
@@ -48,8 +48,8 @@ preflight:ranger0:
         echo "No docker-compose project detected"
         exit 0
       fi
-      echo "==> Pre-flight checks for $PROJECT on ranger0..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.16 bash -s "$PROJECT" << 'PRECHECK'
+      echo "==> Pre-flight checks for $PROJECT on $HOST_NAME ($TARGET_HOST)..."
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no "ecloaiza@$TARGET_HOST" bash -s "$PROJECT" << 'PRECHECK'
         set -e
         PROJECT="$1"
         echo "--- Checking Docker daemon"
@@ -87,6 +87,18 @@ preflight:ranger0:
   only:
     changes:
       - docker-compose/**/*
+
+preflight:ranger0:
+  <<: *preflight_template
+  variables:
+    TARGET_HOST: "192.168.5.16"
+    HOST_NAME: "ranger0"
+
+preflight:endurance:
+  <<: *preflight_template
+  variables:
+    TARGET_HOST: "192.168.5.30"
+    HOST_NAME: "endurance"
 
 .deploy_template: &deploy_template
   stage: deploy
