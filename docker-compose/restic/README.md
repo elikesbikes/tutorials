@@ -243,3 +243,5 @@ docker compose exec restic sh -c 'cd / && restic forget --tag docker-volumes \
 - `.env` and `backup/` are git-ignored — never commit them
 - `~/nfs-mount.env` should be `chmod 600`
 - Rotate the repo password: `docker compose exec restic restic key passwd`
+
+Author (Tars)
