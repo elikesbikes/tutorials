@@ -1,5 +1,9 @@
 services:
   restic:
+    # Published image (Docker Hub). `docker compose pull && up -d` uses this.
+    image: ecloaiza/restic-backup:latest
+    # `build: .` stays for local development — `docker compose build` rebuilds
+    # from source and tags the result as the image name above.
     build: .
     container_name: restic
     hostname: ${CONTAINER_HOSTNAME:-ranger0}
@@ -7,10 +11,8 @@ services:
     env_file:
       - .env
     volumes:
-      # App code — bind-mounted individually so changes take effect without a rebuild
-      - ./app/entrypoint.sh:/app/entrypoint.sh:ro
-      - ./app/scripts:/app/scripts:ro
-      - ./app/status-api:/app/status-api:ro
+      # App code now lives IN the image (COPY app/ in the Dockerfile). To pick
+      # up code changes, rebuild: `docker compose up -d --build`.
 
       # Job definitions — one .conf per backup job (see jobs/example.conf.example)
       - ./jobs:/app/jobs:ro
