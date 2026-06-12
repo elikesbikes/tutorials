@@ -2,6 +2,19 @@
 
 Restic running in a persistent Docker container with multiple independently scheduled backup jobs, an HTTP health endpoint, and host-managed NFS mounting.
 
+## Docker Image
+
+Published on Docker Hub (multi-arch — `linux/amd64` + `linux/arm64`):
+
+```bash
+docker pull ecloaiza/restic-backup:latest
+```
+
+The image contains only the application code (`app/`). All configuration —
+`.env`, `jobs/*.conf`, data-source mounts, and the `backup` repository — is
+provided at runtime via bind mounts and `env_file`, so **no secrets are baked
+into the image**. See [Setup](#4-setup) for the required mounts and config.
+
 ## Table of Contents
 
 1. [Architecture](#1-architecture)
@@ -96,7 +109,9 @@ cp jobs/example.conf.example jobs/<name>.conf                       # define at 
 
 # 5. Mount NFS and start
 sudo host/nfs-auto-mount.sh
-docker compose up -d --build
+docker compose pull && docker compose up -d   # pull the published image (recommended)
+# — or build from source instead of pulling (for local development):
+# docker compose up -d --build
 
 # 6. Init repo (first time only)
 docker compose exec restic restic init
