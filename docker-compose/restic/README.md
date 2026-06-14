@@ -245,3 +245,5 @@ docker compose exec restic sh -c 'cd / && restic forget --tag docker-volumes \
 - Rotate the repo password: `docker compose exec restic restic key passwd`
 
 Author Cooper
+
+<!-- pipeline test: 2026-06-14 -->
