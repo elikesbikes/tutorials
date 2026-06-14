@@ -201,9 +201,23 @@ done
 # Pipe through tee so verbose output is visible live (on the terminal for a
 # manual run, in cron-<job>.log for a scheduled run) AND saved to the log file
 # the result parser reads below. pipefail makes the pipeline fail if restic does.
+# Capture restic's own exit code (PIPESTATUS[0]) — not tee's. `|| true` keeps
+# `set -e` from aborting before we can inspect the code.
 restic --no-lock "--verbose=$VERBOSITY" backup --tag "$JOB_NAME" "${BACKUP_PATHS[@]}" 2>&1 \
-  | tee -a "$LOG_FILE" \
-  || fail "Restic backup command failed"
+  | tee -a "$LOG_FILE" || true
+restic_rc=${PIPESTATUS[0]}
+
+# restic exit codes: 0 = success; 3 = snapshot saved but some source files
+# could not be read; anything else = real failure. Exit 3 happens routinely
+# when backing up live data dirs (e.g. Graylog/OpenSearch deletes Lucene
+# segment files mid-scan) — the snapshot is still valid, so treat it as a
+# warning and proceed to parse results + cleanup.
+if [[ "$restic_rc" -eq 3 ]]; then
+  echo "WARNING: some source files could not be read during backup (restic exit 3); snapshot still saved" \
+    | tee -a "$LOG_FILE"
+elif [[ "$restic_rc" -ne 0 ]]; then
+  fail "Restic backup command failed (exit $restic_rc)"
+fi
 
 #####################################
 # PARSE RESULTS FROM LOG
