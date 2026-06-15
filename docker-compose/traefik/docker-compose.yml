@@ -1,5 +1,7 @@
 ---
 # Traefik v3 reverse proxy — homelab, multi-host portable.
+# Deployed to multiple hosts (tars, endurance, ...) — bootstrap each once with
+# scripts/bootstrap.sh, then pipeline deploys keep config in sync.
 # Everything host-specific comes from .env (git-ignored); nothing is hardcoded.
 # Secrets: CF_DNS_API_TOKEN (.env) + secrets/dashboard.htpasswd (git-ignored).
 # Talks to Docker via the existing socket-proxy container (no raw socket mount).
