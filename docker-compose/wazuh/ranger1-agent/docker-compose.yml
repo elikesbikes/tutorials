@@ -1,0 +1,26 @@
+# Wazuh App Copyright (C) 2017, Wazuh Inc. (License GPLv2)
+services:
+  wazuh.agent:
+    image: wazuh/wazuh-agent:4.14.5
+    hostname: ranger1
+    restart: unless-stopped
+    # host network so the agent can monitor the actual host and reach the manager
+    network_mode: host
+    pid: host
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - WAZUH_MANAGER=192.168.5.30
+      - WAZUH_MANAGER_PORT=11514
+      - WAZUH_AGENT_NAME=ranger1
+    volumes:
+      - ./config/wazuh-agent-conf:/wazuh-config-mount/etc/ossec.conf
+      - /var/log:/var/log:ro
+      - /etc:/etc:ro
+      - /var/ossec/queue/sockets:/var/ossec/queue/sockets
+      - /home/ecloaiza/devops/github:/home/ecloaiza/devops/github:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "wazuh-agent-ranger1"
