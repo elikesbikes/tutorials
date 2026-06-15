@@ -192,4 +192,4 @@ Prereqs per host: the `frontend` network, a running `socket-proxy`, and ports 80
 
 ---
 
-_README authored by TARS per homelab standards._
+_README authored by TARS per homelab standards
