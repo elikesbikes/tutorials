@@ -2,6 +2,12 @@
 .env
 .env.*
 
+# Exclude all CLAUDE.md files and .claude folders anywhere in the tree
+CLAUDE.md
+**/CLAUDE.md
+.claude/
+**/.claude/
+
 # Exclude all hidden files/folders (starting with a dot)
 .*
 # But keep the .gitignore file itself!
