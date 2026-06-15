@@ -1,22 +1,51 @@
 ---
+# Traefik v3 reverse proxy — homelab, multi-host portable.
+# Everything host-specific comes from .env (git-ignored); nothing is hardcoded.
+# Secrets: CF_DNS_API_TOKEN (.env) + secrets/dashboard.htpasswd (git-ignored).
+# Talks to Docker via the existing socket-proxy container (no raw socket mount).
 services:
   traefik:
-    image: traefik:v2.10.4
-    container_name: traefik-prod-4
-    ports:
-      - 80:80
-      - 443:443
-      - 8081:8080
-
-    volumes:
-      - ./config:/etc/traefik
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:1
-      - CF_DNS_API_TOKEN=xWJyPUNNH93Smi-0ajLziJGV3v9D6Ca6s0GMdOIs
-      - "TZ=America/Los_Angeles" 
-    networks:
-      frontend:
+    image: traefik:v3.7.5
+    container_name: traefik
     restart: unless-stopped
+    # Non-root; defaults to 1000:1000 but overridable per host via .env.
+    # acme.json must be owned/writable by this user.
+    user: "${PUID:-1000}:${PGID:-1000}"
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: .env
+    environment:
+      - TZ=${TZ:-America/Los_Angeles}
+      # Consumed by the Cloudflare DNS-01 ACME provider (value lives in .env).
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+    volumes:
+      # Bind mounts only — no Docker named volumes (per homelab standards).
+      - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./config/dynamic:/etc/traefik/dynamic:ro
+      - ./certs:/etc/traefik/certs
+      # Per-host secrets (dashboard htpasswd), read-only.
+      - ./secrets:/etc/traefik/secrets:ro
+    networks:
+      - frontend
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "${SYSLOG_ADDRESS:-udp://192.168.5.30:514}"
+        syslog-format: "rfc3164"
+        tag: "traefik"
+    # Dashboard router + basic-auth defined here via labels so the host-specific
+    # hostname comes from .env. Auth uses a usersfile (htpasswd) to avoid the
+    # bcrypt-'$' problem with compose env interpolation.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.tls.certresolver=production"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth,security-headers@file"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.usersfile=/etc/traefik/secrets/dashboard.htpasswd"
+
 networks:
   frontend:
     external: true

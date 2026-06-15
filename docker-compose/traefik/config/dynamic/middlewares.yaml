@@ -1,0 +1,33 @@
+# Shared, reusable middlewares (no secrets — safe to commit).
+# Reference these from container labels, e.g.:
+#   traefik.http.routers.<name>.middlewares=security-headers@file
+http:
+  middlewares:
+    # Sensible default security headers for any router that opts in.
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    # Redirect any router to HTTPS (entryPoint-level redirect already covers web->websecure,
+    # this is here for per-router use if ever needed).
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    # Restrict socket-proxy access to ranger0 + endurance only (everyone else: 403).
+    # Clients hit Traefik directly on the LAN, so the default (remote source IP)
+    # strategy is correct — no X-Forwarded-For depth needed.
+    socketproxy-allowlist:
+      ipAllowList:
+        sourceRange:
+          - "192.168.5.16/32"
+          - "192.168.5.30/32"
+          - "192.168.5.127/32"
+          - "127.0.0.1/32"
