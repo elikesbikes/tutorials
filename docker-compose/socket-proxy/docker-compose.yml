@@ -42,8 +42,16 @@ services:
     read_only: true
     tmpfs:
       - /run
-    ports:
-      - 2375:2375
+    # Host port 2375 is intentionally NOT published — the Docker API is no longer
+    # exposed on the LAN. Traefik reaches socket-proxy internally over the frontend
+    # network, and external access goes through Traefik (HTTPS + IP allowlist) only.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.socketproxy.rule=Host(`socketproxy-tars.home.elikesbikes.com`)"
+      - "traefik.http.routers.socketproxy.entrypoints=websecure"
+      - "traefik.http.routers.socketproxy.tls.certresolver=production"
+      - "traefik.http.routers.socketproxy.middlewares=socketproxy-allowlist@file,security-headers@file"
+      - "traefik.http.services.socketproxy.loadbalancer.server.port=2375"
 networks:
   frontend:
     external: true
