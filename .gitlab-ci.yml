@@ -106,6 +106,12 @@ preflight:docker-prod-1:
     TARGET_HOST: "192.168.5.24"
     HOST_NAME: "docker-prod-1"
 
+preflight:ranger1:
+  <<: *preflight_template
+  variables:
+    TARGET_HOST: "192.168.5.35"
+    HOST_NAME: "ranger1"
+
 .deploy_template: &deploy_template
   stage: deploy
   when: manual
@@ -316,5 +322,73 @@ deploy:docker-prod-1:
         fi
 
         echo "==> $PROJECT deployed successfully on docker-prod-1"
+      DEPLOY_SCRIPT
+      test $? -eq 0
+
+deploy:ranger1:
+  <<: *deploy_template
+  script:
+    - |
+      if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
+        echo "No docker-compose project changed — nothing to deploy"
+        exit 0
+      fi
+      echo "==> Deploying $PROJECT to ranger1..."
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.35 bash -s "$PROJECT" << 'DEPLOY_SCRIPT'
+        set -e
+        PROJECT="$1"
+
+        echo "--- Sync tutorials repo"
+        cd ~/devops/github/tutorials
+        git fetch origin
+        git reset --hard origin/main
+
+        echo "--- Rsync docker-compose files"
+        mkdir -p ~/devops/docker/$PROJECT
+        # --no-owner/--no-group: runner can't chgrp container-written data (root-owned).
+        # Exclude runtime data/cache dirs *before* '*/' so rsync never descends into
+        # them (first matching rule wins); we only sync code/config, not app state.
+        rsync -am --ignore-errors --no-owner --no-group \
+          --exclude='openwebui_data/' --exclude='*_data/' \
+          --exclude='data/' --exclude='.env' \
+          --include='*/' --include='*.yml' --include='*.yaml' --include='*.py' \
+          --include='*.sh' --include='*.md' --include='*.json' \
+          --exclude='*' \
+          ~/devops/github/tutorials/docker-compose/$PROJECT/ \
+          ~/devops/docker/$PROJECT/
+
+        echo "--- Validate compose configuration on target"
+        cd ~/devops/docker/$PROJECT
+        docker compose config > /dev/null || {
+          echo "ERROR: docker-compose.yml validation failed"
+          exit 1
+        }
+
+        echo "--- Check required bind mount directories"
+        MOUNTS=$(docker compose config | grep -oP "^\s+- \./\K[^:]*(?=:)" | sort -u)
+        while IFS= read -r MOUNT; do
+          [ -z "$MOUNT" ] && continue
+          if [ ! -e "$MOUNT" ]; then
+            echo "Creating bind mount: $MOUNT"
+            mkdir -p "$MOUNT"
+          fi
+        done <<< "$MOUNTS"
+
+        echo "--- Start services"
+        docker compose up -d
+
+        echo "--- Run health checks"
+        if [ -f health-check.sh ]; then
+          bash health-check.sh 120 "$(pwd)"
+        else
+          # Fallback: simple health check if script not found
+          sleep 5
+          RUNNING=$(docker compose ps --filter status=running --services 2>/dev/null | wc -l)
+          TOTAL=$(docker compose ps --services 2>/dev/null | wc -l)
+          echo "Running: $RUNNING / $TOTAL services"
+          [ "$RUNNING" -eq "$TOTAL" ] || exit 1
+        fi
+
+        echo "==> $PROJECT deployed successfully on ranger1"
       DEPLOY_SCRIPT
       test $? -eq 0
