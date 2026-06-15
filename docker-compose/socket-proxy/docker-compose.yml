@@ -4,8 +4,6 @@ services:
     container_name: socket-proxy
     networks:
       frontend:
-    security_opt:
-      - no-new-privileges:true
     environment:
       - ALLOW_START=1 #optional
       - ALLOW_STOP=1 #optional
@@ -47,11 +45,11 @@ services:
     # network, and external access goes through Traefik (HTTPS + IP allowlist) only.
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.socketproxy.rule=Host(`socketproxy-tars.home.elikesbikes.com`)"
-      - "traefik.http.routers.socketproxy.entrypoints=websecure"
-      - "traefik.http.routers.socketproxy.tls.certresolver=production"
-      - "traefik.http.routers.socketproxy.middlewares=socketproxy-allowlist@file,security-headers@file"
-      - "traefik.http.services.socketproxy.loadbalancer.server.port=2375"
+      - "traefik.http.routers.socketproxy-${HOSTNAME}.rule=Host(`socketproxy-${HOSTNAME}.home.elikesbikes.com`)"
+      - "traefik.http.routers.socketproxy-${HOSTNAME}.entrypoints=websecure"
+      - "traefik.http.routers.socketproxy-${HOSTNAME}.tls.certresolver=production"
+      - "traefik.http.routers.socketproxy-${HOSTNAME}.middlewares=socketproxy-allowlist@file,security-headers@file"
+      - "traefik.http.services.socketproxy-${HOSTNAME}.loadbalancer.server.port=2375"
 networks:
   frontend:
     external: true
