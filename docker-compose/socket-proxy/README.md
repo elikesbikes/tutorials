@@ -44,6 +44,13 @@ Many tools (Traefik, Portainer, dashboards, etc.) need to talk to the Docker API
 
 ## 4. Usage
 
+Copy the example environment file and set the host-specific values:
+
+```bash
+cp .env.example .env
+# edit .env and set HOSTNAME for this machine
+```
+
 Start the proxy:
 
 ```bash
@@ -94,12 +101,22 @@ Tighten this to the minimum your consumers actually need. For example, if only T
 
 - The container joins the external `frontend` network only.
 - Host port `2375` is **intentionally not published** — there is no LAN exposure.
-- Traefik routes external traffic to the proxy via the labels in the compose file:
-  - Host rule: `socketproxy-tars.home.elikesbikes.com`
+- Traefik routes external traffic to the proxy via the labels in the compose file. The host-specific parts come from `.env`:
+  - Host rule: `socketproxy-${HOSTNAME}.home.elikesbikes.com` (e.g. `socketproxy-tars.home.elikesbikes.com`)
+  - Router/service names are also suffixed with `${HOSTNAME}` so multiple hosts sharing a Traefik instance don't collide.
   - Entrypoint: `websecure` (HTTPS)
   - TLS cert resolver: `production`
   - Middlewares: IP allowlist + security headers
   - Upstream service port: `2375`
+
+### Multi-host deployment
+
+The compose file is host-agnostic; only `.env` changes per machine. On each host:
+
+```bash
+cp .env.example .env   # set HOSTNAME=<this host>
+docker compose up -d
+```
 
 ## 7. Security Notes
 
