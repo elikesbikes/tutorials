@@ -135,7 +135,7 @@ deploy:ranger0:
         rsync -am --ignore-errors --no-owner --no-group \
           --exclude='openwebui_data/' --exclude='*_data/' \
           --exclude='data/' --exclude='.env' \
-          --include='*/' --include='*.yml' --include='*.py' \
+          --include='*/' --include='*.yml' --include='*.yaml' --include='*.py' \
           --include='*.sh' --include='*.md' --include='*.json' \
           --exclude='*' \
           ~/devops/github/tutorials/docker-compose/$PROJECT/ \
@@ -203,7 +203,7 @@ deploy:endurance:
         rsync -am --ignore-errors --no-owner --no-group \
           --exclude='openwebui_data/' --exclude='*_data/' \
           --exclude='data/' --exclude='.env' \
-          --include='*/' --include='*.yml' --include='*.py' \
+          --include='*/' --include='*.yml' --include='*.yaml' --include='*.py' \
           --include='*.sh' --include='*.md' --include='*.json' \
           --exclude='*' \
           ~/devops/github/tutorials/docker-compose/$PROJECT/ \
