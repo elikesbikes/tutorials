@@ -8,10 +8,9 @@ services:
     env_file: .env
     environment:
       TZ: US/Pacific
-    ports:
-      # Web UI (5000) is no longer published — it's served through Traefik.
-      # Agent receiver kept: monitored hosts connect here directly for TLS registration/push.
-      - "8001:8000"   # Agent receiver (TLS registration)
+    # No published ports — web UI (5000) served via Traefik. The agent receiver
+    # (8000) is unused (0 registered agents); re-publish "8001:8000" only if you
+    # later set up checkmk agent push/registration.
     volumes:
       - ./data/omd:/omd/sites
     tmpfs:
