@@ -2,15 +2,16 @@ name: checkmk
 
 services:
   checkmk:
-    image: checkmk/check-mk-raw:2.5.0p4
+    image: checkmk/check-mk-raw:latest
     container_name: checkmk-prod-1
     restart: unless-stopped
     env_file: .env
     environment:
-      TZ: America/Los_Angeles
+      TZ: US/Pacific
     ports:
-      - "8080:5000"   # Web UI
-      - "8000:8000"   # Agent receiver (TLS registration)
+      # Web UI (5000) is no longer published — it's served through Traefik.
+      # Agent receiver kept: monitored hosts connect here directly for TLS registration/push.
+      - "8001:8000"   # Agent receiver (TLS registration)
     volumes:
       - ./data/omd:/omd/sites
     tmpfs:
@@ -22,8 +23,15 @@ services:
         tag: "checkmk"
     networks:
       default:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.checkmk.rule=Host(`monitoring.home.elikesbikes.com`)"
+      - "traefik.http.routers.checkmk.entrypoints=websecure"
+      - "traefik.http.routers.checkmk.tls.certresolver=production"
+      - "traefik.http.routers.checkmk.middlewares=security-headers@file"
+      - "traefik.http.services.checkmk.loadbalancer.server.port=5000"
 
 networks:
   default:
-    name: FRONTEND
+    name: frontend
     external: true

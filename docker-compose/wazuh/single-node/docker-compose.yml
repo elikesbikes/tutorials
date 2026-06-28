@@ -1,0 +1,145 @@
+# Wazuh App Copyright (C) 2017, Wazuh Inc. (License GPLv2)
+services:
+  wazuh.manager:
+    image: wazuh/wazuh-manager:4.14.5
+    hostname: wazuh.manager
+    restart: always
+    healthcheck:
+      # wazuh-control status exits non-zero in single-node (optional daemons
+      # like clusterd/maild are intentionally not running), so probe the API
+      # port instead — it's up only when the manager is actually serving.
+      test: ["CMD-SHELL", "curl -sk -o /dev/null https://localhost:55000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 655360
+        hard: 655360
+    ports:
+      - "11514:1514"
+      - "11515:1515"
+      - "5514:514/udp"
+      - "55000:55000"
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - INDEXER_URL=https://wazuh.indexer:9200
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+      - DOCKER_HOST=tcp://host.docker.internal:2375
+    volumes:
+      - ./data/wazuh_api_configuration:/var/ossec/api/configuration
+      - ./data/wazuh_etc:/var/ossec/etc
+      - ./data/wazuh_logs:/var/ossec/logs
+      - ./data/wazuh_queue:/var/ossec/queue
+      - ./data/wazuh_var_multigroups:/var/ossec/var/multigroups
+      - ./data/wazuh_integrations:/var/ossec/integrations
+      - ./data/wazuh_active_response:/var/ossec/active-response/bin
+      - ./data/wazuh_agentless:/var/ossec/agentless
+      - ./data/wazuh_wodles:/var/ossec/wodles
+      - ./data/filebeat_etc:/etc/filebeat
+      - ./data/filebeat_var:/var/lib/filebeat
+      - ./config/wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
+      - ./config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "wazuh-manager"
+
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:4.14.5
+    hostname: wazuh.indexer
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -o /dev/null https://localhost:9200 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    security_opt:
+      - no-new-privileges:true
+    # Port 9200 not published — manager/dashboard reach it internally as wazuh.indexer:9200.
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./data/wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.key
+      - ./config/wazuh_indexer_ssl_certs/wazuh.indexer.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem
+      - ./config/wazuh_indexer_ssl_certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem
+      - ./config/wazuh_indexer_ssl_certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem
+      - ./config/wazuh_indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/config/opensearch.yml
+      - ./config/wazuh_indexer/internal_users.yml:/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "wazuh-indexer"
+
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:4.14.5
+    hostname: wazuh.dashboard
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -o /dev/null https://localhost:5601 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    security_opt:
+      - no-new-privileges:true
+    # Dashboard (5601, https) served via Traefik at soc.home.elikesbikes.com; host port removed.
+    env_file: .env
+    environment:
+      - WAZUH_API_URL=https://wazuh.manager
+    volumes:
+      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
+      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
+      - ./config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
+      - ./config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - ./data/wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
+      - ./data/wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+    depends_on:
+      - wazuh.indexer
+    links:
+      - wazuh.indexer:wazuh.indexer
+      - wazuh.manager:wazuh.manager
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.16:514"
+        tag: "wazuh-dashboard"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wazuh.rule=Host(`soc.home.elikesbikes.com`)"
+      - "traefik.http.routers.wazuh.entrypoints=websecure"
+      - "traefik.http.routers.wazuh.tls.certresolver=production"
+      - "traefik.http.routers.wazuh.middlewares=security-headers@file"
+      - "traefik.http.services.wazuh.loadbalancer.server.port=5601"
+      - "traefik.http.services.wazuh.loadbalancer.server.scheme=https"
+
+networks:
+  default:
+    name: frontend
+    external: true
