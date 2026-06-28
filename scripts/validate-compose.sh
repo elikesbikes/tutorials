@@ -48,7 +48,7 @@ docker compose config > /dev/null 2>&1 || {
     # Use the variable's own name as the value so each placeholder is unique —
     # reusing one value would collide on container_name and fail validation.
     sed -n 's/.*\${\([A-Z_][A-Z0-9_]*\)}.*/\1/p' docker-compose.yml | sort -u \
-      | awk '/PORT/{print $0"=8080";next} /PATH/{print $0"=/tmp/"$0;next} {print $0"="$0}' > .env
+      | awk '/PORT/{print $0"=8080";next} /PATH|LOCATION|DIR/{print $0"=/tmp/"$0;next} {print $0"="$0}' > .env
     docker compose config > /dev/null 2>&1 || { rm -f .env; fail "Invalid docker-compose.yml syntax"; }
     rm -f .env
   else
