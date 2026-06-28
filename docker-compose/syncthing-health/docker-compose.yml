@@ -49,10 +49,7 @@ services:
     env_file:
       - .env
 
-    ports:
-      - "9123:9123"   # Overall Syncthing health
-      - "9124:9124"   # Device sync lag monitor
-      - "9125:9125"   # Device offline / last-seen monitor
+    # Host ports removed — served via Traefik (path-based) on the frontend network.
 
     networks:
       - frontend
@@ -80,6 +77,26 @@ services:
       "
 
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.synchealth-health.rule=Host(`syncthing-ranger0-health.home.elikesbikes.com`) && PathPrefix(`/health`)"
+      - "traefik.http.routers.synchealth-health.entrypoints=websecure"
+      - "traefik.http.routers.synchealth-health.tls.certresolver=production"
+      - "traefik.http.routers.synchealth-health.middlewares=security-headers@file"
+      - "traefik.http.routers.synchealth-health.service=synchealth-health"
+      - "traefik.http.services.synchealth-health.loadbalancer.server.port=9123"
+      - "traefik.http.routers.synchealth-synclag.rule=Host(`syncthing-ranger0-health.home.elikesbikes.com`) && PathPrefix(`/sync-lag`)"
+      - "traefik.http.routers.synchealth-synclag.entrypoints=websecure"
+      - "traefik.http.routers.synchealth-synclag.tls.certresolver=production"
+      - "traefik.http.routers.synchealth-synclag.middlewares=security-headers@file"
+      - "traefik.http.routers.synchealth-synclag.service=synchealth-synclag"
+      - "traefik.http.services.synchealth-synclag.loadbalancer.server.port=9124"
+      - "traefik.http.routers.synchealth-offline.rule=Host(`syncthing-ranger0-health.home.elikesbikes.com`) && PathPrefix(`/offline`)"
+      - "traefik.http.routers.synchealth-offline.entrypoints=websecure"
+      - "traefik.http.routers.synchealth-offline.tls.certresolver=production"
+      - "traefik.http.routers.synchealth-offline.middlewares=security-headers@file"
+      - "traefik.http.routers.synchealth-offline.service=synchealth-offline"
+      - "traefik.http.services.synchealth-offline.loadbalancer.server.port=9125"
 
 networks:
   frontend:
