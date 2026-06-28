@@ -30,11 +30,26 @@ services:
       # Timezone consistency
       - /etc/localtime:/etc/localtime:ro
 
-    ports:
-      - "8484:8484"
+    # No host port published — the status API (8484) is reached only through
+    # Traefik at RESTIC_HOST. Traefik talks to the container over the shared
+    # `frontend` network; the container still listens on 8484 internally.
+    # Point Uptime Kuma at https://${RESTIC_HOST}/health instead of host:8484.
 
     networks:
       - default
+
+    # Reverse-proxy the status UI/API through Traefik at the host-specific
+    # hostname in RESTIC_HOST (e.g. restic-tars.home.elikesbikes.com). RESTIC_HOST
+    # lives in each host's .env so this base file stays identical across hosts —
+    # same pattern as Traefik's own TRAEFIK_DASHBOARD_HOST. Traefik reaches the
+    # container over the shared `frontend` network on port 8484.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.restic.rule=Host(`${RESTIC_HOST}`)"
+      - "traefik.http.routers.restic.entrypoints=websecure"
+      - "traefik.http.routers.restic.tls.certresolver=production"
+      - "traefik.http.routers.restic.middlewares=security-headers@file"
+      - "traefik.http.services.restic.loadbalancer.server.port=8484"
 
     # Ship container stdout to the homelab Graylog syslog server. Backup/cleanup
     # job output reaches stdout via the /proc/1/fd/1 routing in entrypoint.sh,
