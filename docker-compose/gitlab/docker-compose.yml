@@ -10,6 +10,8 @@ services:
     hostname: gitlab.home.elikesbikes.com
     restart: unless-stopped
     env_file: .env
+    security_opt:
+      - no-new-privileges:true
     environment:
       TZ: America/Los_Angeles
       GITLAB_OMNIBUS_CONFIG: |
@@ -22,8 +24,9 @@ services:
         }
         gitlab_rails['initial_root_password'] = ENV['GITLAB_ROOT_PASSWORD']
         gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        gitlab_rails['time_zone'] = 'America/Los_Angeles'
     ports:
-      - "8929:80"
+      # Web (80) served via Traefik; SSH kept for git over ssh (gitlab_shell_ssh_port=2222).
       - "2222:22"
     volumes:
       - ./config:/etc/gitlab
@@ -36,6 +39,13 @@ services:
         syslog-address: "udp://192.168.5.30:514"
         syslog-format: "rfc3164"
         tag: "gitlab"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gitlab.rule=Host(`gitlab.home.elikesbikes.com`)"
+      - "traefik.http.routers.gitlab.entrypoints=websecure"
+      - "traefik.http.routers.gitlab.tls.certresolver=production"
+      - "traefik.http.routers.gitlab.middlewares=security-headers@file"
+      - "traefik.http.services.gitlab.loadbalancer.server.port=80"
 
   gitlab-runner:
     image: gitlab/gitlab-runner:latest
@@ -43,6 +53,8 @@ services:
     restart: unless-stopped
     depends_on:
       - gitlab
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./runner-config:/etc/gitlab-runner
       - /var/run/docker.sock:/var/run/docker.sock
