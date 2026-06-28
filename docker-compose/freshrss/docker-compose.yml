@@ -1,0 +1,32 @@
+services:
+  freshrss:
+    image: freshrss/freshrss:latest
+    container_name: freshrss-prod-1
+    logging:
+      options:
+        max-size: 10m
+    environment:
+      TZ: America/New_York
+      CRON_MIN: '*/30'
+      FRESHRSS_INSTALL: |-
+        --api-enabled
+        --base-url ${BASE_URL}
+    # Ports no longer published — reachable only through Traefik on the frontend network.
+    volumes:
+      - ./data:/var/www/FreshRSS/data
+      - ./extensions:/var/www/FreshRSS/extensions
+    restart: unless-stopped
+    networks:
+      - default
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.freshrss.rule=Host(`rss.home.elikesbikes.com`)"
+      - "traefik.http.routers.freshrss.entrypoints=websecure"
+      - "traefik.http.routers.freshrss.tls.certresolver=production"
+      - "traefik.http.routers.freshrss.middlewares=security-headers@file"
+      - "traefik.http.services.freshrss.loadbalancer.server.port=80"
+
+networks:
+  frontend:
+    external: true
