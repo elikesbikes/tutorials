@@ -1,4 +1,3 @@
-version: "3.8"
 networks:
   frontend:
     external: true
@@ -8,10 +7,9 @@ services:
     hostname: dashy
     image: lissy93/dashy
     volumes:
-      - ./conf/conf.yml:/app/public/conf.yml
+      - ./conf/conf.yml:/app/user-data/conf.yml
       - ./item-icons:/app/public/item-icons
-    ports:
-      - 4000:80
+    # 4000 no longer published — served via Traefik (dash.home), behind Authelia.
     networks:
       frontend:
     environment:
@@ -31,3 +29,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashy.rule=Host(`dash.home.elikesbikes.com`)"
+      - "traefik.http.routers.dashy.entrypoints=websecure"
+      - "traefik.http.routers.dashy.tls.certresolver=production"
+      # Authelia ForwardAuth (defined on the authelia container) gates access;
+      # unauthenticated users are redirected to auth.home for login.
+      - "traefik.http.routers.dashy.middlewares=authelia@docker,security-headers@file"
+      - "traefik.http.services.dashy.loadbalancer.server.port=8080"

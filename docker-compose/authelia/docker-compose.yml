@@ -1,18 +1,23 @@
-version: '3.3'
 services:
   authelia:
     image: authelia/authelia
-    container_name: authelia-prod1
     hostname: authelia-prod-1
     volumes:
       - ./config:/config
-    ports:
-      - 9091:9091
+      # Secrets externalized (git-ignored) — kept OUT of configuration.yml.
+      - ./secrets:/secrets:ro
+    # 9091 no longer published — portal served via Traefik (auth.home), and the
+    # ForwardAuth middleware reaches it internally as authelia:9091 on frontend.
     restart: unless-stopped
     healthcheck:
       disable: true
     environment:
       - TZ=America/Los_Angeles
+      # Secrets loaded from files (see ./secrets, git-ignored) instead of config.
+      - AUTHELIA_JWT_SECRET_FILE=/secrets/JWT_SECRET
+      - AUTHELIA_SESSION_SECRET_FILE=/secrets/SESSION_SECRET
+      - AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE=/secrets/STORAGE_ENCRYPTION_KEY
+      - AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE=/secrets/SMTP_PASSWORD
     networks:
       frontend:
     logging:
@@ -23,10 +28,20 @@ services:
         tag: "authelia"
     depends_on:
       - redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`auth.home.elikesbikes.com`)"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.tls.certresolver=production"
+      - "traefik.http.routers.authelia.middlewares=security-headers@file"
+      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.home.elikesbikes.com/"
+      - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
 
   redis:
     image: redis:alpine
-    hostname: redis-prod-1
+    hostname: authelia-redis-prod1
     container_name: authelia-redis-prod1
     networks:
       frontend:

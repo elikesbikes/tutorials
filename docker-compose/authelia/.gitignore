@@ -1,0 +1,9 @@
+# Secrets & runtime state — never commit (kept on host only)
+secrets/
+.env
+config/db.sqlite3*
+config/users_database.yml
+config/notification.txt
+config/*.orig
+redis/
+*.bak.*
