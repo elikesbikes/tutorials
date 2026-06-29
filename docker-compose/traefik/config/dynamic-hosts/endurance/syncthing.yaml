@@ -1,0 +1,20 @@
+# Syncthing — runs on 192.168.5.51:8525 (not a container on this host), so it's
+# routed via the file provider rather than docker labels (same pattern as cooper.yaml).
+# DNS: syncthing.home.elikesbikes.com -> proxy-endurance (this host).
+http:
+  routers:
+    syncthing:
+      rule: "Host(`syncthing.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: syncthing
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    syncthing:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.51:20910"

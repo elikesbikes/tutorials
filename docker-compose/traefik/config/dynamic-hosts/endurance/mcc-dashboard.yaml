@@ -1,0 +1,29 @@
+# MCC dashboard — host process on endurance :5679 (not a container), so it's routed
+# via the file provider rather than docker labels (same pattern as cooper.yaml).
+# DNS: mcc-dashboard.home.elikesbikes.com -> proxy-endurance (this host, .30).
+http:
+  routers:
+    mcc-dashboard:
+      rule: "Host(`mcc-dashboard.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: mcc-dashboard
+      middlewares:
+        - mcc-dashboard-root-redirect
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  middlewares:
+    # Bare domain -> the app's /dashboard path.
+    mcc-dashboard-root-redirect:
+      redirectRegex:
+        regex: "^https://mcc-dashboard\\.home\\.elikesbikes\\.com/?$"
+        replacement: "https://mcc-dashboard.home.elikesbikes.com/dashboard"
+        permanent: false
+
+  services:
+    mcc-dashboard:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.30:5679"
