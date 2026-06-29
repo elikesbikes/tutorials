@@ -24,7 +24,11 @@ services:
     volumes:
       # Bind mounts only — no Docker named volumes (per homelab standards).
       - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
-      - ./config/dynamic:/etc/traefik/dynamic:ro
+      # Dynamic config is split: shared (all hosts) + this host's own dir.
+      # The file provider watches /etc/traefik/dynamic recursively, so it loads both.
+      # PROXY_HOST (.env) selects which host-specific dir gets mounted.
+      - ./config/dynamic:/etc/traefik/dynamic/shared:ro
+      - ./config/dynamic-hosts/${PROXY_HOST}:/etc/traefik/dynamic/host:ro
       - ./certs:/etc/traefik/certs
       # Per-host secrets (dashboard htpasswd), read-only.
       - ./secrets:/etc/traefik/secrets:ro
