@@ -1,0 +1,21 @@
+# Home Assistant — web UI on 192.168.5.18:8123 (not a container on this host), so it's
+# routed via the file provider rather than docker labels (same pattern as syncthing.yaml).
+# DNS: ha.home.elikesbikes.com -> this proxy host (endurance). HA's websocket API works
+# transparently through Traefik (no extra config needed).
+http:
+  routers:
+    ha:
+      rule: "Host(`ha.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: ha
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    ha:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.18:8123"
