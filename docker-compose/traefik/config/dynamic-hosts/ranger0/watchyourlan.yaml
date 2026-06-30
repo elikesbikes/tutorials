@@ -1,0 +1,20 @@
+# WatchYourLAN — static file-provider route for ranger0.
+# The container runs with network_mode: host (needs raw NIC access for ARP scans),
+# so it can't be discovered by the Docker provider. We point directly to the host IP.
+http:
+  routers:
+    watchyourlan:
+      rule: "Host(`lan.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: watchyourlan
+      tls:
+        certResolver: production
+      middlewares:
+        - security-headers@file
+
+  services:
+    watchyourlan:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.16:8840"
