@@ -10,7 +10,7 @@ http:
         - websecure
       service: ha
       middlewares:
-        - security-headers@file
+        - security-headers-noframe@file
       tls:
         certResolver: production
 

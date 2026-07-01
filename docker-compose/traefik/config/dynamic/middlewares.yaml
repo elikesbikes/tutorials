@@ -21,6 +21,18 @@ http:
         scheme: https
         permanent: true
 
+    # Same as security-headers but without frameDeny -- needed for apps that iframe
+    # their own content (e.g. Home Assistant add-on ingress pages load in an iframe
+    # within the HA frontend; X-Frame-Options: DENY blocks that same-origin framing).
+    security-headers-noframe:
+      headers:
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
     # Restrict socket-proxy access to ranger0 + endurance only (everyone else: 403).
     # Clients hit Traefik directly on the LAN, so the default (remote source IP)
     # strategy is correct — no X-Forwarded-For depth needed.
