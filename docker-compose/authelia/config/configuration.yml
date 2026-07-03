@@ -43,8 +43,11 @@ access_control:
   default_policy: deny
   rules:
     # Rules applied to everyone
+    # Both portal hostnames listed so this shared config works on either host
+    # (auth-dev = tars/dev, auth-end = endurance/prod). The non-local one is inert.
     - domain:
         - "auth-dev.home.elikesbikes.com"
+        - "auth-end.home.elikesbikes.com"
       policy: bypass
     - domain:
         - "dash.home.elikesbikes.com"
@@ -53,8 +56,11 @@ access_control:
       policy: one_factor
 #      networks:
 #       - 192.168.5.0/24
+    # Both reviere hostnames listed so the shared config covers prod (endurance) and
+    # dev (tars). Domains are globally unique, so the non-local one never matches.
     - domain:
         - "docker.home.elikesbikes.com"
+        - "reviere.home.elikesbikes.com"
         - "reviere-dev.home.elikesbikes.com"
       policy: two_factor
 #     networks:
