@@ -48,6 +48,8 @@ access_control:
     - domain:
         - "auth-dev.home.elikesbikes.com"
         - "auth-end.home.elikesbikes.com"
+        - "auth-r1.home.elikesbikes.com"
+        - "auth-dp1.home.elikesbikes.com"
       policy: bypass
     - domain:
         - "dash.home.elikesbikes.com"
