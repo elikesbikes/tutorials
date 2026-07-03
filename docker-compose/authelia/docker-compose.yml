@@ -2,6 +2,12 @@ services:
   authelia:
     image: authelia/authelia
     hostname: authelia-prod-1
+    # Load shared config first, then the per-host override (git-ignored, in ./secrets,
+    # excluded from the deploy rsync) which sets the host-specific session.cookies
+    # (auth-dev on tars vs auth-end on endurance). Last --config wins for list values.
+    command:
+      - "--config"
+      - "/config/configuration.yml,/secrets/configuration.host.yml"
     # Run as ecloaiza (1000:1000) so bind-mounted /config files stay user-owned.
     user: "1000:1000"
     volumes:
