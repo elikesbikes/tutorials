@@ -65,11 +65,10 @@ session:
   expiration: 3600 # 1 hour
   inactivity: 7200 # 2 hours
   remember_me: 24h # "Remember me" cookie lasts 24 hours (was default ~1 month)
-  # 4.38+ multi-domain cookie config (replaces the deprecated name/domain keys).
-  cookies:
-    - domain: home.elikesbikes.com
-      authelia_url: https://auth-dev.home.elikesbikes.com
-      name: authelia_session
+  # session.cookies is HOST-SPECIFIC (auth-dev vs auth-end) and therefore lives in a
+  # per-host override file loaded after this one: /secrets/configuration.host.yml
+  # (git-ignored + excluded from the deploy rsync). See docker-compose.yml command.
+  # Authelia merges multiple --config files; the later file's session.cookies list wins.
 
   redis:
     host: authelia-redis-prod1
