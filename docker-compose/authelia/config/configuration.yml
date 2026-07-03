@@ -56,6 +56,17 @@ access_control:
       policy: one_factor
 #      networks:
 #       - 192.168.5.0/24
+    # COOPER backend service account — 1FA only (can't complete OTP). MUST stay ABOVE
+    # the two_factor reviere rule so browser users still get OTP (first-match wins).
+    # cooper-svc user exists only on endurance, so this rule is inert on tars.
+    # (Was previously injected into endurance's local config by setup_cooper_svc.py;
+    # baked into shared config here so deploys don't drop it again.)
+    - domain:
+        - "reviere.home.elikesbikes.com"
+        - "reviere-dev.home.elikesbikes.com"
+      subject:
+        - "user:cooper-svc"
+      policy: one_factor
     # Both reviere hostnames listed so the shared config covers prod (endurance) and
     # dev (tars). Domains are globally unique, so the non-local one never matches.
     - domain:
