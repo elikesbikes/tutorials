@@ -13,6 +13,16 @@ totp:
   period: 30
   skew: 1
 
+webauthn:
+  disable: false
+  display_name: 'elikesbikes homelab'        # shown in the browser passkey prompt
+  attestation_conveyance_preference: 'indirect'
+  timeout: '60s'
+  # Passkey (usernameless) login — adds a "Sign in with a passkey" button. Authelia 4.39+.
+  # RP ID is inherited from the session cookie domain (home.elikesbikes.com), so a passkey
+  # registered once works across all *.home.elikesbikes.com apps and both portals.
+  enable_passkey_login: true
+
 #duo_api:     ## You can use this api if you want push notifications of auth attempts
 #  hostname: api-123456789.example.com
 #  integration_key: ABCDEF
