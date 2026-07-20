@@ -29,5 +29,9 @@ if [ -z "$COMPOSE_FILE" ]; then
 fi
 
 echo "Validating $COMPOSE_FILE..."
-docker compose -f "$COMPOSE_FILE" config >/dev/null
+# --no-interpolate: CI checkouts never have the project's .env (git-ignored,
+# host-local secrets) or docker-compose.override.yml, so full `config`
+# resolution fails on missing env vars/env_file. This only checks YAML
+# structure, which is all a pre-deploy sanity check needs.
+docker compose -f "$COMPOSE_FILE" config --no-interpolate >/dev/null
 echo "✓ $COMPOSE_FILE is valid"
