@@ -152,6 +152,16 @@ echo "==================================================" | tee -a "$LOG_FILE"
 #####################################
 read -ra BACKUP_PATHS <<< "$JOB_SOURCES"
 
+# Optional space-separated exclude patterns (restic --exclude globs), e.g.
+# live database/index data dirs that mutate mid-scan and produce spurious
+# read errors (see graylog/opensearch_data in docker-volumes.conf).
+EXCLUDE_ARGS=()
+if [[ -n "${JOB_EXCLUDES:-}" ]]; then
+  for pattern in $JOB_EXCLUDES; do
+    EXCLUDE_ARGS+=(--exclude "$pattern")
+  done
+fi
+
 # A missing source means a broken mount, not "nothing to back up" —
 # fail loudly instead of silently backing up less than configured.
 for path in "${BACKUP_PATHS[@]}"; do
@@ -203,7 +213,7 @@ done
 # the result parser reads below. pipefail makes the pipeline fail if restic does.
 # Capture restic's own exit code (PIPESTATUS[0]) — not tee's. `|| true` keeps
 # `set -e` from aborting before we can inspect the code.
-restic --no-lock "--verbose=$VERBOSITY" backup --tag "$JOB_NAME" "${BACKUP_PATHS[@]}" 2>&1 \
+restic --no-lock "--verbose=$VERBOSITY" backup --tag "$JOB_NAME" "${EXCLUDE_ARGS[@]}" "${BACKUP_PATHS[@]}" 2>&1 \
   | tee -a "$LOG_FILE" || true
 restic_rc=${PIPESTATUS[0]}
 
