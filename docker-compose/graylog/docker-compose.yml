@@ -1,6 +1,5 @@
 networks:
-  default:
-    name: frontend
+  frontend:
     external: true
 
 services:
@@ -9,67 +8,56 @@ services:
     container_name: syslog_mongodb
     hostname: mongodb
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
     environment:
       - TZ=${TZ}
     volumes:
       - ./mongo_data:/data/db
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://192.168.5.30:514"
-        syslog-format: "rfc3164"
-        tag: "syslog_mongo"
+    networks:
+      - frontend
 
   syslog_opensearch:
     image: opensearchproject/opensearch:2.19.0
     container_name: syslog_opensearch
     hostname: opensearch
-    env_file: .env
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
     environment:
       - TZ=${TZ}
+      - "OPENSEARCH_JAVA_OPTS=${OPENSEARCH_JAVA_OPTS}"
       - "bootstrap.memory_lock=${OPENSEARCH_BOOTSTRAP_MEMORY_LOCK}"
       - "discovery.type=${OPENSEARCH_DISCOVERY_TYPE}"
       - "action.auto_create_index=${OPENSEARCH_ACTION_AUTO_CREATE_INDEX}"
       - "DISABLE_SECURITY_PLUGIN=${OPENSEARCH_DISABLE_SECURITY_PLUGIN}"
-    volumes:
-      - ./opensearch_data:/usr/share/opensearch/data
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://192.168.5.30:514"
-        syslog-format: "rfc3164"
-        tag: "syslog_opensearch"
-    # Port 9200 not published — Graylog reaches it internally as opensearch:9200 on the frontend net.
+    ports:
+      - 9200:9200/tcp  
+    networks:
+      - frontend      
 
   syslog_graylog:
-    image: graylog/graylog:7.1.3
+    image: graylog/graylog:7.0
     container_name: syslog_graylog
     hostname: graylog
     user: "1100:1100"
     depends_on:
       - syslog_opensearch
       - syslog_mongo
-    env_file: .env
-    security_opt:
-      - no-new-privileges:true
     environment:
       - TZ=${TZ}
+      - GRAYLOG_HTTP_BIND_ADDRESS=${GRAYLOG_HTTP_BIND_ADDRESS}
+      - GRAYLOG_HTTP_EXTERNAL_URI=${GRAYLOG_HTTP_EXTERNAL_URI}
+      - GRAYLOG_ROOT_PASSWORD_SHA2=${GRAYLOG_ROOT_PASSWORD_SHA2}
+      - GRAYLOG_PASSWORD_SECRET=${GRAYLOG_PASSWORD_SECRET}
+      - GRAYLOG_ROOT_USERNAME=${GRAYLOG_ROOT_USERNAME}
+      - GRAYLOG_ROOT_TIMEZONE=${GRAYLOG_ROOT_TIMEZONE}
+      - GRAYLOG_MONGODB_URI=${GRAYLOG_MONGODB_URI}
+      - GRAYLOG_OPENSEARCH_HOSTS=${GRAYLOG_OPENSEARCH_HOSTS}
+      - GRAYLOG_ELASTICSEARCH_HOSTS=${GRAYLOG_ELASTICSEARCH_HOSTS}
+      - GRAYLOG_DATA_DIR=${GRAYLOG_DATA_DIR}
+      - GRAYLOG_NODE_ID_FILE=${GRAYLOG_NODE_ID_FILE}
     volumes:
       - ./graylog_data:/usr/share/graylog/data
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://192.168.5.30:514"
-        syslog-format: "rfc3164"
-        tag: "syslog_graylog"
+    networks:
+      - frontend
     restart: always
     ports:
-      # Web UI (9000) served via Traefik; syslog INPUT ports kept (devices log here).
       - "1514:1514/tcp"   # Syslog TCP
       - "1514:1514/udp"   # Syslog UDP
       - "514:514/tcp"     # Standard Syslog TCP
@@ -77,7 +65,7 @@ services:
       - "1515:1515/udp"   # Custom Input
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.graylog.rule=Host(`graylog.home.elikesbikes.com`)"
+      - "traefik.http.routers.graylog.rule=Host(`graylog-tars.home.elikesbikes.com`)"
       - "traefik.http.routers.graylog.entrypoints=websecure"
       - "traefik.http.routers.graylog.tls.certresolver=production"
       - "traefik.http.routers.graylog.middlewares=security-headers@file"
