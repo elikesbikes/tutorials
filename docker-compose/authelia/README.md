@@ -61,10 +61,34 @@ These replaced deprecated keys (all warnings now gone):
 - `notifier.smtp.address: submission://smtp.gmail.com:587` (was `smtp.host`/`smtp.port`).
 - Compose env `AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE` (was `AUTHELIA_JWT_SECRET_FILE`).
 
+## Starting the Stack
+
+```bash
+./start.sh
+```
+
+The `start.sh` script authenticates to Proton Pass using a PAT (Personal Access Token),
+fetches all 4 secrets from the HOMELAB vault, loads non-secret config from `.env`,
+and runs `docker compose up -d`. No manual `pass-cli login` needed.
+
+### Secrets (Proton Pass HOMELAB vault)
+
+| Env Var | Vault Item | Purpose |
+|---------|------------|---------|
+| AUTHELIA_JWT_SECRET | authelia - JWT_SECRET | JWT signing for identity validation |
+| AUTHELIA_SESSION_SECRET | authelia - SESSION_SECRET | Session cookie encryption |
+| AUTHELIA_STORAGE_ENCRYPTION_KEY | authelia - STORAGE_ENCRYPTION_KEY | SQLite storage encryption |
+| AUTHELIA_SMTP_PASSWORD | authelia - SMTP_PASSWORD | Gmail SMTP for notifications |
+
+### Files
+
+- `env.sample` — repo-safe template for `.env` (no secrets, no leading dot)
+- `start.sh` — PAT-based startup script
+
 ## Restart / verify
 
 ```bash
-docker compose up -d --force-recreate authelia
+./start.sh
 docker logs authelia-authelia-1 --tail 40 | grep -iE "level=(warning|error)|Startup complete"
 docker exec authelia-authelia-1 wget -qO- http://localhost:9091/api/health   # -> {"status":"OK"}
 ```

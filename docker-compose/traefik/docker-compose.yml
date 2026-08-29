@@ -16,10 +16,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    env_file: .env
     environment:
       - TZ=${TZ:-America/Los_Angeles}
-      # Consumed by the Cloudflare DNS-01 ACME provider (value lives in .env).
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
     volumes:
       # Bind mounts only — no Docker named volumes (per homelab standards).
