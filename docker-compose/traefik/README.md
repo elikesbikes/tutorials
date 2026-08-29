@@ -46,8 +46,9 @@ automatically by Let's Encrypt using the Cloudflare DNS-01 challenge (wildcard-c
 ```
 traefik/
 ├── docker-compose.yml            # Traefik service (parameterized via .env)
-├── .env                          # Per-host config + secrets (git-ignored)
-├── .env.example                  # Template documenting every host var
+├── .env                          # Per-host config (git-ignored, no secrets)
+├── env.sample                    # Template documenting every host var (repo-safe)
+├── start.sh                      # PAT-based startup — fetches secrets + starts stack
 ├── scripts/
 │   └── bootstrap.sh              # One-time per-host setup (idempotent)
 ├── config/
@@ -74,9 +75,22 @@ traefik/
 Nothing host-specific is hardcoded in committed files. Secrets stay out of git: `.env`,
 `secrets/*` (except `.example`), and `certs/*.json` are all git-ignored.
 
-## 5. Installation (per host)
+## 5. Installation / Starting
 
-The fastest path on any host is the bootstrap script — it's idempotent and prompts for
+### Starting the service (unattended)
+
+```bash
+./start.sh
+```
+
+The `start.sh` script authenticates to Proton Pass using a PAT (Personal Access Token),
+fetches `CF_DNS_API_TOKEN` from the HOMELAB vault, loads non-secret config from `.env`,
+and runs `docker compose up -d`. No manual `pass-cli login` needed — works after reboot,
+from cron, or systemd.
+
+### First-time bootstrap on a new host
+
+The bootstrap script handles one-time setup — it's idempotent and prompts for
 the per-host values:
 
 ```bash
@@ -84,19 +98,8 @@ the per-host values:
 ```
 
 It ensures the `frontend` network, checks socket-proxy + ports, creates `.env`
-(prompting for `CF_DNS_API_TOKEN` and `TRAEFIK_DASHBOARD_HOST`), generates
-`secrets/dashboard.htpasswd` (prompting for the shared password), sets `certs/acme.json`
-perms, then runs `docker compose up -d`.
-
-Manual equivalent:
-
-```bash
-cp .env.example .env && $EDITOR .env          # CF token + TRAEFIK_DASHBOARD_HOST
-htpasswd -nbB admin 'your-password' > secrets/dashboard.htpasswd && chmod 600 secrets/dashboard.htpasswd
-touch certs/acme.json && chmod 600 certs/acme.json
-docker compose config && docker compose up -d
-docker logs -f traefik
-```
+(from `env.sample`), generates `secrets/dashboard.htpasswd`, sets `certs/acme.json`
+perms, then runs `start.sh`.
 
 Everything host-specific lives in `.env`; the dashboard hostname and credentials are
 **not** baked into committed config.
