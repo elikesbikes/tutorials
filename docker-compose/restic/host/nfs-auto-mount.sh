@@ -3,7 +3,7 @@ set -euo pipefail
 
 #####################################
 # nfs-auto-mount.sh
-# Version: 1.2.0
+# Version: 1.3.0
 #
 # Status: PRODUCTION
 #
@@ -29,6 +29,9 @@ set -euo pipefail
 #   * Fix: verify /proc/self/mounts after unmount attempt
 #   * Fix: lock file prevents concurrent cron instances conflicting
 #   * Fix: escape dots in IP address in is_mounted_proc regex
+# - 1.3.0:
+#   * Fix: stale file handle on mount → force unmount and retry
+#   * Add: detect stale mount points even when not in /proc/self/mounts
 #####################################
 
 #####################################
@@ -119,6 +122,14 @@ is_mounted_proc() {
     /proc/self/mounts
 }
 
+is_stale_mountpoint() {
+  local mount_point="$1"
+  timeout 5 stat "$mount_point" >/dev/null 2>&1
+  local rc=$?
+  # stat returns 1 with "Stale file handle" when the mount point is stale
+  [[ $rc -ne 0 ]]
+}
+
 nfs_transport_ok() {
   local nas_ip="$1"
   local port="$2"
@@ -144,7 +155,7 @@ safe_umount_lazy_force() {
 #####################################
 log "========================================"
 log "NFS auto-mount run starting"
-log "Version: 1.2.0"
+log "Version: 1.3.0"
 log "Log file: $LOG_FILE"
 log "Using env: $ENV_FILE"
 log "========================================"
@@ -177,14 +188,26 @@ while IFS= read -r line; do
     if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
       log "Already mounted → no action"
     else
+      if is_stale_mountpoint "$MOUNT_POINT"; then
+        log "Stale file handle detected on mount point → force unmounting before mount"
+        safe_umount_lazy_force "$MOUNT_POINT" || true
+        sleep 1
+      fi
+
       log "Mounting NFS"
-      # Wrap in if-block so a mount failure logs cleanly instead of aborting
-      # the whole script via set -e, leaving other mounts unprocessed
       if mount -t nfs -o "$MOUNT_OPTS" "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT" 2>&1 \
            | while IFS= read -r line; do log "  mount: $line"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
         log "Mount complete"
       else
-        log "WARNING: mount failed for $NAS_IP:$NFS_EXPORT → $MOUNT_POINT"
+        log "Mount failed → force unmount and retry"
+        safe_umount_lazy_force "$MOUNT_POINT" || true
+        sleep 2
+        if mount -t nfs -o "$MOUNT_OPTS" "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT" 2>&1 \
+             | while IFS= read -r line; do log "  mount(retry): $line"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+          log "Mount complete on retry"
+        else
+          log "WARNING: mount failed after retry for $NAS_IP:$NFS_EXPORT → $MOUNT_POINT"
+        fi
       fi
     fi
   else
