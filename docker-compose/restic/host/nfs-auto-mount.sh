@@ -31,6 +31,7 @@ set -euo pipefail
 #   * Fix: escape dots in IP address in is_mounted_proc regex
 # - 1.3.0:
 #   * Fix: stale file handle on mount → force unmount and retry
+#   * Fix: recreate mount point dir when stale dentry persists after unmount
 #   * Add: detect stale mount points even when not in /proc/self/mounts
 #####################################
 
@@ -189,9 +190,16 @@ while IFS= read -r line; do
       log "Already mounted → no action"
     else
       if is_stale_mountpoint "$MOUNT_POINT"; then
-        log "Stale file handle detected on mount point → force unmounting before mount"
-        safe_umount_lazy_force "$MOUNT_POINT" || true
-        sleep 1
+        log "Stale file handle detected on mount point"
+        if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
+          log "Mount still in /proc → force unmounting"
+          safe_umount_lazy_force "$MOUNT_POINT" || true
+          sleep 1
+        else
+          log "Not in /proc but dentry is stale → recreating mount point"
+          rm -rf "$MOUNT_POINT"
+          mkdir -p "$MOUNT_POINT"
+        fi
       fi
 
       log "Mounting NFS"
@@ -199,8 +207,10 @@ while IFS= read -r line; do
            | while IFS= read -r line; do log "  mount: $line"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
         log "Mount complete"
       else
-        log "Mount failed → force unmount and retry"
+        log "Mount failed → recreating mount point and retrying"
         safe_umount_lazy_force "$MOUNT_POINT" || true
+        rm -rf "$MOUNT_POINT"
+        mkdir -p "$MOUNT_POINT"
         sleep 2
         if mount -t nfs -o "$MOUNT_OPTS" "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT" 2>&1 \
              | while IFS= read -r line; do log "  mount(retry): $line"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
