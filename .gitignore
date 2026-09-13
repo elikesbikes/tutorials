@@ -17,3 +17,4 @@ CLAUDE.md
 # Runtime app data / model caches (bind-mounted, container-written)
 openwebui_data/
 *_data/
+test
