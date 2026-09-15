@@ -118,7 +118,7 @@ deploy:rocky:
         exit 0
       fi
       echo "==> Deploying $PROJECT to rocky (dev)..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.21 bash -s "$PROJECT" << 'DEPLOY_SCRIPT'
+      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.28 bash -s "$PROJECT" << 'DEPLOY_SCRIPT'
         set -e
         PROJECT="$1"
 
