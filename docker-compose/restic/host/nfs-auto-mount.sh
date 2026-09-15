@@ -1,38 +1,36 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 #####################################
 # nfs-auto-mount.sh
-# Version: 1.3.0
+# Version: 2.0.0
 #
 # Status: PRODUCTION
 #
 # Description:
 # Safely manages NFS mounts by mounting when the NFS transport
-# is reachable and forcibly detaching stale mounts when it is not.
-# Designed to be cron-safe and resilient against stale NFS hangs.
+# is reachable and detaching stale mounts when it is not.
+# Designed to never hang on D-state NFS operations.
+#
+# Key design principle: NEVER call stat, test -d, ls, rm, or
+# any filesystem operation on NFS mount point paths. Use
+# /proc/self/mounts exclusively for mount state detection.
+# This prevents D-state hangs with hard NFS mounts.
 #
 # Changelog (cumulative):
-# - 1.1.0:
-#   * Replaced ICMP ping with TCP/2049 health check
-#   * Time-bounded forced lazy unmounts to prevent hangs
-# - 1.1.1:
-#   * Normalize mount points and exports to remove trailing slashes
-#   * Fix false-negative mount detection for stubborn NFS mounts
-# - 1.1.2:
-#   * Canonicalize logging to /var/log/nfs-auto-mount.log
-#   * Ensure consistent logging across cron, root, and manual runs
-# - 1.2.0:
-#   * Fix: mount failures no longer silently abort the script (set -e)
-#   * Fix: umount timeout raised from 5s to 30s for hard-mount D-state
-#   * Fix: umount stderr now logged instead of suppressed
-#   * Fix: verify /proc/self/mounts after unmount attempt
-#   * Fix: lock file prevents concurrent cron instances conflicting
-#   * Fix: escape dots in IP address in is_mounted_proc regex
-# - 1.3.0:
-#   * Fix: stale file handle on mount → force unmount and retry
-#   * Fix: recreate mount point dir when stale dentry persists after unmount
-#   * Add: detect stale mount points even when not in /proc/self/mounts
+# - 1.1.0: TCP/2049 health check, forced lazy unmounts
+# - 1.1.1: Normalize paths, fix false-negative detection
+# - 1.1.2: Canonicalize logging
+# - 1.2.0: Lock file, umount timeout, stderr logging
+# - 1.3.0: Stale dentry recovery (rm + mkdir)
+# - 2.0.0:
+#   * BREAKING: never touch filesystem for mount state — /proc only
+#   * Fix: umount runs in background subprocess to avoid D-state blocking
+#   * Fix: D-state aware lock — steals lock from D-state holder
+#   * Fix: mount point creation uses parent dir only (local fs)
+#   * Removed: is_stale_mountpoint (called stat — D-state risk)
+#   * Removed: rm -rf on mount points (D-state risk)
+#   * Removed: test -d on mount points (D-state risk)
 #####################################
 
 #####################################
@@ -44,20 +42,10 @@ DEFAULT_LOG_FILE="/var/log/nfs-auto-mount.log"
 LOG_FILE="${LOG_FILE:-$DEFAULT_LOG_FILE}"
 
 LOCK_FILE="/var/run/nfs-auto-mount.lock"
+LOCK_PID_FILE="/var/run/nfs-auto-mount.pid"
 
-DEFAULT_ENV_FILE_1="/home/ecloaiza/.nfs-mount.env"   # preferred (hidden)
-DEFAULT_ENV_FILE_2="/home/ecloaiza/nfs-mount.env"    # legacy
-
-#####################################
-# LOCK — prevent concurrent runs
-#####################################
-exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
-  # Log without failing — another instance is legitimately running
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$HOSTNAME] Another instance is running, exiting" \
-    >> "$LOG_FILE" 2>/dev/null || true
-  exit 0
-fi
+DEFAULT_ENV_FILE_1="/home/ecloaiza/.nfs-mount.env"
+DEFAULT_ENV_FILE_2="/home/ecloaiza/nfs-mount.env"
 
 #####################################
 # LOGGING
@@ -75,6 +63,38 @@ fail() {
   log "ERROR: $*"
   exit 1
 }
+
+#####################################
+# D-STATE AWARE LOCK
+#####################################
+is_pid_dstate() {
+  local pid="$1"
+  local state
+  state="$(awk '/^State:/ {print $2}' "/proc/$pid/status" 2>/dev/null)"
+  [[ "$state" == "D" ]]
+}
+
+acquire_lock() {
+  exec 9>"$LOCK_FILE"
+  if ! flock -n 9; then
+    local old_pid
+    old_pid="$(cat "$LOCK_PID_FILE" 2>/dev/null)" || old_pid=""
+    if [[ -n "$old_pid" ]] && is_pid_dstate "$old_pid"; then
+      log "Previous instance (PID $old_pid) is in D-state — stealing lock"
+      # Close and reopen the fd to get a fresh lock attempt
+      exec 9>&-
+      exec 9>"$LOCK_FILE"
+      # Force-write our PID even without the lock — the holder is dead
+      echo $$ > "$LOCK_PID_FILE"
+    else
+      log "Another instance is running (PID ${old_pid:-unknown}), exiting"
+      exit 0
+    fi
+  fi
+  echo $$ > "$LOCK_PID_FILE"
+}
+
+acquire_lock
 
 #####################################
 # ENV FILE RESOLUTION
@@ -99,8 +119,6 @@ source "$ENV_FILE"
 
 NFS_PORT="${NFS_PORT:-2049}"
 NFS_CONNECT_TIMEOUT_SECONDS="${NFS_CONNECT_TIMEOUT_SECONDS:-2}"
-# Raised from 5s: hard-mount D-state processes need time for kernel to abort
-UMOUNT_TIMEOUT_SECONDS="${UMOUNT_TIMEOUT_SECONDS:-30}"
 
 #####################################
 # HELPERS
@@ -115,40 +133,61 @@ is_mounted_proc() {
   local nas_ip="$1"
   local export_path="$2"
   local mount_point="$3"
-
-  # Escape dots in IP so they match literally, not as regex wildcards
   local escaped_ip="${nas_ip//./\\.}"
-
   grep -qsE "^${escaped_ip}:${export_path}[[:space:]]+${mount_point}[[:space:]]+nfs" \
     /proc/self/mounts
-}
-
-is_stale_mountpoint() {
-  local mount_point="$1"
-  timeout 5 stat "$mount_point" >/dev/null 2>&1
-  local rc=$?
-  # stat returns 1 with "Stale file handle" when the mount point is stale
-  [[ $rc -ne 0 ]]
 }
 
 nfs_transport_ok() {
   local nas_ip="$1"
   local port="$2"
-
   timeout "$NFS_CONNECT_TIMEOUT_SECONDS" \
     bash -c "</dev/tcp/${nas_ip}/${port}" \
     >/dev/null 2>&1
 }
 
-safe_umount_lazy_force() {
+# Ensure mount point directory exists using ONLY local filesystem operations.
+# The parent directory (e.g. /mnt/homenas) is always on the local fs.
+# We NEVER stat or test -d the mount point itself.
+ensure_mountpoint_dir() {
   local mount_point="$1"
+  local parent_dir
+  parent_dir="$(dirname "$mount_point")"
+  mkdir -p "$parent_dir" 2>/dev/null || true
+  mkdir "$mount_point" 2>/dev/null || true
+}
 
-  # Pipe stderr into the log so failures are visible, not swallowed
-  timeout "$UMOUNT_TIMEOUT_SECONDS" \
-    umount -fl "$mount_point" 2>&1 | while IFS= read -r line; do log "  umount: $line"; done
+# Unmount in a background subprocess so D-state can't block the script.
+# umount -l detaches from VFS namespace immediately (no NFS RPC needed).
+# We give it a few seconds, then move on regardless.
+background_umount() {
+  local mount_point="$1"
+  local label="$2"
 
-  # Return the exit code of umount, not the pipe
-  return "${PIPESTATUS[0]}"
+  log "  Attempting lazy unmount ($label)"
+
+  umount -l "$mount_point" &>/dev/null &
+  local umount_pid=$!
+
+  local waited=0
+  while [[ $waited -lt 5 ]]; do
+    if ! kill -0 "$umount_pid" 2>/dev/null; then
+      wait "$umount_pid" 2>/dev/null
+      local rc=$?
+      if [[ $rc -eq 0 ]]; then
+        log "  Lazy unmount completed"
+      else
+        log "  Lazy unmount returned rc=$rc"
+      fi
+      return $rc
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  log "  Lazy unmount still running after 5s (PID $umount_pid likely D-state) — moving on"
+  disown "$umount_pid" 2>/dev/null || true
+  return 1
 }
 
 #####################################
@@ -156,7 +195,7 @@ safe_umount_lazy_force() {
 #####################################
 log "========================================"
 log "NFS auto-mount run starting"
-log "Version: 1.3.0"
+log "Version: 2.0.0"
 log "Log file: $LOG_FILE"
 log "Using env: $ENV_FILE"
 log "========================================"
@@ -178,42 +217,28 @@ while IFS= read -r line; do
   log "Mount:  $MOUNT_POINT"
   log "Opts:   $MOUNT_OPTS"
 
+  mounted_in_proc=false
+  is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT" && mounted_in_proc=true
+
   if nfs_transport_ok "$NAS_IP" "$NFS_PORT"; then
     log "NFS transport reachable on TCP/$NFS_PORT"
 
-    if [[ ! -d "$MOUNT_POINT" ]]; then
-      log "Creating mount point"
-      mkdir -p "$MOUNT_POINT"
-    fi
-
-    if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
+    if $mounted_in_proc; then
       log "Already mounted → no action"
     else
-      if is_stale_mountpoint "$MOUNT_POINT"; then
-        log "Stale file handle detected on mount point"
-        if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
-          log "Mount still in /proc → force unmounting"
-          safe_umount_lazy_force "$MOUNT_POINT" || true
-          sleep 1
-        else
-          log "Not in /proc but dentry is stale → recreating mount point"
-          rm -rf "$MOUNT_POINT"
-          mkdir -p "$MOUNT_POINT"
-        fi
-      fi
+      ensure_mountpoint_dir "$MOUNT_POINT"
 
       log "Mounting NFS"
       if mount -t nfs -o "$MOUNT_OPTS" "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT" 2>&1 \
-           | while IFS= read -r line; do log "  mount: $line"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+           | while IFS= read -r ml; do log "  mount: $ml"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
         log "Mount complete"
       else
-        log "Mount failed → recreating mount point and retrying"
-        safe_umount_lazy_force "$MOUNT_POINT" || true
-        rm -rf "$MOUNT_POINT"
-        mkdir -p "$MOUNT_POINT"
+        log "Mount failed → clearing partial state and retrying"
+        background_umount "$MOUNT_POINT" "clearing partial state"
         sleep 2
+        ensure_mountpoint_dir "$MOUNT_POINT"
         if mount -t nfs -o "$MOUNT_OPTS" "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT" 2>&1 \
-             | while IFS= read -r line; do log "  mount(retry): $line"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+             | while IFS= read -r ml; do log "  mount(retry): $ml"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
           log "Mount complete on retry"
         else
           log "WARNING: mount failed after retry for $NAS_IP:$NFS_EXPORT → $MOUNT_POINT"
@@ -223,22 +248,17 @@ while IFS= read -r line; do
   else
     log "NFS transport NOT reachable on TCP/$NFS_PORT"
 
-    if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
-      log "Stale/blocked NFS mount detected → forcing lazy unmount (timeout: ${UMOUNT_TIMEOUT_SECONDS}s)"
-      if safe_umount_lazy_force "$MOUNT_POINT"; then
-        # Lazy unmount returns 0 immediately but mount may linger in /proc
-        # until all open file handles are released — check and report honestly
-        if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
-          log "Unmount queued (lazy detach) — still visible in /proc (open handles held)"
-        else
-          log "Unmount complete"
-        fi
+    if $mounted_in_proc; then
+      log "Stale NFS mount in /proc → detaching"
+      background_umount "$MOUNT_POINT" "server unreachable"
+
+      if is_mounted_proc "$NAS_IP" "$NFS_EXPORT" "$MOUNT_POINT"; then
+        log "  Still in /proc after lazy unmount (open handles or D-state)"
       else
-        log "WARNING: umount failed or timed out after ${UMOUNT_TIMEOUT_SECONDS}s"
-        log "  Mount state: $(grep "$MOUNT_POINT" /proc/self/mounts 2>/dev/null || echo 'not in /proc')"
+        log "  Successfully removed from /proc"
       fi
     else
-      log "No NFS mount present → no action"
+      log "Not mounted → no action"
     fi
   fi
 
