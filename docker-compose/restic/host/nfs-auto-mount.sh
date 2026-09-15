@@ -41,8 +41,7 @@ HOSTNAME="$(hostname -s)"
 DEFAULT_LOG_FILE="/var/log/nfs-auto-mount.log"
 LOG_FILE="${LOG_FILE:-$DEFAULT_LOG_FILE}"
 
-LOCK_FILE="/var/run/nfs-auto-mount.lock"
-LOCK_PID_FILE="/var/run/nfs-auto-mount.pid"
+PID_FILE="/var/run/nfs-auto-mount.pid"
 
 DEFAULT_ENV_FILE_1="/home/ecloaiza/.nfs-mount.env"
 DEFAULT_ENV_FILE_2="/home/ecloaiza/nfs-mount.env"
@@ -65,34 +64,31 @@ fail() {
 }
 
 #####################################
-# D-STATE AWARE LOCK
+# PID FILE LOCK (no flock — immune to D-state deadlock)
 #####################################
-is_pid_dstate() {
-  local pid="$1"
-  local state
-  state="$(awk '/^State:/ {print $2}' "/proc/$pid/status" 2>/dev/null)"
-  [[ "$state" == "D" ]]
+acquire_lock() {
+  if [[ -f "$PID_FILE" ]]; then
+    local old_pid
+    old_pid="$(cat "$PID_FILE" 2>/dev/null)" || old_pid=""
+    if [[ -n "$old_pid" ]] && [[ -d "/proc/$old_pid" ]]; then
+      local state
+      state="$(awk '/^State:/ {print $2}' "/proc/$old_pid/status" 2>/dev/null)" || state=""
+      if [[ "$state" == "D" ]]; then
+        log "Previous instance (PID $old_pid) is in D-state (uninterruptible) — proceeding anyway"
+      else
+        log "Another instance is running (PID $old_pid, state=$state), exiting"
+        exit 0
+      fi
+    fi
+    # PID file exists but process is gone or D-state — safe to proceed
+  fi
+  echo $$ > "$PID_FILE"
 }
 
-acquire_lock() {
-  exec 9>"$LOCK_FILE"
-  if ! flock -n 9; then
-    local old_pid
-    old_pid="$(cat "$LOCK_PID_FILE" 2>/dev/null)" || old_pid=""
-    if [[ -n "$old_pid" ]] && is_pid_dstate "$old_pid"; then
-      log "Previous instance (PID $old_pid) is in D-state — stealing lock"
-      # Close and reopen the fd to get a fresh lock attempt
-      exec 9>&-
-      exec 9>"$LOCK_FILE"
-      # Force-write our PID even without the lock — the holder is dead
-      echo $$ > "$LOCK_PID_FILE"
-    else
-      log "Another instance is running (PID ${old_pid:-unknown}), exiting"
-      exit 0
-    fi
-  fi
-  echo $$ > "$LOCK_PID_FILE"
+cleanup_lock() {
+  rm -f "$PID_FILE"
 }
+trap cleanup_lock EXIT
 
 acquire_lock
 
