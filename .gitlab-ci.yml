@@ -30,9 +30,6 @@ validate:compose:
       bash "$CI_PROJECT_DIR/scripts/validate-compose.sh" "$CI_PROJECT_DIR/docker-compose/$PROJECT"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      changes:
-        - docker-compose/**/*
-        - scripts/validate-compose.sh
 
 preflight:hailmary:
   stage: preflight
@@ -85,78 +82,6 @@ preflight:hailmary:
       changes:
         - docker-compose/**/*
 
-deploy:rocky:
-  stage: deploy
-  when: on_success
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client rsync git
-    - chmod 600 "$SSH_PRIVATE_KEY"
-    - *detect_project
-  script:
-    - |
-      if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
-        echo "No docker-compose project changed — nothing to deploy"
-        exit 0
-      fi
-      echo "==> Deploying $PROJECT to rocky (dev)..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.28 bash -s "$PROJECT" << 'DEPLOY_SCRIPT'
-        set -e
-        PROJECT="$1"
-
-        echo "--- Sync tutorials repo"
-        cd ~/devops/github/tutorials
-        git fetch origin
-        git reset --hard origin/main
-
-        echo "--- Rsync docker-compose files"
-        mkdir -p ~/devops/docker/$PROJECT
-        rsync -am --ignore-errors --no-owner --no-group \
-          --exclude='openwebui_data/' --exclude='*_data/' \
-          --exclude='data/' --exclude='.env' \
-          --include='*/' --include='*.yml' --include='*.yaml' --include='*.py' \
-          --include='*.sh' --include='*.md' --include='*.json' \
-          --exclude='*' \
-          ~/devops/github/tutorials/docker-compose/$PROJECT/ \
-          ~/devops/docker/$PROJECT/
-
-        echo "==> $PROJECT files synced to rocky"
-      DEPLOY_SCRIPT
-      test $? -eq 0
-
-deploy:sync:hailmary:
-  <<: *deploy_template
-  script:
-    - |
-      if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
-        echo "No docker-compose project changed — nothing to sync"
-        exit 0
-      fi
-      echo "==> Syncing $PROJECT files to hailmary (no container restart)..."
-      ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no ecloaiza@192.168.5.25 bash -s "$PROJECT" << 'SYNC_SCRIPT'
-        set -e
-        PROJECT="$1"
-
-        echo "--- Sync tutorials repo"
-        cd ~/devops/github/tutorials
-        git fetch origin
-        git reset --hard origin/main
-
-        echo "--- Rsync docker-compose files"
-        mkdir -p ~/devops/docker/$PROJECT
-        rsync -am --ignore-errors --no-owner --no-group \
-          --exclude='openwebui_data/' --exclude='*_data/' \
-          --exclude='data/' --exclude='.env' \
-          --include='*/' --include='*.yml' --include='*.yaml' --include='*.py' \
-          --include='*.sh' --include='*.md' --include='*.json' \
-          --exclude='*' \
-          ~/devops/github/tutorials/docker-compose/$PROJECT/ \
-          ~/devops/docker/$PROJECT/
-
-        echo "==> $PROJECT files synced to hailmary (containers untouched)"
-      SYNC_SCRIPT
-      test $? -eq 0
-
 deploy:hailmary:
   stage: deploy
   tags:
@@ -179,7 +104,14 @@ deploy:hailmary:
 
       echo "--- Rsync docker-compose files"
       mkdir -p ~/devops/docker/$PROJECT
-      rsync -am --ignore-errors --no-owner --no-group         --exclude='openwebui_data/' --exclude='*_data/'         --exclude='data/' --exclude='.env'         --include='*/' --include='*.yml' --include='*.yaml' --include='*.py'         --include='*.sh' --include='*.md' --include='*.json'         --exclude='*'         ~/devops/github/tutorials/docker-compose/$PROJECT/         ~/devops/docker/$PROJECT/
+      rsync -am --ignore-errors --no-owner --no-group \
+        --exclude='openwebui_data/' --exclude='*_data/' \
+        --exclude='data/' --exclude='.env' \
+        --include='*/' --include='*.yml' --include='*.yaml' --include='*.py' \
+        --include='*.sh' --include='*.md' --include='*.json' \
+        --exclude='*' \
+        ~/devops/github/tutorials/docker-compose/$PROJECT/ \
+        ~/devops/docker/$PROJECT/
 
       echo "--- Validate compose configuration"
       cd ~/devops/docker/$PROJECT
