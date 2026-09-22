@@ -121,7 +121,7 @@ deploy:hailmary:
       }
 
       echo "--- Check required bind mount directories"
-      MOUNTS=$(docker compose config | grep -oP "^\s+- \./\K[^:]*(?=:)" | sort -u)
+      MOUNTS=$(docker compose config 2>/dev/null | grep -oP "^\s+- \./\K[^:]*(?=:)" | sort -u || true)
       while IFS= read -r MOUNT; do
         [ -z "$MOUNT" ] && continue
         if [ ! -e "$MOUNT" ]; then
