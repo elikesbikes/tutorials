@@ -3,7 +3,7 @@ set -uo pipefail
 
 #####################################
 # nfs-auto-mount.sh
-# Version: 2.0.0
+# Version: 2.1.0
 #
 # Status: PRODUCTION
 #
@@ -23,6 +23,9 @@ set -uo pipefail
 # - 1.1.2: Canonicalize logging
 # - 1.2.0: Lock file, umount timeout, stderr logging
 # - 1.3.0: Stale dentry recovery (rm + mkdir)
+# - 2.1.0: Detect stale file handles on soft mounts (stat with timeout)
+#           and auto-remount — fixes case where server is reachable but
+#           mount has a stale NFS handle
 # - 2.0.0:
 #   * BREAKING: never touch filesystem for mount state — /proc only
 #   * Fix: umount runs in background subprocess to avoid D-state blocking
@@ -142,6 +145,18 @@ nfs_transport_ok() {
     >/dev/null 2>&1
 }
 
+# Safe only on soft mounts — stat returns EIO quickly on stale handle.
+# On hard mounts this could D-state, so caller must check mount opts first.
+is_stale_soft_mount() {
+  local mount_point="$1"
+  local stat_out
+  stat_out="$(timeout 10 stat "$mount_point" 2>&1)" && return 1
+  if echo "$stat_out" | grep -qi "stale file handle\|stale nfs"; then
+    return 0
+  fi
+  return 1
+}
+
 # Ensure mount point directory exists using ONLY local filesystem operations.
 # The parent directory (e.g. /mnt/homenas) is always on the local fs.
 # We NEVER stat or test -d the mount point itself.
@@ -191,7 +206,7 @@ background_umount() {
 #####################################
 log "========================================"
 log "NFS auto-mount run starting"
-log "Version: 2.0.0"
+log "Version: 2.1.0"
 log "Log file: $LOG_FILE"
 log "Using env: $ENV_FILE"
 log "========================================"
@@ -220,7 +235,20 @@ while IFS= read -r line; do
     log "NFS transport reachable on TCP/$NFS_PORT"
 
     if $mounted_in_proc; then
-      log "Already mounted → no action"
+      if echo "$MOUNT_OPTS" | grep -q "soft" && is_stale_soft_mount "$MOUNT_POINT"; then
+        log "Mounted but STALE file handle detected → remounting"
+        background_umount "$MOUNT_POINT" "stale file handle"
+        sleep 2
+        ensure_mountpoint_dir "$MOUNT_POINT"
+        if mount -t nfs -o "$MOUNT_OPTS" "$NAS_IP:$NFS_EXPORT" "$MOUNT_POINT" 2>&1 \
+             | while IFS= read -r ml; do log "  mount(remount): $ml"; done; [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+          log "Remount after stale handle complete"
+        else
+          log "WARNING: remount failed for stale $NAS_IP:$NFS_EXPORT → $MOUNT_POINT"
+        fi
+      else
+        log "Already mounted → no action"
+      fi
     else
       ensure_mountpoint_dir "$MOUNT_POINT"
 
