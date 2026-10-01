@@ -1,0 +1,53 @@
+# ------------------------------------------------------------
+# docker-compose.yml
+#
+# Service: signal-cli
+# Version: 1.0.0
+#
+# Description:
+# Local Signal gateway (signal-cli-rest-api). MCC copies opted-in Discord
+# posts to Signal through it — see mcc/docs/signal.md.
+#
+# Endpoints:
+#   - 127.0.0.1:8080 only: REST API (/v2/send, /v1/about). No Traefik route —
+#     the MCC runner and self-monitor on this host are the only callers.
+#
+# Design notes:
+# - hailmary only: a Signal number has one primary registration.
+# - Bot number registered once by hand (docs/signal.md#setup); the account
+#   lives in ./data, so a redeploy keeps the registration.
+# - Entrypoint starts as root only to set the UID, then drops to
+#   SIGNAL_CLI_UID/GID via setpriv — the API never runs as root.
+# - NO top-level 'version:' key (Compose v2 rule)
+#
+# Changelog (running):
+# - 1.0.0: Initial gateway for the MCC Signal mirror
+# ------------------------------------------------------------
+
+services:
+  signal-cli:
+    image: bbernhard/signal-cli-rest-api:0.101
+    container_name: signal-cli
+    environment:
+      - TZ=${TZ:-America/Los_Angeles}
+      - MODE=json-rpc
+      - SIGNAL_CLI_UID=${PUID:-1000}
+      - SIGNAL_CLI_GID=${PGID:-1000}
+    volumes:
+      - ./data:/home/.local/share/signal-cli
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - frontend
+    restart: unless-stopped
+    # Health: the image's own HEALTHCHECK (curl /v1/health).
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "${SYSLOG_ADDRESS:?set SYSLOG_ADDRESS in .env}"
+        syslog-format: "rfc3164"
+        tag: "signal-cli"
+
+networks:
+  frontend:
+    external: true
