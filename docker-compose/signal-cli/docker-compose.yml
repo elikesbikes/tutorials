@@ -2,7 +2,7 @@
 # docker-compose.yml
 #
 # Service: signal-cli
-# Version: 1.0.0
+# Version: 1.0.1
 #
 # Description:
 # Local Signal gateway (signal-cli-rest-api). MCC copies opted-in Discord
@@ -16,11 +16,14 @@
 # - hailmary only: a Signal number has one primary registration.
 # - Bot number registered once by hand (docs/signal.md#setup); the account
 #   lives in ./data, so a redeploy keeps the registration.
-# - Entrypoint starts as root only to set the UID, then drops to
-#   SIGNAL_CLI_UID/GID via setpriv — the API never runs as root.
+# - Image 0.101 (s6) runs as SIGNAL_CLI_UID/GID from the start and never
+#   chowns ./data, so the deploy job must create ./data as the deploy user;
+#   a dockerd-created (root) dir crash-loops with "permission denied".
 # - NO top-level 'version:' key (Compose v2 rule)
 #
 # Changelog (running):
+# - 1.0.1: Note image 0.101 runs as SIGNAL_CLI_UID from the start (s6, no
+#          root chown) — ./data must be created by the deploy user, not dockerd
 # - 1.0.0: Initial gateway for the MCC Signal mirror
 # ------------------------------------------------------------
 
