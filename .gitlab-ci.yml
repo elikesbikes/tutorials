@@ -121,7 +121,20 @@ deploy:hailmary:
       }
 
       echo "--- Check required bind mount directories"
-      MOUNTS=$(docker compose config 2>/dev/null | grep -oP "^\s+- \./\K[^:]*(?=:)" | sort -u || true)
+      # `docker compose config` prints binds in long form (`source: /abs/path`),
+      # so the old `- ./x:` regex never matched and dockerd created every missing
+      # bind dir as root — fatal for images that run as a non-root UID
+      # (signal-cli 2026-09-30). Read the bind sources from the JSON instead;
+      # only dirs inside the project are created (as the deploy user).
+      MOUNTS=$(docker compose config --format json | python3 -c '
+      import json, os, sys
+      root = os.getcwd()
+      for svc in json.load(sys.stdin).get("services", {}).values():
+          for v in svc.get("volumes", []):
+              src = v.get("source", "")
+              if v.get("type") == "bind" and src.startswith(root + "/") and "." not in os.path.basename(src):
+                  print(src)
+      ' | sort -u)
       while IFS= read -r MOUNT; do
         [ -z "$MOUNT" ] && continue
         if [ ! -e "$MOUNT" ]; then
