@@ -26,7 +26,6 @@ fetch() {   # fetch <VAR> <item title> <field> <required|optional>
 }
 
 fetch DISCORD_BOT_TOKEN     "hermes - DISCORD_BOT_TOKEN"     password optional
-fetch DISCORD_ALLOWED_USERS "hermes - DISCORD_ALLOWED_USERS" note     optional
 
 export HERMES_UID="$(id -u)" HERMES_GID="$(id -g)"
 docker compose up -d "$@"
