@@ -1,0 +1,42 @@
+# Hermes Agent (Nous Research) on endurance - orchestrator working alongside IT ops.
+# State (config, database, memory, skills) lives in ./data, inside this project, not ~/.hermes.
+# Model: the Claude subscription via the official Claude Code CLI (no API key anywhere).
+# Secrets are NOT in this file or any .env: start.sh fetches them from Proton Pass and exports them.
+services:
+  hermes:
+    build: .
+    image: hermes-claude:local
+    container_name: hermes
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    volumes:
+      - ./data:/opt/data
+    # No ports: published (homelab rule: behind Traefik, never direct ports). The gateway only
+    # makes outbound connections (Discord etc.), so nothing needs to be reachable yet.
+    networks:
+      - default
+    environment:
+      - TZ=America/Los_Angeles
+      - HERMES_UID=${HERMES_UID:-1000}
+      - HERMES_GID=${HERMES_GID:-1000}
+      - HERMES_DASHBOARD=1                     # web dashboard; login is Authelia OIDC (see data/config.yaml)
+      - DISCORD_BOT_TOKEN
+      - DISCORD_ALLOWED_USERS
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hermes.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.hermes.entrypoints=websecure"
+      - "traefik.http.routers.hermes.tls.certresolver=production"
+      - "traefik.http.routers.hermes.middlewares=security-headers@file"
+      - "traefik.http.services.hermes.loadbalancer.server.port=${TRAEFIK_PORT}"
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "hermes"
+
+networks:
+  default:
+    name: frontend
+    external: true
