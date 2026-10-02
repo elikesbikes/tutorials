@@ -2,6 +2,10 @@
 # (plugin: claude-subscription-directsdk). App code lives in the image; only ./data is mounted.
 FROM nousresearch/hermes-agent:latest
 RUN npm install -g @anthropic-ai/claude-code && claude --version
+# Read-only diagnostics client for hailmary (see hdiag.sh). The host key of hailmary is PINNED here.
+COPY hdiag.sh /usr/local/bin/hdiag
+COPY hailmary.known_hosts.txt /opt/hermes-diag/known_hosts
+RUN chmod 755 /usr/local/bin/hdiag && chmod 644 /opt/hermes-diag/known_hosts
 # The CLI login lives in Hermes own data folder (bind mount), not a shared ~/.claude
 ENV CLAUDE_CONFIG_DIR=/opt/data/claude
 

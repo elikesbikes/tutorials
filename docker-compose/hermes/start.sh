@@ -27,6 +27,12 @@ fetch() {   # fetch <VAR> <item title> <field> <required|optional>
 
 fetch DISCORD_BOT_TOKEN     "hermes - DISCORD_BOT_TOKEN"     "API Key" optional   # Proton item type "API Key": value is in its "API Key" field
 
+# Restricted, read-only SSH key for hailmary diagnostics (Proton item "endurance hermes-diag", SSH key type).
+fetch HERMES_DIAG_SSH_KEY "endurance hermes-diag" private_key optional
+
+# Install the Hermes skills kept in this project (data/ itself is not in git).
+for d in skills/*/; do n="$(basename "$d")"; mkdir -p "data/skills/devops/$n" && cp -f "$d"SKILL.md "data/skills/devops/$n/SKILL.md"; done
+
 export HERMES_UID="$(id -u)" HERMES_GID="$(id -g)"
 docker compose up -d "$@"
 docker compose ps
