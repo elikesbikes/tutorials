@@ -26,7 +26,7 @@ Hermes Agent (Nous Research) running in Docker on endurance: an orchestrator tha
 ## 2. Secrets
 
 No `.env` file. `start.sh` logs in with endurance's own vTPM-sealed PAT and exports these from the `HOMELAB` vault:
-`hermes - DISCORD_BOT_TOKEN` (optional; Discord). The allowed Discord user IDs are not secret and live in `.env` as `DISCORD_ALLOWED_USERS`.
+`hermes - DISCORD_BOT_TOKEN` (optional; Discord; item type **API Key**, token in its "API Key" field). The allowed Discord user IDs are not secret and live in `.env` as `DISCORD_ALLOWED_USERS`.
 Do not run `hermes setup`: it writes keys to `data/.env`.
 
 ## 3. Start, stop, update

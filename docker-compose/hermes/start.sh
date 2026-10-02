@@ -25,7 +25,7 @@ fetch() {   # fetch <VAR> <item title> <field> <required|optional>
   fi
 }
 
-fetch DISCORD_BOT_TOKEN     "hermes - DISCORD_BOT_TOKEN"     password optional
+fetch DISCORD_BOT_TOKEN     "hermes - DISCORD_BOT_TOKEN"     "API Key" optional   # Proton item type "API Key": value is in its "API Key" field
 
 export HERMES_UID="$(id -u)" HERMES_GID="$(id -g)"
 docker compose up -d "$@"
