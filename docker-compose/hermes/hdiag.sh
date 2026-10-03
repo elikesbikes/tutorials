@@ -1,11 +1,15 @@
 #!/bin/sh
-# hdiag <subcommand> [argument]  -  READ-ONLY diagnostics on hailmary through the restricted `hermes-diag` account.
-#   hdiag status | hdiag component <name> | hdiag container-logs <name> | hdiag service-journal <unit> | hdiag help
-# The remote side enforces everything (forced command, exact allowlists, redaction); this wrapper only supplies the
-# key (kept in RAM, removed on exit) and the PINNED hailmary host key. The key comes from Proton Pass via start.sh.
+# hdiag [host] <subcommand> [argument]  -  READ-ONLY diagnostics through the restricted `hermes-diag` account on a host.
+#   hosts: hailmary (default), kipp          e.g.  hdiag kipp hostinfo     hdiag hailmary status     hdiag kipp help
+# Each host enforces everything itself (forced command, exact allowlists, redaction, audit); this wrapper only supplies
+# the key (kept in RAM, removed on exit) and the PINNED host keys. The key comes from Proton Pass via start.sh.
 set -eu
 : "${HERMES_DIAG_SSH_KEY:?hdiag: no key available (the container was not started with ./start.sh)}"
-HOST="${HERMES_DIAG_HOST:-192.168.5.25}"
+case "${1:-}" in
+  hailmary) HOST=192.168.5.25;  shift ;;
+  kipp)     HOST=192.168.5.216; shift ;;
+  *)        HOST="${HERMES_DIAG_HOST:-192.168.5.25}" ;;   # no host given: hailmary (backward compatible)
+esac
 D="$(mktemp -d /dev/shm/hdiag.XXXXXX)"
 trap 'rm -rf "$D"' EXIT INT TERM
 umask 077
