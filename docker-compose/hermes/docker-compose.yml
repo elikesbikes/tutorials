@@ -21,6 +21,9 @@ services:
       - HERMES_GID=${HERMES_GID:-1000}
       - HERMES_DASHBOARD=1                     # web dashboard; login is Authelia OIDC (see data/config.yaml)
       - DISCORD_BOT_TOKEN
+      - API_SERVER_ENABLED=true               # OpenAI-compatible API for Open WebUI (internal network only, never published)
+      - API_SERVER_HOST=0.0.0.0
+      - API_SERVER_KEY                         # Proton Pass item 'hermes - API_SERVER_KEY', via start.sh
       - HASS_TOKEN                             # Home Assistant long-lived token (Proton Pass, via start.sh)
       - HASS_URL=${HASS_URL:-}                 # not a secret (from .env)
       - HERMES_DIAG_SSH_KEY                    # restricted read-only key for `hdiag` (Proton Pass, via start.sh)
