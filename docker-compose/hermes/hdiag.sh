@@ -1,6 +1,6 @@
 #!/bin/sh
 # hdiag [host] <subcommand> [argument]  -  READ-ONLY diagnostics through the restricted `hermes-diag` account on a host.
-#   hosts: hailmary (default), kipp          e.g.  hdiag kipp hostinfo     hdiag hailmary status     hdiag kipp help
+#   hosts: hailmary (default), kipp, rocky, tars, murph     e.g.  hdiag kipp hostinfo   hdiag hailmary status   hdiag rocky help
 # Each host enforces everything itself (forced command, exact allowlists, redaction, audit); this wrapper only supplies
 # the key (kept in RAM, removed on exit) and the PINNED host keys. The key comes from Proton Pass via start.sh.
 set -eu
@@ -8,6 +8,9 @@ set -eu
 case "${1:-}" in
   hailmary) HOST=192.168.5.25;  shift ;;
   kipp)     HOST=192.168.5.216; shift ;;
+  rocky)    HOST=192.168.5.28;  shift ;;
+  tars)     HOST=192.168.5.127; shift ;;
+  murph)    HOST=192.168.5.41;  shift ;;
   *)        HOST="${HERMES_DIAG_HOST:-192.168.5.25}" ;;   # no host given: hailmary (backward compatible)
 esac
 D="$(mktemp -d /dev/shm/hdiag.XXXXXX)"
