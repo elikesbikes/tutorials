@@ -1,0 +1,63 @@
+# Open WebUI: friendly chat front end for the Hermes agent (Hermes is the backend: its memory, skills and tools).
+# Standards (CLAUDE-docker2.md): shared `frontend` network, Traefik labels from .env, NO published ports, TZ Pacific,
+# syslog to Graylog (192.168.5.25), bind mounts only, non-root, secrets from Proton Pass via start.sh (never in a file).
+# Login: Authelia single sign-on ONLY (local login form and local sign-up are off).
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.11.4      # pinned (owner rule: no `latest`)
+    container_name: open-webui
+    restart: unless-stopped
+    user: "1000:1000"                                  # non-root; ./data must be owned by 1000
+    networks:
+      - default
+    volumes:
+      - ./data:/app/backend/data
+    environment:
+      - TZ=America/Los_Angeles
+      - HOME=/app/backend/data                         # writable home for the non-root user (caches)
+      # --- backend: the Hermes agent's OpenAI-compatible API, over the internal network only
+      - OPENAI_API_BASE_URL=http://hermes:8642/v1
+      - OPENAI_API_KEY                                 # = Hermes API_SERVER_KEY (Proton Pass, via start.sh)
+      - ENABLE_OLLAMA_API=false
+      # --- sessions / URL
+      - WEBUI_SECRET_KEY                               # Proton Pass, via start.sh
+      - WEBUI_URL=https://${TRAEFIK_HOST}
+      # --- login: Authelia only
+      - ENABLE_LOGIN_FORM=false
+      - ENABLE_SIGNUP=false
+      - ENABLE_OAUTH_SIGNUP=true
+      - OAUTH_MERGE_ACCOUNTS_BY_EMAIL=true
+      - OAUTH_PROVIDER_NAME=Authelia
+      - OAUTH_CLIENT_ID=open-webui
+      - OAUTH_CLIENT_SECRET                            # Proton Pass, via start.sh
+      - OPENID_PROVIDER_URL=https://auth-hailmary.home.elikesbikes.com/.well-known/openid-configuration
+      - OAUTH_SCOPES=openid email profile groups
+      - OAUTH_CODE_CHALLENGE_METHOD=S256
+      - ENABLE_OAUTH_ROLE_MANAGEMENT=true
+      - OAUTH_ROLES_CLAIM=groups
+      - OAUTH_ALLOWED_ROLES=admins
+      - OAUTH_ADMIN_ROLES=admins
+      - ENABLE_PERSISTENT_CONFIG=false                 # env stays authoritative: settings (incl. keys) are NOT copied into the database on disk
+      - ENABLE_OAUTH_PERSISTENT_CONFIG=false
+      # --- privacy: no analytics / telemetry
+      - ANONYMIZED_TELEMETRY=false
+      - SCARF_NO_ANALYTICS=true
+      - DO_NOT_TRACK=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.open-webui.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.open-webui.entrypoints=websecure"
+      - "traefik.http.routers.open-webui.tls.certresolver=production"
+      - "traefik.http.routers.open-webui.middlewares=security-headers@file"
+      - "traefik.http.services.open-webui.loadbalancer.server.port=${TRAEFIK_PORT}"
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "open-webui"
+
+networks:
+  default:
+    name: frontend
+    external: true
