@@ -16,7 +16,7 @@ metadata:
 
 ## Usage: `hdiag <host> <command>`
 
-Hosts: `kipp` (macOS, iOS build host), `hailmary` (Linux, production). Ask a host what it offers with `hdiag <host> help`.
+Hosts: `kipp` (macOS, iOS build host), `hailmary` (Linux, production), `rocky` (Linux, development), `tars` (Linux, the owner's desktop), `murph` (Linux, sandbox VM). Ask a host what it offers with `hdiag <host> help`.
 
 | Command | Where | What you get |
 |---|---|---|
