@@ -29,8 +29,8 @@ fetch DISCORD_BOT_TOKEN     "hermes - DISCORD_BOT_TOKEN"     "API Key" optional 
 
 fetch HASS_TOKEN            "hermes - HASS_TOKEN"            "API Key" optional   # Home Assistant long-lived access token
 
-# Restricted, read-only SSH key for hailmary diagnostics (Proton item "endurance hermes-diag", SSH key type).
-fetch HERMES_DIAG_SSH_KEY "endurance hermes-diag" private_key optional
+# Restricted, read-only SSH key for hailmary diagnostics (Proton item "hermes-diag", SSH key type, generated 2026-10-02 for this purpose only).
+fetch HERMES_DIAG_SSH_KEY "hermes-diag" private_key optional
 
 # Install the Hermes skills kept in this project (data/ itself is not in git).
 for d in skills/*/; do n="$(basename "$d")"; mkdir -p "data/skills/devops/$n" && cp -f "$d"SKILL.md "data/skills/devops/$n/SKILL.md"; done
