@@ -1,0 +1,78 @@
+# Honcho (Plastic Labs): self-hosted memory for the Hermes agent. Models run on Ollama on tars (see honcho.env).
+# Standards: shared `frontend` network, no published ports, Traefik labels from .env, syslog to Graylog, TZ Pacific,
+# bind mounts only, non-root, secrets from Proton Pass via start.sh (the DB password), never from a file.
+# Service names are prefixed `honcho-` on purpose: `redis`/`database` would collide with other stacks on the shared network.
+# Source is built from ./src (pinned checkout, see README).
+x-honcho: &honcho
+  build: {context: ./src, dockerfile: Dockerfile}
+  image: honcho:local
+  env_file: honcho.env
+  restart: unless-stopped
+  environment:
+    - TZ=America/Los_Angeles
+    - DB_CONNECTION_URI                 # built by start.sh (contains the Proton Pass password)
+    - CACHE_URL=redis://honcho-redis:6379/0?suppress=true
+    - CACHE_ENABLED=true
+  logging: &log
+    driver: syslog
+    options: {syslog-address: "udp://192.168.5.25:514", syslog-format: "rfc3164", tag: "honcho"}
+
+services:
+  honcho-api:
+    <<: *honcho
+    container_name: honcho-api
+    entrypoint: ["sh", "docker/entrypoint.sh"]      # runs DB migrations, then the API
+    depends_on: {honcho-db: {condition: service_healthy}, honcho-redis: {condition: service_healthy}}
+    networks: [default]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.honcho.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.honcho.entrypoints=websecure"
+      - "traefik.http.routers.honcho.tls.certresolver=production"
+      - "traefik.http.routers.honcho.middlewares=honcho-allowlist@file,security-headers@file"
+      - "traefik.http.services.honcho.loadbalancer.server.port=${TRAEFIK_PORT}"
+    healthcheck:
+      test: ["CMD", "/app/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+  honcho-deriver:
+    <<: *honcho
+    container_name: honcho-deriver
+    entrypoint: ["/app/.venv/bin/python", "-m", "src.deriver"]
+    depends_on: {honcho-api: {condition: service_healthy}}
+    networks: [default]
+  honcho-db:
+    image: pgvector/pgvector:pg15
+    container_name: honcho-db
+    restart: unless-stopped
+    user: "999:999"                                  # non-root; ./data/postgres must be owned by 999
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      - TZ=America/Los_Angeles
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD                            # from Proton Pass via start.sh
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./src/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./data/postgres:/var/lib/postgresql/data
+    networks: [default]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"], interval: 5s, timeout: 5s, retries: 10}
+    logging: *log
+  honcho-redis:
+    image: redis:8.2
+    container_name: honcho-redis
+    restart: unless-stopped
+    user: "999:999"
+    environment: [TZ=America/Los_Angeles]
+    volumes: ["./data/redis:/data"]
+    networks: [default]
+    healthcheck: {test: ["CMD-SHELL", "redis-cli ping"], interval: 5s, timeout: 5s, retries: 10}
+    logging: *log
+
+networks:
+  default:
+    name: frontend
+    external: true
