@@ -27,6 +27,8 @@ fetch() {   # fetch <VAR> <item title> <field> <required|optional>
 
 fetch DISCORD_BOT_TOKEN     "hermes - DISCORD_BOT_TOKEN"     "API Key" optional   # Proton item type "API Key": value is in its "API Key" field
 
+fetch HASS_TOKEN            "hermes - HASS_TOKEN"            "API Key" optional   # Home Assistant long-lived access token
+
 # Restricted, read-only SSH key for hailmary diagnostics (Proton item "endurance hermes-diag", SSH key type).
 fetch HERMES_DIAG_SSH_KEY "endurance hermes-diag" private_key optional
 
