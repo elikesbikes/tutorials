@@ -31,6 +31,11 @@ entryPoints:
           scheme: https
   websecure:
     address: ":443"
+  # Implicit TLS entry points for Proton Mail Bridge.
+  proton-imaps:
+    address: ":993"
+  proton-smtps:
+    address: ":465"
 
 # Let's Encrypt via Cloudflare DNS-01 challenge -> supports wildcard certificates.
 # The CF_DNS_API_TOKEN env var is injected from .env (never committed).
