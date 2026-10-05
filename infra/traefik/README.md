@@ -1,6 +1,6 @@
 ---
-revision: 4
-updated: 2026-10-05 16:24
+revision: 5
+updated: 2026-10-05 16:28
 ---
 
 # Traefik: desired state in git
@@ -50,7 +50,7 @@ All from tars, in the tutorials repo:
 |---|---|
 | tars | **applied and restarted 2026-10-05 16:18**; checked: smoke test unchanged, allowlist tested from allowed and non-allowed machines, certificate unchanged |
 | rocky | **applied and restarted 2026-10-05 16:22**; checked: smoke test unchanged (33 addresses), allowlist behaves as before from tars, hailmary and endurance, certificate unchanged |
-| endurance | not yet applied |
+| endurance | **applied and restarted 2026-10-05 16:27** (about 10 seconds without web access); checked: smoke test unchanged (5 addresses), both allowlists behave as before, chat, sign-in and Hermes login fine, MCC checks ok, 8 containers still running, certificate unchanged |
 | hailmary | not yet applied (last, and only with the owner present: its Traefik is also the front door to GitLab) |
 
 ## 5. Why Traefik is not deployed by the pipeline
@@ -61,7 +61,8 @@ Restarting Traefik cuts web access for a few seconds. On hailmary that includes 
 
 | Rev | Date | Commit | Change |
 |---|---|---|---|
-| 4 | 2026-10-05 16:24 | (this revision) | Corrected commit ids and times in this table (earlier values were not taken from git). |
+| 5 | 2026-10-05 16:28 | (this revision) | endurance applied and verified. |
+| 4 | 2026-10-05 16:24 | 4449ef9 | Corrected commit ids and times in this table (earlier values were not taken from git). |
 | 3 | 2026-10-05 16:23 | 1b71182 | rocky applied and verified. |
 | 2 | 2026-10-05 16:19 | a13bb01 | tars applied and verified; restart notes added. |
 | 1 | 2026-10-05 16:10 | 98afddd | Desired-state layout, verifier, smoke test and sync script created; nothing applied to any host yet. |
