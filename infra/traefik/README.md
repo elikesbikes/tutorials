@@ -1,6 +1,6 @@
 ---
-revision: 3
-updated: 2026-10-05 16:40
+revision: 4
+updated: 2026-10-05 16:24
 ---
 
 # Traefik: desired state in git
@@ -61,6 +61,7 @@ Restarting Traefik cuts web access for a few seconds. On hailmary that includes 
 
 | Rev | Date | Commit | Change |
 |---|---|---|---|
-| 3 | 2026-10-05 16:40 | (this revision) | rocky applied and verified. |
-| 2 | 2026-10-05 16:30 | a13bb01 | tars applied and verified; restart notes added. |
-| 1 | 2026-10-05 19:00 | Desired-state layout, verifier, smoke test and sync script created; nothing applied to any host yet. |
+| 4 | 2026-10-05 16:24 | (this revision) | Corrected commit ids and times in this table (earlier values were not taken from git). |
+| 3 | 2026-10-05 16:23 | 1b71182 | rocky applied and verified. |
+| 2 | 2026-10-05 16:19 | a13bb01 | tars applied and verified; restart notes added. |
+| 1 | 2026-10-05 16:10 | 98afddd | Desired-state layout, verifier, smoke test and sync script created; nothing applied to any host yet. |
