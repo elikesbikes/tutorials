@@ -39,6 +39,16 @@ services:
       - OAUTH_ADMIN_ROLES=admins
       - ENABLE_PERSISTENT_CONFIG=false                 # env stays authoritative: settings (incl. keys) are NOT copied into the database on disk
       - ENABLE_OAUTH_PERSISTENT_CONFIG=false
+      # --- Hermes API quirk (found 2026-10-03): with the Claude-subscription provider the API server returns an EMPTY reply when the
+      #     request is "streaming" (it only forwards piece-by-piece deltas and never falls back to the final answer). Ask for normal replies.
+      - 'DEFAULT_MODEL_PARAMS={"stream_response": false}'
+      # --- no automatic background requests: each would be a separate Claude request against the Pro limit (title/tags/follow-ups/etc.)
+      - ENABLE_TITLE_GENERATION=false
+      - ENABLE_TAGS_GENERATION=false
+      - ENABLE_FOLLOW_UP_GENERATION=false
+      - ENABLE_AUTOCOMPLETE_GENERATION=false
+      - ENABLE_SEARCH_QUERY_GENERATION=false
+      - ENABLE_RETRIEVAL_QUERY_GENERATION=false
       # --- privacy: no analytics / telemetry
       - ANONYMIZED_TELEMETRY=false
       - SCARF_NO_ANALYTICS=true
