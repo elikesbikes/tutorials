@@ -117,6 +117,8 @@ TS="$(date +%Y%m%d-%H%M%S)"
 BK="$BACKUP_ROOT/$PROJECT/$TS"
 mkdir -p "$BK"
 
+OLD_DOCKERFILE_SUM="$(sha256sum "$DEST/Dockerfile" 2>/dev/null | cut -d' ' -f1 || true)"
+
 log "==> Installing files (previous versions saved in $BK)"
 rsync -amc --no-owner --no-group --backup --backup-dir="$BK" \
   --exclude='logs/' --exclude='.env' --exclude='backup/' --exclude='*.conf' \
@@ -140,6 +142,14 @@ rollback() {
 
 log "==> Checking the compose file with this host's .env"
 (cd "$DEST" && docker compose config -q) || { rollback; fail "docker compose config failed after install"; }
+
+# start.sh only runs "compose up -d", which never rebuilds an image. If this
+# project builds its own image (hermes) and its Dockerfile changed, rebuild first.
+NEW_DOCKERFILE_SUM="$(sha256sum "$DEST/Dockerfile" 2>/dev/null | cut -d' ' -f1 || true)"
+if [ -n "$NEW_DOCKERFILE_SUM" ] && [ "$NEW_DOCKERFILE_SUM" != "$OLD_DOCKERFILE_SUM" ]; then
+  log "==> Dockerfile changed - rebuilding the image first (docker compose build --pull)"
+  (cd "$DEST" && docker compose build --pull) || { rollback; fail "image build failed"; }
+fi
 
 log "==> Creating missing bind-mount folders inside the project (as ecloaiza)"
 (cd "$DEST" && docker compose config --format json | python3 -c '
