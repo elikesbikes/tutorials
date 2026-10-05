@@ -1,0 +1,9 @@
+# Allowlists for THIS host only (moved out of the shared middlewares.yaml). No secrets.
+http:
+  middlewares:
+    socketproxy-allowlist:
+      ipAllowList:
+        sourceRange:
+        - 192.168.5.127/32
+        - 192.168.5.28/32
+        - 127.0.0.1/32

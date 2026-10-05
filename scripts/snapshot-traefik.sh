@@ -23,7 +23,7 @@ REMOTE_DIR="devops/docker/traefik"      # relative to the home directory on each
 
 FILTERS=(
   --exclude='*.bak*'
-  --include='docker-compose.yml' --include='start.sh' --include='.env.example' --include='.gitignore'
+  --include='docker-compose.yml' --include='docker-compose.override.yml' --include='start.sh' --include='.env.example' --include='.gitignore'
   --include='scripts/' --include='scripts/*.sh'
   --include='config/' --include='config/traefik.yaml'
   --include='config/dynamic/' --include='config/dynamic/*.yaml'

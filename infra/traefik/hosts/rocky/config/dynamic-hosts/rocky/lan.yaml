@@ -1,0 +1,19 @@
+# WatchYourLAN — IPAM (host-network container, port 8840).
+# DNS: lan-rocky.home.elikesbikes.com -> proxy-rocky.
+http:
+  routers:
+    lan-rocky:
+      rule: "Host(`lan-rocky.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: lan-rocky
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    lan-rocky:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.28:8840"

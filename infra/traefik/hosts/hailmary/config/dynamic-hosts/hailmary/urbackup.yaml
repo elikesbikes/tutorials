@@ -1,0 +1,20 @@
+# UrBackup — web UI on 192.168.5.51:55414 (not a container on this host), so it's
+# routed via the file provider rather than docker labels (same pattern as syncthing.yaml).
+# DNS: urbackup.home.elikesbikes.com -> this proxy host.
+http:
+  routers:
+    urbackup:
+      rule: "Host(`urbackup.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: urbackup
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    urbackup:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.51:55414"
