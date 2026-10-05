@@ -1,6 +1,6 @@
 ---
-revision: 1
-updated: 2026-10-02 20:20
+revision: 2
+updated: 2026-10-05 15:25
 ---
 
 # honcho (endurance)
@@ -29,3 +29,4 @@ Self-hosted Honcho memory for the Hermes agent. Models run on Ollama on tars (`h
 | Rev | Date | Commit | Change |
 |---|---|---|---|
 | 1 | 2026-10-02 20:20 | (this revision) | Initial project. |
+| 2 | 2026-10-05 15:25 | (this revision) | Models run on Ollama on nvr-prod-2 via ai.home; honcho.env now kept in git; deployed through the endurance pipeline (`gacp_tutorials_wcopy honcho "msg" endurance`). |
