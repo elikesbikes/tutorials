@@ -1,0 +1,37 @@
+# Apple Mail uses implicit TLS. Traefik terminates its trusted ACME certificate
+# here, then forwards plaintext IMAP/SMTP over the private Docker bridge.
+tcp:
+  routers:
+    proton-bridge-imaps:
+      entryPoints:
+        - proton-imaps
+      rule: "HostSNI(`protonmail.home.elikesbikes.com`)"
+      service: proton-bridge-imap
+      tls:
+        certResolver: production
+        options: proton-imap-tls@file
+    proton-bridge-smtps:
+      entryPoints:
+        - proton-smtps
+      rule: "HostSNI(`protonmail.home.elikesbikes.com`)"
+      service: proton-bridge-smtp
+      tls:
+        certResolver: production
+
+  services:
+    proton-bridge-imap:
+      loadBalancer:
+        servers:
+          - address: "172.18.0.1:21143"
+    proton-bridge-smtp:
+      loadBalancer:
+        servers:
+          - address: "172.18.0.1:21025"
+
+tls:
+  options:
+    proton-imap-tls:
+      alpnProtocols:
+        - imap
+        - h2
+        - http/1.1

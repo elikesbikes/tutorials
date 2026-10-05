@@ -1,0 +1,27 @@
+# NAS — web UI on 192.168.1.51 (not a container on this host), so it's routed
+# via the file provider rather than docker labels (same pattern as syncthing.yaml).
+# DNS: nas.home.elikesbikes.com -> this proxy host.
+# Upstream is HTTPS with a self-signed cert, so the transport skips verification.
+http:
+  routers:
+    nas:
+      rule: "Host(`nas.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: nas
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    nas:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.1.51:443"
+        # NAS presents a self-signed cert; don't fail the proxy on it.
+        serversTransport: nas-insecure
+
+  serversTransports:
+    nas-insecure:
+      insecureSkipVerify: true

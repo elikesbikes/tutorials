@@ -1,0 +1,8 @@
+# hailmary only: Proton Mail Bridge implicit-TLS ports, and the .env file passed into the container
+# (this host still keeps the Cloudflare token in .env; tracked as a separate item).
+services:
+  traefik:
+    ports:
+      - "993:993"
+      - "465:465"
+    env_file: .env

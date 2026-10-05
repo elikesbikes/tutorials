@@ -1,0 +1,35 @@
+# Shared middlewares, identical on EVERY host (no secrets — safe to commit).
+# Host-specific allowlists live in each host's own config/dynamic-hosts/<host>/allowlists.yaml.
+# Reference these from container labels, e.g.:
+#   traefik.http.routers.<name>.middlewares=security-headers@file
+http:
+  middlewares:
+    # Sensible default security headers for any router that opts in.
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    # Redirect any router to HTTPS (entryPoint-level redirect already covers web->websecure,
+    # this is here for per-router use if ever needed).
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    # Same as security-headers but without frameDeny -- needed for apps that iframe
+    # their own content (e.g. Home Assistant add-on ingress pages load in an iframe
+    # within the HA frontend; X-Frame-Options: DENY blocks that same-origin framing).
+    security-headers-noframe:
+      headers:
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true

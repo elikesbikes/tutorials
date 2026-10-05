@@ -1,0 +1,27 @@
+# MCC dashboard — host process on rocky :5679 (not a container).
+# DNS: mcc-dashboard-rocky.home.elikesbikes.com -> proxy-rocky (this host).
+http:
+  routers:
+    mcc-dashboard:
+      rule: "Host(`mcc-dashboard-rocky.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: mcc-dashboard
+      middlewares:
+        - mcc-dashboard-root-redirect
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  middlewares:
+    mcc-dashboard-root-redirect:
+      redirectRegex:
+        regex: "^https://mcc-dashboard-rocky\\.home\\.elikesbikes\\.com/?$"
+        replacement: "https://mcc-dashboard-rocky.home.elikesbikes.com/dashboard"
+        permanent: false
+
+  services:
+    mcc-dashboard:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.28:5679"
