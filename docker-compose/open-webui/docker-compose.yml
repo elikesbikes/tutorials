@@ -22,6 +22,7 @@ services:
       # --- sessions / URL
       - WEBUI_SECRET_KEY                               # Proton Pass, via start.sh
       - WEBUI_URL=https://${TRAEFIK_HOST}
+      - WEBUI_NAME=Hermes                               # shown as "Hermes (Open WebUI)" in the browser tab and /api/config (harmless display setting; added 2026-10-05 as the first real pipeline deploy)
       # --- login: Authelia only
       - ENABLE_LOGIN_FORM=false
       - ENABLE_SIGNUP=false

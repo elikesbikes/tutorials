@@ -1,6 +1,6 @@
 ---
-revision: 2
-updated: 2026-10-05 15:20
+revision: 3
+updated: 2026-10-05 16:45
 ---
 
 # open-webui (endurance)
@@ -53,3 +53,4 @@ Open WebUI sends the whole chat history on each request; whether Hermes treats e
 |---|---|---|---|
 | 1 | 2026-10-03 15:20 | (this revision) | Initial project: Open WebUI in front of the Hermes API, Authelia sign-in only. |
 | 2 | 2026-10-05 15:20 | (this revision) | Moved to chattars.home; first deploy through the endurance pipeline (`gacp_tutorials_wcopy open-webui "msg" endurance`). |
+| 3 | 2026-10-05 16:45 | (this revision) | Display name set to Hermes (`WEBUI_NAME`): first deploy through the pipeline that recreates the container. |
