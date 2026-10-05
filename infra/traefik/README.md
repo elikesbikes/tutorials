@@ -1,6 +1,6 @@
 ---
-revision: 1
-updated: 2026-10-05 19:00
+revision: 2
+updated: 2026-10-05 16:30
 ---
 
 # Traefik: desired state in git
@@ -40,7 +40,7 @@ All from tars, in the tutorials repo:
 2. Take a baseline: `scripts/traefik_smoke.py <host> --out /tmp/<host>.before.txt` (requests every address the host serves and records the answer).
 3. See what would change: `scripts/sync-traefik.sh <host>` (writes nothing).
 4. Apply: `scripts/sync-traefik.sh <host> --apply` (backs up each replaced file on the host, copies, checks the compose file). Traefik keeps running the old configuration.
-5. Restart on purpose: `ssh <host> 'docker restart traefik'` (a few seconds without web access on that host).
+5. Restart on purpose: `ssh <host> 'docker restart traefik'` (a few seconds without web access on that host). Use `docker restart`, never a plain `docker compose up` on tars, endurance or rocky: the Cloudflare token reaches the container only through each host's `start.sh`, so a recreate without it would break certificate renewal. The container logs go to syslog, so `docker logs` shows nothing: verify with the smoke test, the allowlist tests and Graylog.
 6. Check: `scripts/traefik_smoke.py <host> --compare /tmp/<host>.before.txt`, and the Traefik log for errors.
 7. Refresh the snapshot (`scripts/snapshot-traefik.sh <host>`) and commit with `gacp`.
 
@@ -48,7 +48,7 @@ All from tars, in the tutorials repo:
 
 | Host | State |
 |---|---|
-| tars | not yet applied |
+| tars | **applied and restarted 2026-10-05 16:18**; checked: smoke test unchanged, allowlist tested from allowed and non-allowed machines, certificate unchanged |
 | rocky | not yet applied |
 | endurance | not yet applied |
 | hailmary | not yet applied (last, and only with the owner present: its Traefik is also the front door to GitLab) |
@@ -61,4 +61,5 @@ Restarting Traefik cuts web access for a few seconds. On hailmary that includes 
 
 | Rev | Date | Commit | Change |
 |---|---|---|---|
-| 1 | 2026-10-05 19:00 | (this revision) | Desired-state layout, verifier, smoke test and sync script created; nothing applied to any host yet. |
+| 2 | 2026-10-05 23:30 | (this revision) | tars applied and verified; restart notes added. |
+| 1 | 2026-10-05 19:00 | Desired-state layout, verifier, smoke test and sync script created; nothing applied to any host yet. |

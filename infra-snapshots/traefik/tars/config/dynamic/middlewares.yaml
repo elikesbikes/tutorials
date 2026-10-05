@@ -1,4 +1,5 @@
-# Shared, reusable middlewares (no secrets — safe to commit).
+# Shared middlewares, identical on EVERY host (no secrets — safe to commit).
+# Host-specific allowlists live in each host's own config/dynamic-hosts/<host>/allowlists.yaml.
 # Reference these from container labels, e.g.:
 #   traefik.http.routers.<name>.middlewares=security-headers@file
 http:
@@ -32,32 +33,3 @@ http:
         stsSeconds: 31536000
         stsIncludeSubdomains: true
         stsPreload: true
-
-    # Restrict socket-proxy access to an explicit allowlist (everyone else: 403).
-    # Retired hosts ranger0 (.16) and the old endurance (.30) were removed 2026-10-02.
-    # Clients hit Traefik directly on the LAN, so the default (remote source IP)
-    # strategy is correct — no X-Forwarded-For depth needed.
-    # Ollama on tars: only endurance (Honcho) and tars itself. No Authelia: the client is a program.
-    ollama-allowlist:
-      ipAllowList:
-        sourceRange:
-          - "192.168.5.46/32"   # endurance
-          - "192.168.5.127/32"  # tars
-          - "192.168.5.25/32"   # hailmary: MCC health probe (read-only GET /api/version)
-          - "127.0.0.1/32"
-
-    # Honcho API (Hermes memory): browsers/tools on tars and endurance itself only. Hermes uses the internal address, not this route.
-    honcho-allowlist:
-      ipAllowList:
-        sourceRange:
-          - "192.168.5.127/32"  # tars
-          - "192.168.5.46/32"   # endurance
-          - "127.0.0.1/32"
-
-    socketproxy-allowlist:
-      ipAllowList:
-        sourceRange:
-          - "192.168.5.127/32"
-          - "192.168.5.25/32"   # hailmary (prod)
-          - "192.168.5.28/32"   # rocky (dev)
-          - "127.0.0.1/32"
