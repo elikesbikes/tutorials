@@ -1,6 +1,6 @@
 ---
-revision: 1
-updated: 2026-10-05 17:30
+revision: 2
+updated: 2026-10-05 16:25
 ---
 
 # Traefik configuration snapshots
@@ -63,10 +63,11 @@ Verified by comparing the live files on 2026-10-05. Each host's `middlewares.yam
 
 ## 7. Later: making Traefik deployable from git
 
-Optional, one host at a time, each needing a Traefik restart (a few seconds without web access on that host) and the owner's approval. The idea: move everything host-specific into per-host files (allowlists into `config/dynamic-hosts/<host>/`, hailmary's mail entry points and ports into a hailmary-only override), leave only identical files in a shared folder, then deploy. Not started.
+Optional, one host at a time, each needing a Traefik restart (a few seconds without web access on that host) and the owner's approval. The idea: move everything host-specific into per-host files (allowlists into `config/dynamic-hosts/<host>/`, hailmary's mail entry points and ports into a hailmary-only override), leave only identical files in a shared folder, then deploy. Under way since 2026-10-05: the desired state is in `infra/traefik/` (see its README for the procedure and the per-host status).
 
 ## 8. Revision History
 
 | Rev | Date | Commit | Change |
 |---|---|---|---|
-| 1 | 2026-10-05 17:30 | (this revision) | First snapshots of tars, endurance, hailmary and rocky; guards added; stale shared folder removed. |
+| 2 | 2026-10-05 16:25 | (this revision) | Mentions the desired-state layout in `infra/traefik/` and fixes the time and commit of revision 1. |
+| 1 | 2026-10-05 15:58 | 0bc5584 | First snapshots of tars, endurance, hailmary and rocky; guards added; stale shared folder removed. |
