@@ -118,7 +118,7 @@ BK="$BACKUP_ROOT/$PROJECT/$TS"
 mkdir -p "$BK"
 
 log "==> Installing files (previous versions saved in $BK)"
-rsync -am --no-owner --no-group --backup --backup-dir="$BK" \
+rsync -amc --no-owner --no-group --backup --backup-dir="$BK" \
   --exclude='logs/' --exclude='.env' --exclude='backup/' --exclude='*.conf' \
   --exclude='docker-compose.override.yml' --exclude='certs/' --exclude='acme.json' \
   --exclude='secrets/' --exclude='*.htpasswd' --exclude='data/' --exclude='*_data/' \
