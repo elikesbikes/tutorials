@@ -1,0 +1,19 @@
+# Security (NVR/camera UI) — web UI on 192.168.5.43:81 (nvr-prod-2, VM 100 on proxmox-prod-6s).
+# DNS: security.home.elikesbikes.com -> proxy-hailmary.
+http:
+  routers:
+    security:
+      rule: "Host(`security.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: security
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    security:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.43:81"

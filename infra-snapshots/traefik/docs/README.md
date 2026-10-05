@@ -1,3 +1,5 @@
+> **Historical note (2026-10-05):** written when Traefik was meant to be deployed from this repo. It is no longer deployed from git; see `../README.md`.
+
 # Traefik — Homelab Reverse Proxy (IaC Baseline)
 
 A version-controlled, infrastructure-as-code Traefik v3 deployment that fronts homelab

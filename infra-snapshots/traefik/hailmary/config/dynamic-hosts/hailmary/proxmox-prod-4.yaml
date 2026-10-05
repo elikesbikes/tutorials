@@ -1,0 +1,29 @@
+http:
+  routers:
+    proxmox-prod-4:
+      rule: "Host(`proxmox-prod-4m.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: proxmox-prod-4
+      middlewares:
+        - proxmox-prod-4-headers
+      tls:
+        certResolver: production
+
+  middlewares:
+    proxmox-prod-4-headers:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: ""
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+  services:
+    proxmox-prod-4:
+      loadBalancer:
+        servers:
+          - url: "https://proxmox-prod-4s.home.elikesbikes.com:8007"

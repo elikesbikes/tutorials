@@ -1,0 +1,62 @@
+# Traefik v3 static configuration
+# Docs: https://doc.traefik.io/traefik/
+# This file is mounted read-only at /etc/traefik/traefik.yaml.
+# Dynamic config (routers/middlewares) lives in ./config/dynamic and is hot-reloaded.
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+# Structured logs go to stdout so the Docker syslog driver ships them to Graylog.
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json
+
+# API + dashboard are enabled but NOT insecure: the dashboard is exposed
+# through a secured router (see config/dynamic/dashboard.yaml), not a host port.
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+    # Redirect all plain HTTP to HTTPS.
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+
+# Let's Encrypt via Cloudflare DNS-01 challenge -> supports wildcard certificates.
+# The CF_DNS_API_TOKEN env var is injected from .env (never committed).
+certificatesResolvers:
+  production:
+    acme:
+      email: smarth@elikesbikes.com
+      storage: /etc/traefik/certs/acme.json
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+
+# Allow proxying to upstreams with self-signed/invalid certs (homelab apps).
+serversTransport:
+  insecureSkipVerify: true
+
+providers:
+  # Talk to Docker through the existing socket-proxy container (no raw socket mount).
+  docker:
+    endpoint: "tcp://socket-proxy:2375"
+    exposedByDefault: false
+    network: frontend
+  # File provider for static routers/middlewares (dashboard, security headers, ...).
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true

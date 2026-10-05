@@ -1,0 +1,63 @@
+# Shared, reusable middlewares (no secrets — safe to commit).
+# Reference these from container labels, e.g.:
+#   traefik.http.routers.<name>.middlewares=security-headers@file
+http:
+  middlewares:
+    # Sensible default security headers for any router that opts in.
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    # Redirect any router to HTTPS (entryPoint-level redirect already covers web->websecure,
+    # this is here for per-router use if ever needed).
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    # Same as security-headers but without frameDeny -- needed for apps that iframe
+    # their own content (e.g. Home Assistant add-on ingress pages load in an iframe
+    # within the HA frontend; X-Frame-Options: DENY blocks that same-origin framing).
+    security-headers-noframe:
+      headers:
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    # Restrict socket-proxy access to an explicit allowlist (everyone else: 403).
+    # Retired hosts ranger0 (.16) and the old endurance (.30) were removed 2026-10-02.
+    # Clients hit Traefik directly on the LAN, so the default (remote source IP)
+    # strategy is correct — no X-Forwarded-For depth needed.
+    # Ollama on tars: only endurance (Honcho) and tars itself. No Authelia: the client is a program.
+    ollama-allowlist:
+      ipAllowList:
+        sourceRange:
+          - "192.168.5.46/32"   # endurance
+          - "192.168.5.127/32"  # tars
+          - "192.168.5.25/32"   # hailmary: MCC health probe (read-only GET /api/version)
+          - "127.0.0.1/32"
+
+    # Honcho API (Hermes memory): browsers/tools on tars and endurance itself only. Hermes uses the internal address, not this route.
+    honcho-allowlist:
+      ipAllowList:
+        sourceRange:
+          - "192.168.5.127/32"  # tars
+          - "192.168.5.46/32"   # endurance
+          - "127.0.0.1/32"
+
+    socketproxy-allowlist:
+      ipAllowList:
+        sourceRange:
+          - "192.168.5.127/32"
+          - "192.168.5.25/32"   # hailmary (prod)
+          - "192.168.5.28/32"   # rocky (dev)
+          - "127.0.0.1/32"

@@ -1,0 +1,27 @@
+# COOPER — personal life dashboard (MCC runner, host process on :5679).
+# DNS: cooper-rocky.home.elikesbikes.com -> proxy-rocky (this host).
+http:
+  routers:
+    cooper:
+      rule: "Host(`cooper-rocky.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: cooper
+      middlewares:
+        - cooper-root-redirect
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  middlewares:
+    cooper-root-redirect:
+      redirectRegex:
+        regex: "^https://cooper-rocky\\.home\\.elikesbikes\\.com/?$"
+        replacement: "https://cooper-rocky.home.elikesbikes.com/cooper/"
+        permanent: false
+
+  services:
+    cooper:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.28:5679"
