@@ -160,3 +160,33 @@ deploy:hailmary:
       echo "==> $PROJECT deployed successfully on hailmary"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+
+# ---------------------------------------------------------------------------
+# endurance (Hermes host). Manual only. Runs on the "endurance-shell" runner on
+# endurance itself (tag: endurance; locked to this project; protected branches
+# only). Only hermes, honcho and open-webui are accepted; see
+# scripts/deploy-endurance.sh for what it does and how it rolls back.
+# To deploy a project that is not the first changed one, play the job with the
+# variable ENDURANCE_PROJECT=<project>.
+# ---------------------------------------------------------------------------
+preflight:endurance:
+  stage: preflight
+  tags:
+    - endurance
+  when: manual
+  script:
+    - *detect_project
+    - bash "$CI_PROJECT_DIR/scripts/deploy-endurance.sh" preflight "$PROJECT"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+deploy:endurance:
+  stage: deploy
+  tags:
+    - endurance
+  when: manual
+  script:
+    - *detect_project
+    - bash "$CI_PROJECT_DIR/scripts/deploy-endurance.sh" deploy "$PROJECT"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
