@@ -1,0 +1,12 @@
+# Allowlists for THIS host only (moved out of the shared middlewares.yaml). No secrets.
+http:
+  middlewares:
+    socketproxy-allowlist:
+      ipAllowList:
+        sourceRange:
+        - 192.168.5.25/32
+        - 192.168.5.127/32
+        - 127.0.0.1/32
+        # Local containers (e.g. Uptime Kuma) hairpin through the host's published 443, so Traefik sees
+        # the Docker bridge gateway as the source. NOTE: this admits ANY container on this host.
+        - 172.18.0.1/32

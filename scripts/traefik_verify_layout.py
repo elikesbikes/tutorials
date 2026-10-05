@@ -99,6 +99,8 @@ def main():
             print("     !!", k, ls.get(k), "->", ns.get(k)); bad += 1
         # 3. compose as rendered
         lf = {"docker-compose.yml": SNAP / h / "docker-compose.yml"}
+        if (SNAP / h / "docker-compose.override.yml").exists():       # a host that already runs with an override
+            lf["docker-compose.override.yml"] = SNAP / h / "docker-compose.override.yml"
         nf = {"docker-compose.yml": NEW / "shared/docker-compose.yml"}
         ov = NEW / "hosts" / h / "docker-compose.override.yml"
         if ov.exists():

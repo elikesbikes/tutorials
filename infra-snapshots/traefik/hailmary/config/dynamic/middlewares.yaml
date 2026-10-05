@@ -1,4 +1,5 @@
-# Shared, reusable middlewares (no secrets — safe to commit).
+# Shared middlewares, identical on EVERY host (no secrets — safe to commit).
+# Host-specific allowlists live in each host's own config/dynamic-hosts/<host>/allowlists.yaml.
 # Reference these from container labels, e.g.:
 #   traefik.http.routers.<name>.middlewares=security-headers@file
 http:
@@ -32,17 +33,3 @@ http:
         stsSeconds: 31536000
         stsIncludeSubdomains: true
         stsPreload: true
-
-    # Restrict socket-proxy access to ranger0 + endurance only (everyone else: 403).
-    # Clients hit Traefik directly on the LAN, so the default (remote source IP)
-    # strategy is correct — no X-Forwarded-For depth needed.
-    socketproxy-allowlist:
-      ipAllowList:
-        sourceRange:
-          - "192.168.5.25/32"
-          - "192.168.5.127/32"
-          - "127.0.0.1/32"
-          # Local containers (e.g. Uptime Kuma) hairpin through the host's
-          # published 443, so Traefik sees the docker bridge gateway as the
-          # source. Note: this admits ANY container on this host.
-          - "172.18.0.1/32"
