@@ -19,7 +19,7 @@ Friendly chat front end for the Hermes agent. Open WebUI keeps the chats, folder
 
 ## 1. How it fits together
 
-`https://chat.home.elikesbikes.com` (Traefik, TLS) -> `open-webui` container -> `http://hermes:8642/v1` (Hermes' OpenAI-compatible API on the internal `frontend` network, never published) -> Hermes (Claude subscription, memory, skills). The model is `hermes-agent`.
+`https://chattars.home.elikesbikes.com` (Traefik, TLS) -> `open-webui` container -> `http://hermes:8642/v1` (Hermes' OpenAI-compatible API on the internal `frontend` network, never published) -> Hermes (Claude subscription, memory, skills). The model is `hermes-agent`.
 
 ## 2. Standards
 
@@ -41,7 +41,7 @@ Authelia single sign-on only (OIDC client `open-webui` on hailmary's Authelia, t
 
 ## 5. Run it
 
-`./start.sh` (needs the vTPM-sealed PAT). Update: change the pinned tag in `docker-compose.yml`, pull, `./start.sh`. Check: `docker ps`, `curl -k https://chat.home.elikesbikes.com/health`.
+`./start.sh` (needs the vTPM-sealed PAT). Update: change the pinned tag in `docker-compose.yml`, pull, `./start.sh`. Check: `docker ps`, `curl -k https://chattars.home.elikesbikes.com/health`.
 
 ## 6. Known limits
 

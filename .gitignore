@@ -14,6 +14,8 @@ CLAUDE.md
 !.gitignore
 # Keep GitLab CI config
 !.gitlab-ci.yml
+# Keep the safe .env templates (they hold no credentials; real .env stays ignored)
+!.env.example
 # Runtime app data / model caches (bind-mounted, container-written)
 openwebui_data/
 *_data/
