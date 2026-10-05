@@ -62,5 +62,5 @@ Restarting Traefik cuts web access for a few seconds. On hailmary that includes 
 | Rev | Date | Commit | Change |
 |---|---|---|---|
 | 3 | 2026-10-05 16:40 | (this revision) | rocky applied and verified. |
-| 2 | 2026-10-05 16:30 | f7c1d2a | tars applied and verified; restart notes added. |
+| 2 | 2026-10-05 16:30 | a13bb01 | tars applied and verified; restart notes added. |
 | 1 | 2026-10-05 19:00 | Desired-state layout, verifier, smoke test and sync script created; nothing applied to any host yet. |
