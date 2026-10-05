@@ -1,0 +1,14 @@
+# ntfy — push notifications (container on frontend network, port 80).
+# DNS: ntfy-rocky.home.elikesbikes.com -> proxy-rocky.
+# Reuses the ntfy@docker service discovered via container labels.
+http:
+  routers:
+    ntfy-rocky:
+      rule: "Host(`ntfy-rocky.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: ntfy@docker
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production

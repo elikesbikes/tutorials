@@ -1,0 +1,33 @@
+http:
+  routers:
+    proxmox-prod-5:
+      rule: "Host(`proxmox-prod-5m.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: proxmox-prod-5
+      middlewares:
+        - proxmox-prod-5-headers
+      tls:
+        certResolver: production
+
+  middlewares:
+    proxmox-prod-5-headers:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: ""
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+  services:
+    proxmox-prod-5:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.5.39:8006"
+
+  serversTransports:
+    proxmox-prod-5-insecure:
+      insecureSkipVerify: true

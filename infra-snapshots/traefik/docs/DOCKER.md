@@ -1,3 +1,5 @@
+> **Historical note (2026-10-05):** written when Traefik was meant to be deployed from this repo. It is no longer deployed from git; see `../README.md`.
+
 # CLAUDE.md
 
 ## Homelab Configuration

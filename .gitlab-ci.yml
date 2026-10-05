@@ -26,6 +26,10 @@ validate:compose:
         echo "No docker-compose project changed — skipping validation"
         exit 0
       fi
+      if [ ! -d "$CI_PROJECT_DIR/docker-compose/$PROJECT" ]; then
+        echo "docker-compose/$PROJECT no longer exists (it was removed) — nothing to validate"
+        exit 0
+      fi
       echo "==> Validating $PROJECT..."
       bash "$CI_PROJECT_DIR/scripts/validate-compose.sh" "$CI_PROJECT_DIR/docker-compose/$PROJECT"
   rules:
@@ -38,6 +42,7 @@ preflight:hailmary:
   when: manual
   script:
     - *detect_project
+    - 'if [ "$PROJECT" = "traefik" ]; then echo "REFUSED: traefik is not deployed from git (the hosts differ). See infra-snapshots/traefik/README.md"; exit 1; fi'
     - |
       if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
         echo "No docker-compose project detected"
@@ -89,6 +94,7 @@ deploy:hailmary:
   when: manual
   script:
     - *detect_project
+    - 'if [ "$PROJECT" = "traefik" ]; then echo "REFUSED: traefik is not deployed from git (the hosts differ). See infra-snapshots/traefik/README.md"; exit 1; fi'
     - |
       if [ -z "$PROJECT" ] || [ "$PROJECT" = "none" ]; then
         echo "No docker-compose project changed — nothing to deploy"

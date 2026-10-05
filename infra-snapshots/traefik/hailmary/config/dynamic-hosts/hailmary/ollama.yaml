@@ -1,0 +1,29 @@
+# Ollama model server (used by Honcho for Hermes memory). Runs on nvr-prod-2 (Windows VM, Quadro P4000), 24x7.
+# TLS is terminated here (Let's Encrypt DNS-01); the hop to the NVR is plain HTTP on the LAN. 2026-10-03.
+http:
+  routers:
+    ollama:
+      rule: "Host(`ai.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: ollama
+      middlewares:
+        - ollama-allowlist
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  middlewares:
+    ollama-allowlist:
+      ipAllowList:
+        sourceRange:
+          - "192.168.5.46/32"   # endurance (Honcho)
+          - "192.168.5.127/32"  # tars
+          - "192.168.5.25/32"   # hailmary (MCC health probe)
+          - "127.0.0.1/32"
+
+  services:
+    ollama:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.43:11434"

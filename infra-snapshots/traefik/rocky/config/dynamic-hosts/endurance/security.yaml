@@ -1,0 +1,20 @@
+# Security (NVR/camera UI) — web UI on 192.168.5.9:81 (not a container on this host),
+# so it's routed via the file provider rather than docker labels (same pattern as syncthing.yaml).
+# DNS: security.home.elikesbikes.com -> this proxy host (endurance).
+http:
+  routers:
+    security:
+      rule: "Host(`security.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: security
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    security:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.9:81"

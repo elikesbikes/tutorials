@@ -1,0 +1,29 @@
+http:
+  routers:
+    proxmox-prod-6:
+      rule: "Host(`proxmox-prod-6m.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: proxmox-prod-6
+      middlewares:
+        - proxmox-prod-6-headers
+      tls:
+        certResolver: production
+
+  middlewares:
+    proxmox-prod-6-headers:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: ""
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+  services:
+    proxmox-prod-6:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.5.42:8006"

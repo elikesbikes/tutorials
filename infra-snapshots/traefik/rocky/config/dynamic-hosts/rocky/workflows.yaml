@@ -1,0 +1,19 @@
+# n8n — workflow automation (host port 5678).
+# DNS: workflows-rocky.home.elikesbikes.com -> proxy-rocky.
+http:
+  routers:
+    workflows-rocky:
+      rule: "Host(`workflows-rocky.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: workflows-rocky
+      middlewares:
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  services:
+    workflows-rocky:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.28:5678"

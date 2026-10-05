@@ -1,0 +1,29 @@
+# COOPER — personal life dashboard (MCC runner, host process on :5679).
+# The runner is NOT a container, so it's routed via the file provider rather
+# than docker labels. DNS: cooper.home.elikesbikes.com -> proxy-endurance (this host).
+http:
+  routers:
+    cooper:
+      rule: "Host(`cooper.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: cooper
+      middlewares:
+        - cooper-root-redirect
+        - security-headers@file
+      tls:
+        certResolver: production
+
+  middlewares:
+    # Bare domain -> the SPA's base path.
+    cooper-root-redirect:
+      redirectRegex:
+        regex: "^https://cooper\\.home\\.elikesbikes\\.com/?$"
+        replacement: "https://cooper.home.elikesbikes.com/cooper/"
+        permanent: false
+
+  services:
+    cooper:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.5.30:5679"

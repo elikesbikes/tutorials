@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Per-host secrets (dashboard htpasswd, etc.) — keep the dir + examples, ignore real files
+secrets/*
+!secrets/.gitkeep
+!secrets/*.example
+
+# ACME certificate store (issued certs + account keys)
+certs/*.json
+certs/acme.json
+
+# Editor / OS cruft
+*.swp
+.DS_Store
