@@ -1,6 +1,6 @@
 ---
-revision: 2
-updated: 2026-10-05 16:30
+revision: 3
+updated: 2026-10-05 16:40
 ---
 
 # Traefik: desired state in git
@@ -49,7 +49,7 @@ All from tars, in the tutorials repo:
 | Host | State |
 |---|---|
 | tars | **applied and restarted 2026-10-05 16:18**; checked: smoke test unchanged, allowlist tested from allowed and non-allowed machines, certificate unchanged |
-| rocky | not yet applied |
+| rocky | **applied and restarted 2026-10-05 16:22**; checked: smoke test unchanged (33 addresses), allowlist behaves as before from tars, hailmary and endurance, certificate unchanged |
 | endurance | not yet applied |
 | hailmary | not yet applied (last, and only with the owner present: its Traefik is also the front door to GitLab) |
 
@@ -61,5 +61,6 @@ Restarting Traefik cuts web access for a few seconds. On hailmary that includes 
 
 | Rev | Date | Commit | Change |
 |---|---|---|---|
-| 2 | 2026-10-05 23:30 | (this revision) | tars applied and verified; restart notes added. |
+| 3 | 2026-10-05 16:40 | (this revision) | rocky applied and verified. |
+| 2 | 2026-10-05 16:30 | f7c1d2a | tars applied and verified; restart notes added. |
 | 1 | 2026-10-05 19:00 | Desired-state layout, verifier, smoke test and sync script created; nothing applied to any host yet. |
