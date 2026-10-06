@@ -5,33 +5,17 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-PASS_CLI="$HOME/.local/bin/pass-cli"
-VAULT="HOMELAB"
-export PROTON_PASS_KEY_PROVIDER=fs
-export PROTON_PASS_SESSION_DIR="$(mktemp -d /tmp/pass-agent-hermes.XXXXXX)"
-trap '"$PASS_CLI" logout --force >/dev/null 2>&1 || true; rm -rf "$PROTON_PASS_SESSION_DIR"' EXIT
-
-PROTON_PASS_PERSONAL_ACCESS_TOKEN="$(tpm2_unseal -c 0x81010001)" "$PASS_CLI" login >/dev/null
-
-fetch() {   # fetch <VAR> <item title> <field> <required|optional>
-  local val
-  if val="$(PROTON_PASS_AGENT_REASON="Start Hermes agent on endurance: $1" \
-      "$PASS_CLI" item view --vault-name "$VAULT" --item-title "$2" --field "$3" 2>/dev/null)" && [ -n "$val" ]; then
-    export "$1=$val"
-  elif [ "$4" = required ]; then
-    echo "ERROR: Proton Pass item '$2' (field $3) not found in $VAULT" >&2; exit 1
-  else
-    export "$1="
-  fi
-}
-
-fetch DISCORD_BOT_TOKEN     "hermes - DISCORD_BOT_TOKEN"     "API Key" optional   # Proton item type "API Key": value is in its "API Key" field
-
-fetch API_SERVER_KEY         "hermes - API_SERVER_KEY"        password required   # key for Open WebUI -> Hermes API
-fetch HASS_TOKEN            "hermes - HASS_TOKEN"            "API Key" optional   # Home Assistant long-lived access token
-
-# Restricted, read-only SSH key for hailmary diagnostics (Proton item "hermes-diag", SSH key type, generated 2026-10-02 for this purpose only).
-fetch HERMES_DIAG_SSH_KEY "hermes-diag" private_key optional
+# pp_load: this host's PAT (TPM first), one login at most, TPM-sealed cache so a restart within 10 min
+# does not log in and a Proton rate limit (429 / 2028) does not stop the start. Leading ? = optional
+# (exported empty when the item is missing). See ~/scripts/proton-pass/pass-secrets.sh.
+source "$HOME/scripts/proton-pass/pass-secrets.sh"
+pp_load hermes "Start Hermes agent" \
+    "?DISCORD_BOT_TOKEN|hermes - DISCORD_BOT_TOKEN|API Key" \
+    "API_SERVER_KEY|hermes - API_SERVER_KEY|password" \
+    "?HASS_TOKEN|hermes - HASS_TOKEN|API Key" \
+    "?HERMES_DIAG_SSH_KEY|hermes-diag|private_key"
+# API_SERVER_KEY: key for Open WebUI -> Hermes API. DISCORD_BOT_TOKEN / HASS_TOKEN: Proton "API Key" items.
+# HERMES_DIAG_SSH_KEY: restricted, read-only SSH key for hailmary diagnostics (generated 2026-10-02).
 
 # Install the Hermes skills kept in this project (data/ itself is not in git).
 for d in skills/*/; do n="$(basename "$d")"; mkdir -p "data/skills/devops/$n" && cp -f "$d"SKILL.md "data/skills/devops/$n/SKILL.md"; done
