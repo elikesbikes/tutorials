@@ -4,19 +4,12 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-PASS_CLI="$HOME/.local/bin/pass-cli"
-VAULT="HOMELAB"
-export PROTON_PASS_KEY_PROVIDER=fs
-export PROTON_PASS_SESSION_DIR="$(mktemp -d /tmp/pass-agent-honcho.XXXXXX)"
-trap '"$PASS_CLI" logout --force >/dev/null 2>&1 || true; rm -rf "$PROTON_PASS_SESSION_DIR"' EXIT
-
-PROTON_PASS_PERSONAL_ACCESS_TOKEN="$(tpm2_unseal -c 0x81010001)" "$PASS_CLI" login >/dev/null
-
-POSTGRES_PASSWORD="$(PROTON_PASS_AGENT_REASON="Start Honcho on endurance: database password" \
-  "$PASS_CLI" item view --vault-name "$VAULT" --item-title "honcho - POSTGRES_PASSWORD" --field password 2>/dev/null)" \
-  || { echo "ERROR: Proton Pass item 'honcho - POSTGRES_PASSWORD' not found in $VAULT" >&2; exit 1; }
-[ -n "$POSTGRES_PASSWORD" ] || { echo "ERROR: empty database password" >&2; exit 1; }
-export POSTGRES_PASSWORD
+# pp_load: this host's PAT (TPM first), one login at most, TPM-sealed cache so a restart within 10 min
+# does not log in and a Proton rate limit (429 / 2028) does not stop the start.
+# See ~/scripts/proton-pass/pass-secrets.sh.
+source "$HOME/scripts/proton-pass/pass-secrets.sh"
+pp_load honcho "Start Honcho (database password)" \
+    "POSTGRES_PASSWORD|honcho - POSTGRES_PASSWORD|password"
 # The password may contain URL-reserved characters, so encode it for the connection URI.
 export DB_CONNECTION_URI="postgresql+psycopg://postgres:$(python3 -c 'import sys,urllib.parse as u; print(u.quote(sys.argv[1], safe=""))' "$POSTGRES_PASSWORD")@honcho-db:5432/postgres"
 
