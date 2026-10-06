@@ -1,6 +1,6 @@
 ---
-revision: 3
-updated: 2026-10-05 15:30
+revision: 4
+updated: 2026-10-05 17:06
 ---
 
 # Hermes on endurance
@@ -39,7 +39,7 @@ Do not run `hermes setup`: it writes keys to `data/.env`.
 ## 4. Source, Git and Deployment
 
 - **Source of truth:** `~/devops/docker/hermes` on **tars**. Edit there, never only on endurance.
-- **Git (history and backup):** `gacp_tutorials_wcopy hermes "message"` with **no host argument** copies the compose file, `Dockerfile`, `start.sh`, `hdiag.sh`, `known_hosts.txt`, `skills/` and the README into `tutorials/docker-compose/hermes` and pushes. It never copies `data/` (config, memory, skills Hermes created, and the Claude login). Never pass `hailmary`: that would deploy Hermes onto hailmary.
+- **Git (history and backup):** `gacp_tutorials_wcopy hermes "message"` with **no host argument** copies the compose file, `Dockerfile`, `start.sh`, `hdiag.sh`, `known_hosts.txt`, `skills/` and the README into `tutorials/docker-compose/hermes` and pushes. It never copies `data/` (config, memory, skills Hermes created, and the Claude login). Never pass `hailmary`: that would deploy Hermes onto hailmary. The `skills/` folder of this project holds only the two diagnostic skills (`homelab-hosts-diagnose`, `mcc-diagnose`). Hermes' personal skills, `SOUL.md` and `config.yaml` are backed up in the **private** GitLab repo `ecloaiza/hermes-config` (`~/devops/projects/hermes-config`, `scripts/snapshot-hermes.sh`), because this repo is public on GitHub.
 - **Deploy to endurance (pipeline, since 2026-10-05):** edit on tars, then `gacp_tutorials_wcopy hermes "message" endurance`. That pushes and plays the GitLab job `deploy:endurance`, which a runner on endurance executes (`tutorials/scripts/deploy-endurance.sh`): it checks the host, saves the files it replaces in `~/devops/docker/.deploy-backups/hermes/<time>/`, installs the new files (never `data/` or `.env`), rebuilds the image if the `Dockerfile` changed, runs `./start.sh`, waits up to 3 minutes for a healthy container and restores the old files if it does not come up. The previous hand-copy (`rsync` then `./start.sh`) still works as a fallback.
 - **Host settings:** create `.env` from `.env.example` (`TRAEFIK_HOST=hermes.home.elikesbikes.com`, `TRAEFIK_PORT=9119`). It holds no credentials. `.env.example` is not in git because the tutorials repo ignores dotfiles.
 
@@ -47,6 +47,7 @@ Do not run `hermes setup`: it writes keys to `data/.env`.
 
 | Rev | Date | Commit | Change |
 |---|---|---|---|
-| 3 | 2026-10-05 15:30 | (this revision) | Deployment now goes through the endurance pipeline (`gacp_tutorials_wcopy hermes "msg" endurance`); Dockerfile changes trigger an image rebuild. |
+| 4 | 2026-10-05 17:06 | (this revision) | Personal skills moved out of this public repo into the private hermes-config repo. |
+| 3 | 2026-10-05 15:19 | 10fc1c0 | Deployment now goes through the endurance pipeline (`gacp_tutorials_wcopy hermes "msg" endurance`); Dockerfile changes trigger an image rebuild. |
 | 2 | 2026-10-02 13:40 | (this revision) | Added the git and deployment section; moved to Traefik with Authelia login and the Claude subscription plugin. |
 | 1 | 2026-10-02 12:00 | (not in git) | Initial layout. |
