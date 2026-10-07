@@ -1,4 +1,5 @@
-# HOST-SPECIFIC data-source mounts for THIS host (tars).
+# HOST-SPECIFIC override. This tracked copy is the one deploy:hailmary ships to HAILMARY (gacp_tutorials_wcopy never copies an
+# override, and tars/rocky keep their own, not synced): data-source mounts plus the password hand-over below.
 # docker compose merges this file with docker-compose.yml automatically.
 #
 # Not synced to other hosts — each host keeps its own override (like .env).
@@ -6,6 +7,10 @@
 # in jobs/*.conf reference the /data/<name> container paths.
 services:
   restic:
+    # Forward the password start.sh fetches from Proton Pass (never stored in .env). Only start.sh exports it, so this host
+    # must be started by start.sh (deploy:hailmary does that for pp_load projects).
+    environment:
+      - RESTIC_PASSWORD
     volumes:
       - /var/lib/docker/volumes:/data/docker-volumes:ro
       - /home/ecloaiza:/data/bind-volumes:ro
