@@ -150,7 +150,16 @@ deploy:hailmary:
       done <<< "$MOUNTS"
 
       echo "--- Start services"
-      docker compose up -d
+      # A project whose start.sh loads its secrets from Proton Pass (pp_load) must be started BY start.sh: it fetches them
+      # with THIS host's TPM-sealed PAT and exports them for compose. A plain `docker compose up -d` recreates the
+      # containers WITHOUT them - silently, until the next scheduled run fails (restic: "Missing RESTIC_PASSWORD" once the
+      # password leaves .env). Every other project keeps the plain path. Same idea as scripts/deploy-endurance.sh.
+      if [ -f start.sh ] && grep -q "pp_load" start.sh; then
+        echo "start.sh uses Proton Pass (pp_load): starting $PROJECT with start.sh"
+        bash ./start.sh
+      else
+        docker compose up -d
+      fi
 
       echo "--- Run health checks"
       if [ -f health-check.sh ]; then
