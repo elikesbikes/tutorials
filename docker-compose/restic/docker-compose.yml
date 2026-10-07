@@ -10,6 +10,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    # The repository password comes from Proton Pass via start.sh (never .env); compose forwards it by name. start.sh withholds it
+    # unless ./backup is an NFS mount, so this cannot make backup.sh `restic init` a repository on a local disk.
+    environment:
+      - RESTIC_PASSWORD
     volumes:
       # App code now lives IN the image (COPY app/ in the Dockerfile). To pick
       # up code changes, rebuild: `docker compose up -d --build`.
