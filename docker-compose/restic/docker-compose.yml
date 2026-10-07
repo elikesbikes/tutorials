@@ -59,9 +59,9 @@ services:
     logging:
       driver: syslog
       options:
-        # Graylog runs on endurance (192.168.5.30). 192.168.5.16 is a reverse
-        # proxy that does NOT forward syslog — sending there silently drops logs.
-        syslog-address: "udp://192.168.5.30:514"
+        # Graylog runs on hailmary (192.168.5.25); endurance (.30) and ranger0 (.16) are
+        # retired. Per-host override via SYSLOG_ADDRESS in .env, same as the other projects.
+        syslog-address: "${SYSLOG_ADDRESS:-udp://192.168.5.25:514}"
         # Match the RFC3164 format the hosts/router already send (Graylog's
         # Syslog input parses it); Docker's default rfc5424 was not ingested.
         syslog-format: "rfc3164"
