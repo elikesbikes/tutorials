@@ -1,1 +1,5 @@
+.env
+backup/
 logs/
+# Host-specific: each host keeps its own data-source mounts (see *.example)
+docker-compose.override.yml
