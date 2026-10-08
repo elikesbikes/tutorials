@@ -2,7 +2,7 @@
 #   https://syncthing-homenas-health.home.elikesbikes.com/health   - NAS Syncthing API up, no folder paused or in error
 #   https://syncthing-kipp-health.home.elikesbikes.com/sync-lag    - kipp behind >24h in any folder it shares with the NAS
 #   https://syncthing-kipp-health.home.elikesbikes.com/offline     - kipp disconnected >24h
-# syncthing-ranger0-health.home.elikesbikes.com is the old name (2026-10-08: kept until Uptime Kuma moves, then remove).
+# Renamed 2026-10-08 from syncthing-ranger0-health.home.elikesbikes.com (ranger0 is retired; DNS record removed).
 services:
   syncthing-health:
     container_name: syncthing-health
@@ -29,21 +29,21 @@ services:
     restart: unless-stopped
     labels:
     - traefik.enable=true
-    - traefik.http.routers.synchealth-health.rule=(Host(`syncthing-homenas-health.home.elikesbikes.com`) || Host(`syncthing-ranger0-health.home.elikesbikes.com`))
+    - traefik.http.routers.synchealth-health.rule=Host(`syncthing-homenas-health.home.elikesbikes.com`)
       && PathPrefix(`/health`)
     - traefik.http.routers.synchealth-health.entrypoints=websecure
     - traefik.http.routers.synchealth-health.tls.certresolver=production
     - traefik.http.routers.synchealth-health.middlewares=security-headers@file
     - traefik.http.routers.synchealth-health.service=synchealth-health
     - traefik.http.services.synchealth-health.loadbalancer.server.port=9123
-    - traefik.http.routers.synchealth-synclag.rule=(Host(`syncthing-kipp-health.home.elikesbikes.com`) || Host(`syncthing-ranger0-health.home.elikesbikes.com`))
+    - traefik.http.routers.synchealth-synclag.rule=Host(`syncthing-kipp-health.home.elikesbikes.com`)
       && PathPrefix(`/sync-lag`)
     - traefik.http.routers.synchealth-synclag.entrypoints=websecure
     - traefik.http.routers.synchealth-synclag.tls.certresolver=production
     - traefik.http.routers.synchealth-synclag.middlewares=security-headers@file
     - traefik.http.routers.synchealth-synclag.service=synchealth-synclag
     - traefik.http.services.synchealth-synclag.loadbalancer.server.port=9124
-    - traefik.http.routers.synchealth-offline.rule=(Host(`syncthing-kipp-health.home.elikesbikes.com`) || Host(`syncthing-ranger0-health.home.elikesbikes.com`))
+    - traefik.http.routers.synchealth-offline.rule=Host(`syncthing-kipp-health.home.elikesbikes.com`)
       && PathPrefix(`/offline`)
     - traefik.http.routers.synchealth-offline.entrypoints=websecure
     - traefik.http.routers.synchealth-offline.tls.certresolver=production

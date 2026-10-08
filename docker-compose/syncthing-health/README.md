@@ -17,13 +17,15 @@ A single Alpine-based container (built locally with `bash`, `curl`, `jq`, `socat
 
 ## 2. Endpoints
 
-| Port | Path (via Traefik) | Purpose |
-|------|--------------------|---------|
-| `9123` | `/health` | Overall Syncthing health |
-| `9124` | `/sync-lag` | Device-specific sync lag |
-| `9125` | `/offline` | Device offline / last-seen |
+| Port | Host + path (via Traefik) | Checks |
+|------|---------------------------|--------|
+| `9123` | `syncthing-homenas-health.home.elikesbikes.com/health` | NAS Syncthing API answers; no NAS folder paused or in error |
+| `9124` | `syncthing-kipp-health.home.elikesbikes.com/sync-lag` | kipp behind (needItems > 0, at least `SYNCTHING_SYNC_PHANTOM_BYTES`) for longer than `SYNCTHING_SYNC_BEHIND_THRESHOLD_SECONDS` in **any** folder the NAS shares with it (or `SYNCTHING_FOLDER_IDS` if set). Body lists each folder; failures name the folder, item count and first paths |
+| `9125` | `syncthing-kipp-health.home.elikesbikes.com/offline` | kipp disconnected from the NAS longer than `SYNCTHING_OFFLINE_THRESHOLD_SECONDS` |
 
-Traefik routes these under `syncthing-ranger0-health.home.elikesbikes.com`.
+Only kipp (`SYNCTHING_DEVICE_ID`) is checked by `/sync-lag` and `/offline`. The hostnames were `syncthing-ranger0-health` until 2026-10-08.
+
+Consumers: Uptime Kuma on hailmary and rocky (monitors 52/53/55), and CheckMK HTTP checks `HTTPS Syncthing homenas health` (host homenas) and `HTTPS Syncthing kipp sync-lag` / `HTTPS Syncthing kipp offline` (host kipp), limited to the `homenas_online` time period (08:15-17:00) because the NAS powers off evenings.
 
 ## 3. Prerequisites
 
@@ -44,5 +46,6 @@ docker compose up -d --build
 
 ## 6. Access
 
-- `https://syncthing-ranger0-health.home.elikesbikes.com/health`
-- `.../sync-lag`, `.../offline`
+- `https://syncthing-homenas-health.home.elikesbikes.com/health`
+- `https://syncthing-kipp-health.home.elikesbikes.com/sync-lag`
+- `https://syncthing-kipp-health.home.elikesbikes.com/offline`
