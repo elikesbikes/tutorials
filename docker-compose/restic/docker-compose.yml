@@ -1,9 +1,8 @@
 services:
   restic:
-    # Published image (Docker Hub). `docker compose pull && up -d` uses this.
-    image: ecloaiza/restic-backup:latest
-    # `build: .` stays for local development — `docker compose build` rebuilds
-    # from source and tags the result as the image name above.
+    # Pinned to the restic version baked in by the Dockerfile (RESTIC_VERSION). When this tag is not on the host yet,
+    # `docker compose up -d` (start.sh) builds it from `build: .`; bump both together on an upgrade.
+    image: ecloaiza/restic-backup:0.19.1
     build: .
     container_name: restic
     hostname: ${CONTAINER_HOSTNAME:-ranger0}

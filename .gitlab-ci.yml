@@ -115,6 +115,7 @@ deploy:hailmary:
         --exclude='data/' --exclude='.env' \
         --include='*/' --include='*.yml' --include='*.yaml' --include='*.py' \
         --include='*.sh' --include='*.md' --include='*.json' \
+        --include='Dockerfile' \
         --exclude='*' \
         ~/devops/github/tutorials/docker-compose/$PROJECT/ \
         ~/devops/docker/$PROJECT/
