@@ -193,8 +193,18 @@ preflight:endurance:
   script:
     - *detect_project
     - bash "$CI_PROJECT_DIR/scripts/deploy-endurance.sh" preflight "$PROJECT"
-  rules:
+  rules: &endurance_rules
+    # Only offer the endurance jobs when the commit changes a project endurance
+    # accepts (same list as ALLOWED in deploy-endurance.sh). Before this they
+    # were created on every commit, and playing one for e.g. syncthing-health
+    # failed by design and turned the pipeline orange. Pipelines started by hand
+    # (Run pipeline, with ENDURANCE_PROJECT) always get them: rules:changes is
+    # true when there is no push event.
     - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - docker-compose/hermes/**/*
+        - docker-compose/honcho/**/*
+        - docker-compose/open-webui/**/*
 
 deploy:endurance:
   stage: deploy
@@ -204,5 +214,4 @@ deploy:endurance:
   script:
     - *detect_project
     - bash "$CI_PROJECT_DIR/scripts/deploy-endurance.sh" deploy "$PROJECT"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+  rules: *endurance_rules
