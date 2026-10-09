@@ -1,0 +1,30 @@
+http:
+  routers:
+    proxmox-dm:
+      rule: "Host(`proxmox-dmm.home.elikesbikes.com`)"
+      entryPoints:
+        - websecure
+      service: proxmox-dm
+      middlewares:
+        - proxmox-dm-headers
+      tls:
+        certResolver: production
+
+  middlewares:
+    proxmox-dm-headers:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: ""
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+  services:
+    proxmox-dm:
+      loadBalancer:
+        servers:
+          # Proxmox Datacenter Manager; backend has its own Let's Encrypt cert for proxmox-dms
+          - url: "https://proxmox-dms.home.elikesbikes.com:8443"
