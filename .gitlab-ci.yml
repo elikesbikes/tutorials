@@ -180,7 +180,7 @@ deploy:hailmary:
 # ---------------------------------------------------------------------------
 # endurance (Hermes host). Manual only. Runs on the "endurance-shell" runner on
 # endurance itself (tag: endurance; locked to this project; protected branches
-# only). Only hermes, honcho and open-webui are accepted; see
+# only). Only hermes, honcho, open-webui and restic are accepted; see
 # scripts/deploy-endurance.sh for what it does and how it rolls back.
 # To deploy a project that is not the first changed one, play the job with the
 # variable ENDURANCE_PROJECT=<project>.
@@ -205,6 +205,7 @@ preflight:endurance:
         - docker-compose/hermes/**/*
         - docker-compose/honcho/**/*
         - docker-compose/open-webui/**/*
+        - docker-compose/restic/**/*
 
 deploy:endurance:
   stage: deploy
