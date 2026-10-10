@@ -19,7 +19,7 @@ set -euo pipefail
 
 MODE="${1:?usage: deploy-endurance.sh preflight|deploy <project>}"
 PROJECT="${ENDURANCE_PROJECT:-${2:-}}"      # ENDURANCE_PROJECT can be set when playing the job by hand
-ALLOWED="hermes honcho open-webui"
+ALLOWED="hermes honcho open-webui restic"
 HEALTH_WAIT=180
 MIN_FREE_GB=5
 
@@ -70,6 +70,14 @@ preflight() {
   log "--- free disk space (need >= ${MIN_FREE_GB} GB)"
   FREE_GB=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
   [ "${FREE_GB:-0}" -ge "$MIN_FREE_GB" ] || fail "only ${FREE_GB} GB free"
+
+  if [ "$PROJECT" = "restic" ]; then
+    log "--- restic: ./backup must be an NFS mount (never deploy it onto a local disk)"
+    local bt bfs
+    bt="$(readlink -f "$DEST/backup" 2>/dev/null || true)"
+    bfs=""; [ -n "$bt" ] && bfs="$(findmnt -T "$bt" -n -o FSTYPE 2>/dev/null || true)"
+    case "$bfs" in nfs*) ;; *) fail "restic: $DEST/backup is not on an NFS mount (found: ${bfs:-nothing}) - mount the NAS export and link ./backup to it first";; esac
+  fi
 
   log "--- project folder is writable; routing .env present"
   touch "$DEST/.deploy-write-test" && rm -f "$DEST/.deploy-write-test" || fail "cannot write to $DEST"

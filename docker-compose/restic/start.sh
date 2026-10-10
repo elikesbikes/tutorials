@@ -9,13 +9,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$HOME/scripts/proton-pass/pass-secrets.sh"
 # The repository password differs per host (each host has its own restic repository): hailmary's lives in its own Proton item,
 # every other host keeps the original one. Unknown hosts fall back to the original, as before.
+RESTIC_PASSWORD_FIELD="note"      # hailmary/rocky/original: a Note item; endurance's is a Login item (field "password")
 case "$(hostname -s)" in
-    hailmary) RESTIC_PASSWORD_ITEM="restic - RESTIC_PASSWORD - hailmary" ;;
-    rocky)    RESTIC_PASSWORD_ITEM="restic - RESTIC_PASSWORD - rocky" ;;
-    *)        RESTIC_PASSWORD_ITEM="restic - RESTIC_PASSWORD" ;;
+    hailmary)  RESTIC_PASSWORD_ITEM="restic - RESTIC_PASSWORD - hailmary" ;;
+    rocky)     RESTIC_PASSWORD_ITEM="restic - RESTIC_PASSWORD - rocky" ;;
+    endurance) RESTIC_PASSWORD_ITEM="restic - RESTIC_PASSWORD - endurance"; RESTIC_PASSWORD_FIELD="password" ;;
+    *)         RESTIC_PASSWORD_ITEM="restic - RESTIC_PASSWORD" ;;
 esac
 pp_load restic "Starting restic" \
-    "RESTIC_PASSWORD|${RESTIC_PASSWORD_ITEM}|note"
+    "RESTIC_PASSWORD|${RESTIC_PASSWORD_ITEM}|${RESTIC_PASSWORD_FIELD}"
 
 # --- Load non-secret env vars from .env ---
 while IFS='=' read -r key value; do
