@@ -5,6 +5,9 @@ services:
     # Loads all variables from .env into the container
     env_file:
       - .env
+    # POSTGRES_PASSWORD is not in .env any more: start.sh loads it from Proton Pass and compose passes it in by name.
+    environment:
+      - POSTGRES_PASSWORD
     networks:
       - frontend
     volumes:
@@ -31,6 +34,7 @@ services:
     ports:
       - "${APP_PORT}:22300"
     environment:
+      - POSTGRES_PASSWORD   # from Proton Pass via start.sh
       # Joplin expects "POSTGRES_DATABASE", but our .env uses "POSTGRES_DB"
       # We map it here manually.
       - POSTGRES_DATABASE=${POSTGRES_DB}
