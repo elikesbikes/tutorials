@@ -1,0 +1,80 @@
+services:
+  guacd:
+    container_name: guaca_guacd
+    image: guacamole/guacd
+    restart: unless-stopped
+    volumes:
+      - ./drive:/drive:rw
+      - ./record:/record:rw
+    environment:
+      - TZ=America/Los_Angeles
+    networks:
+      - frontend
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "guaca-guacd"
+
+  postgres:
+    container_name: guaca_postgres
+    image: postgres:15.2-alpine
+    restart: unless-stopped
+    environment:
+      - TZ=America/Los_Angeles
+      - PGDATA=/var/lib/postgresql/data/guacamole
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d:ro
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - frontend
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "guaca-postgres"
+
+  guacamole:
+    container_name: guaca_guacamole
+    image: guacamole/guacamole
+    restart: unless-stopped
+    depends_on:
+      - guacd
+      - postgres
+    environment:
+      - TZ=America/Los_Angeles
+      - GUACD_HOSTNAME=guacd
+      - POSTGRESQL_HOSTNAME=postgres
+      - POSTGRESQL_DATABASE=${POSTGRES_DB}
+      - POSTGRESQL_USERNAME=${POSTGRES_USER}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - frontend
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "guaca-guacamole"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.guacamole.rule=Host(`${GUACAMOLE_DOMAIN}`)"
+      - "traefik.http.routers.guacamole.entrypoints=websecure"
+      - "traefik.http.routers.guacamole.tls=true"
+      - "traefik.http.routers.guacamole.tls.certresolver=production"
+      - "traefik.http.routers.guacamole.middlewares=guacamole-redirect"
+      - "traefik.http.services.guacamole.loadbalancer.server.port=8080"
+      # Redirect bare domain root to /guacamole/ since that's where the app lives
+      - "traefik.http.middlewares.guacamole-redirect.redirectregex.regex=^https?://[^/]+/?$$"
+      - "traefik.http.middlewares.guacamole-redirect.redirectregex.replacement=https://${GUACAMOLE_DOMAIN}/guacamole/"
+      - "traefik.http.middlewares.guacamole-redirect.redirectregex.permanent=true"
+
+networks:
+  frontend:
+    external: true
+    name: frontend
