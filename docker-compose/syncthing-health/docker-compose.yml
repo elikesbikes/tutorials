@@ -11,6 +11,9 @@ services:
       dockerfile: dockerfile
     env_file:
     - .env
+    # The API key is not in .env any more: start.sh loads it from Proton Pass and compose passes it in by name.
+    environment:
+    - SYNCTHING_API_KEY
     networks:
     - frontend
     volumes:

@@ -49,3 +49,14 @@ docker compose up -d --build
 - `https://syncthing-homenas-health.home.elikesbikes.com/health`
 - `https://syncthing-kipp-health.home.elikesbikes.com/sync-lag`
 - `https://syncthing-kipp-health.home.elikesbikes.com/offline`
+
+## Secrets
+
+`SYNCTHING_API_KEY` is not stored in `.env`. `start.sh` loads it from Proton Pass (HOMELAB vault, item
+`syncthing-health - SYNCTHING_API_KEY`) with this host's own TPM-sealed PAT and exports it, and
+`docker-compose.yml` passes it into the container by name. Start the project with `./start.sh` (the
+`deploy:hailmary` job does this automatically because `start.sh` uses `pp_load`); a plain
+`docker compose up -d` recreates the container without the key and the monitors fail their
+`SYNCTHING_API_KEY not set` check. The scripts still read the mounted `.env` for the non-secret
+settings (URL, thresholds, ntfy). To roll back, put the line back with `tools/env_restore.py` from the
+MCC repo using the note `syncthing-health - ROLLBACK .env line <date>`.
