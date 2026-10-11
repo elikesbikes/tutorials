@@ -19,7 +19,9 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      # No MYSQL_ROOT_PASSWORD here (removed 2026-10-11): with it set, the Zabbix 6.2 entrypoint pings the database as root and the
+      # stored root password is not the .env one, so the server loops on "MySQL server is not available". Without it the entrypoint
+      # uses the zabbix user, which the database accepts. The mysql service below still takes the root password.
       - ZBX_JAVAGATEWAY_ENABLE=true
       - ZBX_STARTJAVAPOLLERS=5
       - ZBX_ENABLE_SNMP_TRAPS=true
