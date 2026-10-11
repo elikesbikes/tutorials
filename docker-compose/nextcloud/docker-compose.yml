@@ -1,82 +1,83 @@
 services:
-  # Nextcloud Web App Service
   app:
+    # Pin the version here during upgrades.
+    # Current path: 32.0.1 (on NFS) → start at 33 → then bump to latest (34).
     image: nextcloud:latest
     container_name: nextcloud_app
-    # Ensure the container restarts automatically unless manually stopped
     restart: unless-stopped
     networks:
-      frontend:
-    ports:
-      # Map the container's internal port 80 to the host port defined in .env (default 8080)
-      # NPM or your proxy should point to this HOST_PORT.
-      - ${HOST_PORT:-8080}:80
-    links:
-      - db
-      - redis
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`${NC_DOMAIN}`)"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud.tls=true"
+      - "traefik.http.routers.nextcloud.tls.certresolver=production"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
     volumes:
-      # Bind Mounts for persistent data on the host (defined in .env)
       - ${NEXTCLOUD_DIR}:/var/www/html
-      # Data directory for user files (separate from config/code for easy upgrades)
       - ${DATA_DIR}:/var/www/html/data
     environment:
-      # Database Connection Variables
+      - TZ=America/Los_Angeles
       - MYSQL_HOST=db
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
-
-      # Redis Caching Configuration (for better performance)
       - REDIS_HOST=redis
       - REDIS_HOST_PORT=6379
-
-      # --- REVERSE PROXY CONFIGURATION (Crucial for NPM) ---
-      # NEXTCLOUD_TRUSTED_DOMAINS: Whitelists the domain for access.
-      # Domains are space-separated (localhost and 127.0.0.1 are good for local access).
       - NEXTCLOUD_TRUSTED_DOMAINS=localhost 127.0.0.1 ${NC_DOMAIN}
-
-      # OVERWRITEHOST: Tells Nextcloud what external host name to use for links.
       - OVERWRITEHOST=${NC_DOMAIN}
-
-      # OVERWRITEPROTOCOL: Tells Nextcloud to use HTTPS for generated links (as NPM handles SSL).
       - OVERWRITEPROTOCOL=https
-      # ----------------------------------------------------
-
-      # Recommended PHP limits
+      # Trust Docker bridge subnet so Traefik's forwarded headers are accepted
+      - TRUSTED_PROXIES=172.16.0.0/12
       - PHP_MEMORY_LIMIT=512M
       - PHP_UPLOAD_LIMIT=10G
-
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "nextcloud-app"
     depends_on:
       - db
       - redis
 
-  # Database Service (MariaDB)
   db:
-    image: mariadb:10.6 # Recommended version for Nextcloud compatibility
+    image: mariadb:10.6
     container_name: nextcloud_db
     restart: unless-stopped
     networks:
-      frontend:
+      - frontend
     volumes:
-      # Bind Mount for MariaDB persistent storage
       - ${DB_DIR}:/var/lib/mysql
-    # Required command for Nextcloud compatibility with MariaDB
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
+      - TZ=America/Los_Angeles
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "nextcloud-db"
 
-  # Redis Caching Service
   redis:
     image: redis:alpine
     container_name: nextcloud_redis
     restart: unless-stopped
     networks:
-      frontend:
-
+      - frontend
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.5.25:514"
+        syslog-format: "rfc3164"
+        tag: "nextcloud-redis"
 
 networks:
   frontend:
     external: true
+    name: frontend
