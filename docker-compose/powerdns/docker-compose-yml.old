@@ -20,7 +20,7 @@ services:
       - ./localtime:/etc/localtime:ro
       - mariadb:/var/lib/mysql:z
     environment:
-      - MYSQL_ROOT_PASSWORD=my-secret-pw
+      - MYSQL_ROOT_PASSWORD=REDACTED
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       timeout: 10s
@@ -49,10 +49,10 @@ services:
     volumes:
       - ./localtime:/etc/localtime:ro
     environment:
-      - PDNS_gmysql_password=my-secret-pw
+      - PDNS_gmysql_password=REDACTED
       - PDNS_master=yes
       - PDNS_api=yes
-      - PDNS_api_key=secret
+      - PDNS_api_key=REDACTED
       - PDNS_webserver=yes
       - PDNS_webserver_address=0.0.0.0
       - PDNS_webserver_allow_from=172.6.0.0/16
@@ -76,7 +76,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     environment:
       - PDNS_gmysql_dbname=powerdnsslave
-      - PDNS_gmysql_password=my-secret-pw
+      - PDNS_gmysql_password=REDACTED
       - PDNS_slave=yes
       - PDNS_superslave=yes
       - PDNS_webserver=yes
@@ -99,9 +99,9 @@ services:
     volumes:
       - ./localtime:/etc/localtime:ro
     environment:
-      - PDNS_ADMIN_SQLA_DB_PASSWORD='my-secret-pw'
+      - PDNS_ADMIN_SQLA_DB_PASSWORD='REDACTED'
       - PDNS_VERSION=4.7
-      - PDNS_API_KEY=secret
+      - PDNS_API_KEY=REDACTED
     #depends_on:
     #  - mariadb
     #  - pdns-master

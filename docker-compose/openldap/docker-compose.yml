@@ -9,7 +9,7 @@ services:
       LDAP_DOMAIN: "home.elikesbikes.com"
       LDAP_BASE_DN: "dc=home.elikesbikes,dc=com"
       LDAP_ADMIN_PASSWORD: "admin"
-      LDAP_CONFIG_PASSWORD: "config"
+      LDAP_CONFIG_PASSWORD: "REDACTED"
       LDAP_READONLY_USER: "false"
       #LDAP_READONLY_USER_USERNAME: "readonly"
       #LDAP_READONLY_USER_PASSWORD: "readonly"

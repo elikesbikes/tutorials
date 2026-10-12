@@ -345,13 +345,13 @@ Setting the new password
              environment:
                - INDEXER_URL=https://wazuh.indexer:9200
                - INDEXER_USERNAME=admin
-               - INDEXER_PASSWORD=SecretPassword
+               - INDEXER_PASSWORD=REDACTED
                - FILEBEAT_SSL_VERIFICATION_MODE=full
                - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
                - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
                - SSL_KEY=/etc/ssl/filebeat.key
                - API_USERNAME=wazuh-wui
-               - API_PASSWORD=MyS3cr37P450r.*-
+               - API_PASSWORD=REDACTED
            ...
            wazuh.indexer:
              ...
@@ -362,12 +362,12 @@ Setting the new password
              ...
              environment:
                - INDEXER_USERNAME=admin
-               - INDEXER_PASSWORD=SecretPassword
+               - INDEXER_PASSWORD=REDACTED
                - WAZUH_API_URL=https://wazuh.manager
                - DASHBOARD_USERNAME=kibanaserver
-               - DASHBOARD_PASSWORD=kibanaserver
+               - DASHBOARD_PASSWORD=REDACTED
                - API_USERNAME=wazuh-wui
-               - API_PASSWORD=MyS3cr37P450r.*-
+               - API_PASSWORD=REDACTED
            ...
 
    -  ``kibanaserver`` user
@@ -381,12 +381,12 @@ Setting the new password
              ...
              environment:
                - INDEXER_USERNAME=admin
-               - INDEXER_PASSWORD=SecretPassword
+               - INDEXER_PASSWORD=REDACTED
                - WAZUH_API_URL=https://wazuh.manager
                - DASHBOARD_USERNAME=kibanaserver
-               - DASHBOARD_PASSWORD=kibanaserver
+               - DASHBOARD_PASSWORD=REDACTED
                - API_USERNAME=wazuh-wui
-               - API_PASSWORD=MyS3cr37P450r.*-
+               - API_PASSWORD=REDACTED
            ...
 
 Applying the changes
@@ -455,7 +455,7 @@ The ``wazuh-wui`` user is the user to connect with the Wazuh API by default. Fol
             url: "https://wazuh.manager"
             port: 55000
             username: wazuh-wui
-            password: "MyS3cr37P450r.*-"
+            password: "REDACTED"
             run_as: false
       ...
 
@@ -471,24 +471,24 @@ The ``wazuh-wui`` user is the user to connect with the Wazuh API by default. Fol
           environment:
             - INDEXER_URL=https://wazuh.indexer:9200
             - INDEXER_USERNAME=admin
-            - INDEXER_PASSWORD=SecretPassword
+            - INDEXER_PASSWORD=REDACTED
             - FILEBEAT_SSL_VERIFICATION_MODE=full
             - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
             - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
             - SSL_KEY=/etc/ssl/filebeat.key
             - API_USERNAME=wazuh-wui
-            - API_PASSWORD=MyS3cr37P450r.*-
+            - API_PASSWORD=REDACTED
         ...
         wazuh.dashboard:
           ...
           environment:
             - INDEXER_USERNAME=admin
-            - INDEXER_PASSWORD=SecretPassword
+            - INDEXER_PASSWORD=REDACTED
             - WAZUH_API_URL=https://wazuh.manager
             - DASHBOARD_USERNAME=kibanaserver
-            - DASHBOARD_PASSWORD=kibanaserver
+            - DASHBOARD_PASSWORD=REDACTED
             - API_USERNAME=wazuh-wui
-            - API_PASSWORD=MyS3cr37P450r.*-
+            - API_PASSWORD=REDACTED
         ...
 
 #. Recreate the Wazuh containers:
